@@ -1,0 +1,38 @@
+﻿{
+   "CodeGenerationMode": 0,
+   "ContextClassName": "A28Context",
+   "ContextNamespace": null,
+   "DefaultDacpacSchema": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": true,
+   "ModelNamespace": null,
+   "OutputContextPath": "Data",
+   "OutputPath": "Models\\GuardObjectsOnMapGBR",
+   "ProjectRootNamespace": "VityazReports",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "Name": "[dbo].[Object]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ObjType]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": "ANDROMEDACENTR2\\ANDROMEDA.A28",
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDbContextSplitting": false,
+   "UseFluentApiOnly": false,
+   "UseHandleBars": false,
+   "UseInflector": false,
+   "UseLegacyPluralizer": false,
+   "UseNoConstructor": false,
+   "UseNoNavigations": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UseSpatial": false
+}
