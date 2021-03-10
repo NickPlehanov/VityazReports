@@ -1,28 +1,28 @@
 ﻿{
    "CodeGenerationMode": 0,
-   "ContextClassName": "A28Context",
+   "ContextClassName": "ReportBaseContext",
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
    "IncludeConnectionString": true,
    "ModelNamespace": null,
    "OutputContextPath": "Data",
-   "OutputPath": "Models\\GuardObjectsOnMapGBR",
+   "OutputPath": "Models\\MainWindow",
    "ProjectRootNamespace": "VityazReports",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
-         "Name": "[dbo].[Object]",
+         "Name": "[dbo].[Reports]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[ObjType]",
+         "Name": "[dbo].[UsersReports]",
          "ObjectType": 0
       }
    ],
-   "UiHint": "ANDROMEDACENTR2\\ANDROMEDA.A28",
+   "UiHint": "SQL-SERVICE.ReportBase",
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,
    "UseDbContextSplitting": false,
