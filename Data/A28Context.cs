@@ -20,7 +20,7 @@ namespace VityazReports.Data
         }
 
         public virtual DbSet<ObjType> ObjType { get; set; }
-        public virtual DbSet<Object> Object { get; set; }
+        public virtual DbSet<Models.GuardObjectsOnMapGBR.Object> Object { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -35,7 +35,7 @@ namespace VityazReports.Data
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Cyrillic_General_CI_AS");
 
-            modelBuilder.Entity<Object>(entity =>
+            modelBuilder.Entity<Models.GuardObjectsOnMapGBR.Object>(entity =>
             {
                 entity.Property(e => e.CtignoreSystemEvent).HasDefaultValueSql("((1))");
 
