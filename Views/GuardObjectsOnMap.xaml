@@ -27,12 +27,12 @@
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
-        <mah:Flyout Position="Right" IsModal="True" AnimateOpacity="True" IsOpen="{Binding FlyoutShowGroupsVisibleState}">
+        <mah:Flyout Width="150" Position="Right" IsModal="True" AnimateOpacity="True" IsOpen="{Binding FlyoutShowGroupsVisibleState}" Panel.ZIndex="1">
             <StackPanel>
                 <ListBox ItemsSource="{Binding ObjectTypeList}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <mah:SplitButton Text="{Binding ObjTypeName}" Tag="{Binding ObjTypeId}"/>
+                            <ToggleButton Margin="5" Content="{Binding ObjTypeName}" Tag="{Binding ObjTypeId}"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
