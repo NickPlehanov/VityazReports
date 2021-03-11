@@ -7,7 +7,7 @@
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
                   xmlns:vm="clr-namespace:VityazReports.ViewModel" 
                   xmlns:command="http://www.galasoft.ch/mvvmlight" 
-                  xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+                  xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity" xmlns:wpf="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
         Title="Охраняемые объекты на карте" Height="450" Width="800">
     <mah:MetroWindow.DataContext>
@@ -18,32 +18,62 @@
             <Button Command="{Binding ShowGroups}">
                 <iconPacks:BootstrapIcons Kind="FilterCircle"/>
             </Button>
-            <Button>
+            <Button Command="{Binding CalculateCommand}">
                 <iconPacks:BootstrapIcons Kind="PieChart"/>
             </Button>
-            <Button>
+            <Button Command="{Binding ClearGroup}">
                 <iconPacks:BootstrapIcons Kind="Bucket"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="sort" Source="{Binding ChartObjectsList}">
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="Duration" Direction="Descending"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
         <mah:Flyout Width="150" Position="Right" IsModal="True" AnimateOpacity="True" IsOpen="{Binding FlyoutShowGroupsVisibleState}" Panel.ZIndex="1">
             <StackPanel>
                 <ListBox ItemsSource="{Binding ObjectTypeList}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <ToggleButton Margin="5" Content="{Binding ObjTypeName}" Tag="{Binding ObjTypeId}"/>
+                            <ToggleButton Margin="5" Content="{Binding ObjTypeName}" Tag="{Binding ObjTypeId}"
+                                          Command="{Binding DataContext.SelectGroupCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
             </StackPanel>
         </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding ChartVisible}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+                <wpf:PieChart Margin="5" Grid.Column="0" Series="{Binding ChartSeries}" LegendLocation="Left" ChartLegend="{Binding ChartLegent}" DataTooltip="{Binding ChartToolTip}"/>
+                <DataGrid Margin="5" Grid.Column="1" SelectedItem="{Binding SelectedObject}" ItemsSource="{Binding Source={StaticResource sort}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Объект" Binding="{Binding ObjectInfo}"/>
+                        <DataGridTextColumn Header="Время" Binding="{Binding DurationText}"/>
+                        <!--<DataGridTextColumn Header="Время" Binding="{Binding Duration}"/>-->
+                    </DataGrid.Columns>
+                    <DataGrid.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SelectedObjectCommand}"/>
+                    </DataGrid.InputBindings>
+                </DataGrid>
+            </Grid>
+        </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}">
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="MouseRightButtonDown">
-                    <command:EventToCommand Command="{Binding Mode=OneWay, Path=MouseRightButtonDownCommand}" PassEventArgsToCommand="True"/>
+                    <command:EventToCommand Command="{Binding Mode=OneWay, Path=CreateLabelGbr}" PassEventArgsToCommand="True"/>
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </UserControl>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=MainW}" Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=MainW}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

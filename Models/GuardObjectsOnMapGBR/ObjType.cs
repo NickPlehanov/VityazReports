@@ -21,5 +21,7 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
         [StringLength(255)]
         public string Description { get; set; }
         public bool RecordDeleted { get; set; }
+        [NotMapped]
+        public bool IsShowOnMap { get; set; }
     }
 }
