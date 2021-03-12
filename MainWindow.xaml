@@ -11,10 +11,10 @@
         <vm:MainWindowViewModel/>
     </mah:MetroWindow.DataContext>
     <Grid>
-        <ListBox ItemsSource="{Binding ReportList}">
+        <ListBox ItemsSource="{Binding ReportList}" SelectionMode="Single">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Button Content="{Binding RptName}" Tag="{Binding RptId}" Style="{StaticResource MahApps.Styles.Button.Flat}" Margin="5" 
+                    <Button Content="{Binding RptName}" Tag="{Binding RptId}" Style="{StaticResource MahApps.Styles.Button.ToolBar}" Margin="5" 
                             Command="{Binding DataContext.SelectedReport, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>

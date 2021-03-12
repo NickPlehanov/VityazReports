@@ -22,6 +22,8 @@ using System.Windows.Threading;
 using LiveCharts.Defaults;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System.Threading;
+using System.ComponentModel;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
@@ -182,7 +184,7 @@ namespace VityazReports.ViewModel {
                 List<ColorModel> cm = ColorList.Where(x => x.Isfree == true).ToList();
 
                 //требуется проверить что такой маршрут уже есть/нет на карте
-                var markers = gmaps_contol.Markers.Where(x => x.Tag.ToString() == ObjId.ToString()).ToList();
+                var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == ObjId.ToString()).ToList();
                 foreach (GMapMarker m in markers)
                     gmaps_contol.Markers.Remove(m);
                 ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).IsShowOnMap = false;
@@ -221,8 +223,9 @@ namespace VityazReports.ViewModel {
                             }
                         };
                         //marker.Tag = ObjId.ToString();
+                        marker.ZIndex = (int)ObjId;
                         marker.Tag = item.ObjectId.ToString();
-                        gmaps_contol.Markers.Add(marker);                        
+                        gmaps_contol.Markers.Add(marker);
                     }
                     toggleButton.Background = cm.First().Color;
                     toggleButton.Content += " (" + ObjectsList.Count.ToString() + ")";
@@ -249,7 +252,7 @@ namespace VityazReports.ViewModel {
                 MouseEventArgs mouseEventArgs = obj as MouseEventArgs;
                 if (mouseEventArgs.RightButton == MouseButtonState.Pressed) {
                     if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
-                        if (gmaps_contol.Markers.Count(x => x.Tag == "ГБР") == 0) {
+                        if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
                             Point p = mouseEventArgs.GetPosition((IInputElement)mouseEventArgs.Source);
 
                             GMapMarker marker = new GMapMarker(new PointLatLng()) {
@@ -263,7 +266,7 @@ namespace VityazReports.ViewModel {
                                 }
                             };
                             marker.Position = gmaps_contol.FromLocalToLatLng((int)p.X, (int)p.Y);
-                            marker.Tag = "ГБР";
+                            marker.ZIndex = -1;
                             gmaps_contol.Markers.Add(marker);
                         }
                         else
@@ -279,7 +282,7 @@ namespace VityazReports.ViewModel {
         public RelayCommand ClearGroup {
             get => _ClearGroup ??= new RelayCommand(async obj => {
                 //TODO: задать вопрос на подтвреждение удаления
-                var markers = gmaps_contol.Markers.Where(x => x.Tag.ToString() == "ГБР").ToList();
+                var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == "-1").ToList();
                 foreach (var item in markers) {
                     gmaps_contol.Markers.Remove(item);
                 }
@@ -290,37 +293,76 @@ namespace VityazReports.ViewModel {
         public MatrixTotals SelectedObject {
             get => _SelectedObject;
             set {
-                if (_SelectedObject != null) {
-                    var y = gmaps_contol.Markers.First(x => x.Tag.ToString() == _SelectedObject.Id.ToString());
-                    if (y == null)
+                if (_SelectedObject == null && value != null) {
+                    var _y = gmaps_contol.Markers.First(x => x.Tag.ToString() == value.Id.ToString());
+                    if (_y == null)
                         return;
-                    GMapMarker m = y as GMapMarker;
-                    if (m == null)
+                    GMapMarker _m = _y as GMapMarker;
+                    if (_m == null)
                         return;
-                    Ellipse ellipse = m.Shape as Ellipse;
-                    ellipse.StrokeThickness = 7.5;
-                    ellipse.Stroke = Brushes.Red;
+                    Ellipse _ellipse = _m.Shape as Ellipse;
+                    _ellipse.StrokeThickness = 12;
+                    _ellipse.Stroke = Brushes.BlueViolet;
+                    ObjAddress = context.Object.First(x => x.ObjectId == value.Id).Address;
                 }
+                if (_SelectedObject != null)
+                    if (_SelectedObject != value) {
+                        var y = gmaps_contol.Markers.First(x => x.Tag.ToString() == _SelectedObject.Id.ToString());
+                        if (y == null)
+                            return;
+                        GMapMarker m = y as GMapMarker;
+                        if (m == null)
+                            return;
+                        Ellipse ellipse = m.Shape as Ellipse;
+                        ellipse.StrokeThickness = 7.5;
+                        ellipse.Stroke = Brushes.Red;
+                        ObjAddress = context.Object.First(x => x.ObjectId == _SelectedObject.Id).Address;
+
+                        var _y = gmaps_contol.Markers.First(x => x.Tag.ToString() == value.Id.ToString());
+                        if (_y == null)
+                            return;
+                        GMapMarker _m = _y as GMapMarker;
+                        if (_m == null)
+                            return;
+                        Ellipse _ellipse = _m.Shape as Ellipse;
+                        _ellipse.StrokeThickness = 12;
+                        _ellipse.Stroke = Brushes.BlueViolet;
+                        ObjAddress = context.Object.First(x => x.ObjectId == value.Id).Address;
+
+                    }
                 _SelectedObject = value;
                 OnPropertyChanged(nameof(SelectedObject));
+            }
+        }
+
+        private string _ObjAddress;
+        public string ObjAddress {
+            get => _ObjAddress;
+            set {
+                _ObjAddress = value;
+                OnPropertyChanged(nameof(ObjAddress));
             }
         }
 
         private RelayCommand _SelectedObjectCommand;
         public RelayCommand SelectedObjectCommand {
             get => _SelectedObjectCommand ??= new RelayCommand(async obj => {
-                var y=gmaps_contol.Markers.First(x => x.Tag.ToString() == SelectedObject.Id.ToString());
-                if (y == null)
-                    return;
-                GMapMarker m = y as GMapMarker;
-                if (m == null)
-                    return;
-                Ellipse ellipse = m.Shape as Ellipse;
-                ellipse.StrokeThickness = 20;
-                ellipse.Stroke = Brushes.Blue;
+                ////await Dispatcher.CurrentDispatcher.Invoke(async () => {
+                //if (SelectedObject == null)
+                //    return;
+                //var y = gmaps_contol.Markers.First(x => x.Tag.ToString() == SelectedObject.Id.ToString());
+                //if (y == null)
+                //    return;
+                //GMapMarker m = y as GMapMarker;
+                //if (m == null)
+                //    return;
+                //Ellipse ellipse = m.Shape as Ellipse;
+                //ellipse.StrokeThickness = 12;
+                //ellipse.Stroke = Brushes.BlueViolet;
 
-                var ms = gmaps_contol.Markers.Where(x => x.Tag.ToString() != SelectedObject.Id.ToString()).ToList();
-
+                //if (SelectedObject == null)
+                //    return;
+                //ObjAddress = context.Object.First(x => x.ObjectId == SelectedObject.Id).Address;
             });
         }
 
@@ -329,7 +371,7 @@ namespace VityazReports.ViewModel {
             get => _CalculateCommand ??= new RelayCommand(async obj => {
                 //todo: проверять что series не null, если не null, то открывать просто 
                 if (ChartSeries != null) {
-                    ChartVisible = true;
+                    ChartVisible = !ChartVisible;
                     return;
                 }
                 CreateLegend.Execute(null);
@@ -339,8 +381,8 @@ namespace VityazReports.ViewModel {
                     Loading = true;
                     GMapMarker gbr = null;
                     //List<GMapMarker> objects = null;
-                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.Tag == "ГБР");
-                    var objects = gmaps_contol.Markers.Where(x => x.Tag != "ГБР").ToList();
+                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "-1");
+                    var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "-1").ToList();
                     //foreach (var item in objects) {
                     //    ChartObjectsList.Add(new MatrixTotals() { Duration = -1, ObjectInfo = item.Tag.ToString() });
                     //}
@@ -359,12 +401,12 @@ namespace VityazReports.ViewModel {
                                     if (GoogleMatrixDistance != null) {
                                         if (GoogleMatrixDistance.rows[0].elements[0].duration != null) {
                                             TimeSpan ts = TimeSpan.FromSeconds(double.Parse(GoogleMatrixDistance.rows[0].elements[0].duration.value.ToString()));
-                                            ChartObjectsList.Add(new MatrixTotals(GoogleMatrixDistance.rows[0].elements[0].duration.value, (item.Shape as Ellipse).ToolTip.ToString(), ts.Minutes.ToString()+":"+ts.Seconds.ToString(), int.Parse(item.Tag.ToString())));
+                                            ChartObjectsList.Add(new MatrixTotals(GoogleMatrixDistance.rows[0].elements[0].duration.value, (item.Shape as Ellipse).ToolTip.ToString(), ts.Minutes.ToString() + ":" + ts.Seconds.ToString(), int.Parse(item.Tag.ToString())));
                                         }
-                                            //matrix.Add(new MatrixTotals() {
-                                            //    Duration = GoogleMatrixDistance.rows[0].elements[0].duration.value,
-                                            //    ObjectInfo = item.Tag.ToString()
-                                            //});
+                                        //matrix.Add(new MatrixTotals() {
+                                        //    Duration = GoogleMatrixDistance.rows[0].elements[0].duration.value,
+                                        //    ObjectInfo = item.Tag.ToString()
+                                        //});
                                     }
                                 }
                             }

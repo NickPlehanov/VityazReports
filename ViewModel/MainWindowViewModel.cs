@@ -49,9 +49,12 @@ namespace VityazReports.ViewModel {
 
                 switch (btn.Tag.ToString().ToUpper()) {
                     case "23F71A51-F909-417C-9B09-69534715C689": //охр. объекты на карте
-                        GuardObjectsOnMapGBRViewModel vm = new GuardObjectsOnMapGBRViewModel();
                         GuardObjectsOnMap map = new GuardObjectsOnMap();
                         map.ShowDialog();
+                        break;
+                    case "B904A30B-16B1-4F59-A76D-BD981E18C930": //изм.абон.платы
+                        ChangeCost changeCost = new ChangeCost();
+                        changeCost.ShowDialog();
                         break;
                 }
             }, obj=>obj!=null);
