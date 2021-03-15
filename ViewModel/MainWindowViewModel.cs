@@ -68,6 +68,10 @@ namespace VityazReports.ViewModel {
                         LateGBR lateGBR = new LateGBR();
                         lateGBR.ShowDialog();
                         break;
+                    case "7C9C1F49-6218-4C9A-8F17-126626E5D1D3": //Регламентные работы
+                        ReglamentWorks rw = new ReglamentWorks();
+                        rw.ShowDialog();
+                        break;
                 }
             }, obj => obj != null);
         }
