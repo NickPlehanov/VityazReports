@@ -5,9 +5,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
-        xmlns:local="clr-namespace:VityazReports.Views" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation"
+        xmlns:local="clr-namespace:VityazReports.Views" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" 
+                  xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
-        Title="ChangeCost" Height="450" Width="800">
+        Title="Изменение абонентской платы по охр. объектам" Height="450" Width="800" x:Name="ChangeCostWindow">
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
@@ -19,6 +20,16 @@
         <viewmodel:ChangeCostViewModel/>
     </mah:MetroWindow.DataContext>
     <Grid>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="ChangeCostMonthlyPay" Source="{Binding ChangeCostOutputList}">
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="WhoChanged"/>
+                </CollectionViewSource.GroupDescriptions>
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="DateStart"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
         <mah:Flyout Position="Top" IsModal="True" AnimateOpacity="True" Panel.ZIndex="1" IsOpen="{Binding FilterFlyoutVisible}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -32,5 +43,64 @@
                 <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshDataCommand}" FontSize="16" FontWeight="UltraLight" Margin="5"/>
             </Grid>
         </mah:Flyout>
+        <DataGrid ItemsSource="{Binding Source={StaticResource ChangeCostMonthlyPay}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" AutoGenerateColumns="False" 
+                      CanUserAddRows="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Margin" Value="5"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <Expander IsExpanded="False" BorderThickness="1">
+                                            <Expander.Header>
+                                                <WrapPanel>
+                                                    <TextBlock FontWeight="Bold" x:Name="ManagerName" Text="{Binding Name}" Margin="5"/>
+                                                    <Button Content="Итоги" Command="{Binding DataContext.ViewTotalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding ElementName=ManagerName, Path=Text}"/>
+                                                </WrapPanel>
+                                            </Expander.Header>
+                                            <Expander.Content>
+                                                <ItemsPresenter/>
+                                            </Expander.Content>
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+            <DataGrid.Resources>
+                <!--Дата изменения-->
+                <DataTemplate x:Key="dt_DateChanged">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=DateChanged,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="edt_DateChanged">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=DateChanged,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <!--Дата подключения-->
+                <DataTemplate x:Key="dt_DateStart">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=DateStart,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="edt_DateStart">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=DateStart,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
+                <DataGridTextColumn Header="Название объекта" Binding="{Binding ObjectName}"/>
+                <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
+                <DataGridTextColumn Header="Кем изменено" Binding="{Binding WhoChanged}"/>
+                <DataGridTemplateColumn Header="Дата изменения" CellTemplate="{StaticResource dt_DateChanged}" CellEditingTemplate="{StaticResource edt_DateChanged}"/>
+                <DataGridTextColumn Header="Было" Binding="{Binding Before}"/>
+                <DataGridTextColumn Header="Стало" Binding="{Binding After}"/>
+                <DataGridTemplateColumn Header="Дата подключения" CellTemplate="{StaticResource dt_DateStart}" CellEditingTemplate="{StaticResource edt_DateStart}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Куратор" Binding="{Binding Curator}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=ChangeCostWindow}" Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=ChangeCostWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

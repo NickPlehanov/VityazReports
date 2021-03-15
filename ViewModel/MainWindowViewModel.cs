@@ -12,7 +12,7 @@ namespace VityazReports.ViewModel {
     public class MainWindowViewModel : BaseViewModel {
 
         private readonly ReportBaseContext reportBaseContext;
-        
+
         public MainWindowViewModel() {
             reportBaseContext = new ReportBaseContext();
 
@@ -20,13 +20,13 @@ namespace VityazReports.ViewModel {
             if (string.IsNullOrEmpty(login))
                 throw new Exception("Логин пользователя не может быть пустым!");
             var _rpt_lst = (from r in reportBaseContext.Reports
-                           join ur in reportBaseContext.UsersReports on r.RptId equals ur.RptId
-                           where ur.UsrLogin.Equals(login)
-                           select r).ToList();
+                            join ur in reportBaseContext.UsersReports on r.RptId equals ur.RptId
+                            where ur.UsrLogin.Equals(login)
+                            select r).ToList();
             if (_rpt_lst.Count <= 0)
                 throw new Exception("Для указанного пользователя нет доступных отчётов");
-            foreach (var item in _rpt_lst) 
-                ReportList.Add(item);            
+            foreach (var item in _rpt_lst)
+                ReportList.Add(item);
 
         }
 
@@ -56,8 +56,12 @@ namespace VityazReports.ViewModel {
                         ChangeCost changeCost = new ChangeCost();
                         changeCost.ShowDialog();
                         break;
+                    case "FA4DD0A5-5B15-45B4-A55A-433267FA50FF": //Акты по тревогам
+                        ActsByAlarm acts = new ActsByAlarm();
+                        acts.ShowDialog();
+                        break;
                 }
-            }, obj=>obj!=null);
+            }, obj => obj != null);
         }
     }
 }

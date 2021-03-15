@@ -1,28 +1,36 @@
 ﻿{
    "CodeGenerationMode": 0,
-   "ContextClassName": "ReportBaseContext",
+   "ContextClassName": "MsCRMContext",
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
    "IncludeConnectionString": true,
    "ModelNamespace": null,
    "OutputContextPath": "Data",
-   "OutputPath": "Models\\MainWindow",
+   "OutputPath": "Models\\ChangeCost",
    "ProjectRootNamespace": "VityazReports",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
-         "Name": "[dbo].[Reports]",
+         "Name": "[dbo].[New_guard_object_History]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[UsersReports]",
+         "Name": "[dbo].[New_guard_objectBase]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[New_guard_objectExtensionBase]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SystemUserBase]",
          "ObjectType": 0
       }
    ],
-   "UiHint": "SQL-SERVICE.ReportBase",
+   "UiHint": "SQL-SERVICE.vityaz_MSCRM",
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,
    "UseDbContextSplitting": false,
