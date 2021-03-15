@@ -14,6 +14,14 @@
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
+         "Name": "[dbo].[New_alarmExtensionBase]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[New_andromedaExtensionBase]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[New_guard_object_History]",
          "ObjectType": 0
       },

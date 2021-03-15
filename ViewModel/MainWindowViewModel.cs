@@ -60,6 +60,14 @@ namespace VityazReports.ViewModel {
                         ActsByAlarm acts = new ActsByAlarm();
                         acts.ShowDialog();
                         break;
+                    case "A35A2859-3E10-42F1-9E9B-5F29B5E953D9": //Опоздания пульта
+                        LatePult latePult = new LatePult();
+                        latePult.ShowDialog();
+                        break;
+                    case "8A7E33DF-E27D-413C-80D5-E3812B57853C": //Опоздания ГБР
+                        LateGBR lateGBR = new LateGBR();
+                        lateGBR.ShowDialog();
+                        break;
                 }
             }, obj => obj != null);
         }

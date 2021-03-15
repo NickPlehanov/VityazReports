@@ -1,12 +1,19 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
+using VityazReports.Data;
 using VityazReports.Helpers;
+using VityazReports.Models.ActsByAlarm;
 
 namespace VityazReports.ViewModel {
     public class ActsByAlarmViewModel : BaseViewModel {
+        private readonly MsCRMContext context;
         public ActsByAlarmViewModel() {
-
+            context = new MsCRMContext();
+            FilterFlyoutVisible = true;
         }
         private DateTime _DateStart;
         public DateTime DateStart {
@@ -45,19 +52,36 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private RelayCommand _OpenFlyoutFilterCommand;
+        public RelayCommand OpenFlyoutFilterCommand {
+            get => _OpenFlyoutFilterCommand ??= new RelayCommand(async obj => {
+                FilterFlyoutVisible = !FilterFlyoutVisible;
+            });
+        }
+
+        private ObservableCollection<ActsByAlarmOutputModel> _ActsByAlarmOutputList = new ObservableCollection<ActsByAlarmOutputModel>();
+        public ObservableCollection<ActsByAlarmOutputModel> ActsByAlarmOutputList {
+            get => _ActsByAlarmOutputList;
+            set {
+                _ActsByAlarmOutputList = value;
+                OnPropertyChanged(nameof(ActsByAlarmOutputList));
+            }
+        }
+
         private RelayCommand _RefreshDataCommand;
         public RelayCommand RefreshDataCommand {
             get => _RefreshDataCommand ??= new RelayCommand(async obj => {
+                //TODO: Добавить Loading
                 DateTime start = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
                 DateTime end = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
-                var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start && x.NewAlarmDt < end && x.NewAct == true);
+                var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start && x.NewAlarmDt < end && x.NewAct == true).AsNoTracking().ToList();
                 if (result != null)
                     if (result.Any()) {
                         foreach (var item in result) {
-                            using (Vityaz_MSCRMContext context1 = new Vityaz_MSCRMContext()) {
-                                var andromeda = context1.NewAndromedaExtensionBase.Where(x => x.NewAndromedaId == item.NewAndromedaAlarm).ToList();
-                                App.Current.Dispatcher.Invoke((System.Action)delegate {
-                                    Reports.Add(new Report() {
+                            //using (Vityaz_MSCRMContext context1 = new Vityaz_MSCRMContext()) {
+                                var andromeda = context.NewAndromedaExtensionBase.Where(x => x.NewAndromedaId == item.NewAndromedaAlarm).AsNoTracking().ToList();
+                                App.Current.Dispatcher.Invoke((Action)delegate {
+                                    ActsByAlarmOutputList.Add(new ActsByAlarmOutputModel() {
                                         ObjectName = andromeda.FirstOrDefault(x => x.NewName != null).NewName,
                                         ObjectNumber = andromeda.FirstOrDefault().NewNumber,
                                         ObjectAddress = andromeda.FirstOrDefault().NewAddress,
@@ -73,10 +97,10 @@ namespace VityazReports.ViewModel {
                                         Owner = item.NewOwner,
                                         Police = item.NewPolice,
                                         Act = item.NewAct,
-                                        DateSort = item.NewAlarmDt.Value.Date.ToShortDateString()
+                                        DateSort = item.NewAlarmDt.Value.AddHours(5).Date.ToShortDateString()
                                     });
                                 });
-                            }
+                            //}
                         }
                     }
             });

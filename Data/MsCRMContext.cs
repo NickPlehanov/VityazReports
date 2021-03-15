@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using VityazReports.Models.ActsByAlarm;
 using VityazReports.Models.ChangeCost;
 
 #nullable disable
@@ -19,6 +20,8 @@ namespace VityazReports.Data
         {
         }
 
+        public virtual DbSet<NewAlarmExtensionBase> NewAlarmExtensionBase { get; set; }
+        public virtual DbSet<NewAndromedaExtensionBase> NewAndromedaExtensionBase { get; set; }
         public virtual DbSet<NewGuardObjectBase> NewGuardObjectBase { get; set; }
         public virtual DbSet<NewGuardObjectExtensionBase> NewGuardObjectExtensionBase { get; set; }
         public virtual DbSet<NewGuardObjectHistory> NewGuardObjectHistory { get; set; }
@@ -36,6 +39,26 @@ namespace VityazReports.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Cyrillic_General_CI_AI");
+
+            modelBuilder.Entity<NewAlarmExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.NewAlarmDt, e.NewAndromedaAlarm }, "AlarmDtAndromedaINDEX")
+                    .IsClustered();
+
+                entity.HasIndex(e => new { e.NewName, e.NewOwner, e.NewDeparture, e.NewArrival, e.NewCancel, e.NewAlarmDt, e.NewPs, e.NewAct, e.NewOnc, e.NewPolice, e.NewTpc, e.NewOrder, e.NewGroup }, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+            });
+
+            modelBuilder.Entity<NewAndromedaExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => e.NewNumber, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewContactAndromeda, "ndx_for_cascaderelationship_new_contact_new_andromeda")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewAndromedaId).ValueGeneratedNever();
+            });
 
             modelBuilder.Entity<NewGuardObjectBase>(entity =>
             {
