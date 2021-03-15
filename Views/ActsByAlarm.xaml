@@ -4,9 +4,107 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VityazReports.Views"
-        mc:Ignorable="d"
+                   xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel"
+                   mc:Ignorable="d"
         Title="Акты по тревогам" Height="450" Width="800">
+    <mah:MetroWindow.DataContext>
+        <viewmodel:ActsByAlarmViewModel/>
+    </mah:MetroWindow.DataContext>
     <Grid>
-        
+        <Grid.Resources>
+            <CollectionViewSource x:Key="Acts" Source="{Binding Reports}">
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="ObjectNumber"/>
+                    <PropertyGroupDescription PropertyName="DateSort"/>
+                </CollectionViewSource.GroupDescriptions>
+                <CollectionViewSource.SortDescriptions >
+                    <scm:SortDescription PropertyName="ObjectNumber"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
+        <mah:Flyout Position="Top" IsModal="True" AnimateOpacity="True" Panel.ZIndex="1" IsOpen="{Binding FilterFlyoutVisible}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <mah1:DatePicker Margin="5" SelectedDateFormat="Short" SelectedDate="{Binding DateStart, StringFormat=\{0:dd.MM.yyyy\}}" FontSize="16" FontWeight="UltraLight"/>
+                    <mah1:DatePicker Margin="5" SelectedDateFormat="Short" SelectedDate="{Binding DateEnd, StringFormat=\{0:dd.MM.yyyy\}}"  FontSize="16" FontWeight="UltraLight"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshDataCommand}" FontSize="16" FontWeight="UltraLight" Margin="5"/>
+            </Grid>
+        </mah:Flyout>
+        <DataGrid Panel.ZIndex="0" FontWeight="UltraLight" Visibility="{Binding VisibilityActs, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                      ItemsSource="{Binding Source={StaticResource Acts}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Margin" Value="5"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <Expander IsExpanded="False" BorderThickness="1">
+                                            <Expander.Header>
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="{Binding Name}" Margin="5"/>
+                                                </StackPanel>
+                                            </Expander.Header>
+                                            <Expander.Content>
+                                                <ItemsPresenter/>
+                                            </Expander.Content>
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+            <DataGrid.Resources>
+                <!--Тревога-->
+                <DataTemplate x:Key="dt_Alarm">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Alarm,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="edt_Alarm">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Alarm,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <!--Отправка-->
+                <DataTemplate x:Key="dt_Departure">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Departure,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="edt_Departure">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Departure,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <!--Прибытие-->
+                <DataTemplate x:Key="dt_Arrival">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Arrival,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="edt_Arrival">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Arrival,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <!--Отмена-->
+                <DataTemplate x:Key="dt_Cancel">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Cancel,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="edt_Cancel">
+                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=Cancel,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
+                <DataGridTextColumn Header="Название объекта" Binding="{Binding ObjectName}"/>
+                <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
+                <DataGridCheckBoxColumn Header="Акт" Binding="{Binding Act}"/>
+                <DataGridCheckBoxColumn Header="Полиция" Binding="{Binding Police}"/>
+                <DataGridCheckBoxColumn Header="Вызов х/о" Binding="{Binding Owner}"/>
+                <DataGridTemplateColumn Header="Тревога" CellTemplate="{StaticResource dt_Alarm}" CellEditingTemplate="{StaticResource edt_Alarm}" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="Отправка" CellTemplate="{StaticResource dt_Departure}" CellEditingTemplate="{StaticResource edt_Departure}" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="Прибытие" CellTemplate="{StaticResource dt_Arrival}" CellEditingTemplate="{StaticResource edt_Arrival}" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="Отмена" CellTemplate="{StaticResource dt_Cancel}" CellEditingTemplate="{StaticResource edt_Cancel}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Результат" Binding="{Binding Result}"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </mah:MetroWindow>
