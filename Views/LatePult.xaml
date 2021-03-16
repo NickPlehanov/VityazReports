@@ -6,7 +6,7 @@
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
         xmlns:local="clr-namespace:VityazReports.Views" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
-        Title="LatePult" Height="450" Width="800">
+        Title="Опаздания на сработки (ПЦО)" Height="450" Width="800" x:Name="LatePultWindow">
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
@@ -113,5 +113,9 @@
                 <DataGridTextColumn Header="Опоздание" Binding="{Binding Late}" />
             </DataGrid.Columns>
         </DataGrid>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=LatePultWindow}" 
+              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=LatePultWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

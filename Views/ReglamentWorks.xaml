@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:VityazReports.Views"
         mc:Ignorable="d"                  
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation"
-                  Title="ReglamentWorks" Height="450" Width="800">
+                  Title="Регламентные работы" Height="450" Width="800" x:Name="ReglamentWorksWindow">
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
@@ -124,5 +124,9 @@
                 </DataTemplate>
             </DataGrid.RowDetailsTemplate>-->
         </DataGrid>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="89" Width="{Binding ActualWidth, ElementName=ReglamentWorksWindow}" 
+              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=ReglamentWorksWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

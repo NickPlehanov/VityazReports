@@ -6,7 +6,7 @@
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
         xmlns:local="clr-namespace:VityazReports.Views" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
-        Title="LateGBR" Height="450" Width="800">
+        Title="Опаздания на сработки (ГБР)" Height="450" Width="800" x:Name="LateGBRWindow">
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
@@ -22,10 +22,11 @@
             <CollectionViewSource x:Key="LateGbr" Source="{Binding LatesGBROutputList}">
                 <CollectionViewSource.GroupDescriptions>
                     <PropertyGroupDescription PropertyName="Group"/>
-                    <PropertyGroupDescription PropertyName="HourSort"/>
+                    <!--<PropertyGroupDescription PropertyName="HourSort"/>-->
                 </CollectionViewSource.GroupDescriptions>
                 <CollectionViewSource.SortDescriptions >
                     <scm:SortDescription PropertyName="Alarm"/>
+                    <scm:SortDescription PropertyName="HourSort"/>
                 </CollectionViewSource.SortDescriptions>
             </CollectionViewSource>
         </Grid.Resources>
@@ -114,5 +115,9 @@
                 <DataGridTextColumn Header="Опоздание" Binding="{Binding Late}" Width="{Binding ResultWidth}"/>
             </DataGrid.Columns>
         </DataGrid>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=LateGBRWindow}" 
+              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=LateGBRWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using VityazReports.Data;
@@ -53,6 +54,15 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
+            }
+        }
+
         private RelayCommand _OpenFlyoutFilterCommand;
         public RelayCommand OpenFlyoutFilterCommand {
             get => _OpenFlyoutFilterCommand ??= new RelayCommand(async obj => {
@@ -71,8 +81,13 @@ namespace VityazReports.ViewModel {
         private RelayCommand _RefreshDataCommand;
         public RelayCommand RefreshDataCommand {
             get => _RefreshDataCommand ??= new RelayCommand(async obj => {
+            BackgroundWorker bw = new BackgroundWorker();
+            bw.DoWork += (s, e) => {
+                Loading = true;
                 FilterFlyoutVisible = false;
-                LatesGBROutputList.Clear();
+                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                    LatesGBROutputList.Clear();
+                });
                 DateTime start1 = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
                 DateTime end1 = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
                 var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start1 && x.NewAlarmDt < end1).AsNoTracking().ToList();
@@ -109,6 +124,11 @@ namespace VityazReports.ViewModel {
                             }
                         }
                     }
+            };
+                bw.RunWorkerCompleted += (s, e) => {
+                    Loading = false;
+                };
+                bw.RunWorkerAsync();
             });
         }
     }

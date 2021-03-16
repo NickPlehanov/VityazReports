@@ -7,7 +7,7 @@
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
                    xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel"
                    mc:Ignorable="d"
-        Title="Акты по тревогам" Height="450" Width="800">
+        Title="Акты по тревогам" Height="450" Width="800" x:Name="ActsByAlarmWindow">
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
@@ -114,5 +114,9 @@
                 <DataGridTextColumn Header="Результат" Binding="{Binding Result}"/>
             </DataGrid.Columns>
         </DataGrid>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=ActsByAlarmWindow}" Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" 
+              Height="{Binding ActualHeight, ElementName=ActsByAlarmWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

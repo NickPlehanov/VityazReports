@@ -9,7 +9,7 @@
                   xmlns:command="http://www.galasoft.ch/mvvmlight" 
                   xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity" xmlns:wpf="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
-        Title="Охраняемые объекты на карте" Height="450" Width="800" x:Name="MainW">
+        Title="Охраняемые объекты на карте" Height="450" Width="800" x:Name="GuardObjectOnMapWindow">
     <mah:MetroWindow.DataContext>
         <vm:GuardObjectsOnMapGBRViewModel/>
     </mah:MetroWindow.DataContext>
@@ -84,7 +84,8 @@
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </UserControl>
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=MainW}" Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=MainW}" Grid.ColumnSpan="3">
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=GuardObjectOnMapWindow}" 
+              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=GuardObjectOnMapWindow}" Grid.ColumnSpan="3">
             <mah:ProgressRing IsActive="{Binding Loading}"/>
         </Grid>
     </Grid>

@@ -13,6 +13,8 @@
                     else if (char.IsPunctuation(item))
                         break;
                 }
+                if (string.IsNullOrEmpty(r))
+                    return 0;
                 return int.Parse(r);
             }
             else

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using VityazReports.Data;
@@ -9,7 +10,7 @@ using VityazReports.Helpers;
 using VityazReports.Models.Lates;
 
 namespace VityazReports.ViewModel {
-    public class LatePultViewModel:BaseViewModel {
+    public class LatePultViewModel : BaseViewModel {
         public LatePultViewModel() {
             FilterFlyoutVisible = true;
             context = new MsCRMContext();
@@ -26,6 +27,14 @@ namespace VityazReports.ViewModel {
             set {
                 _DateStart = value;
                 OnPropertyChanged("DateStart");
+            }
+        }
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
             }
         }
 
@@ -71,17 +80,22 @@ namespace VityazReports.ViewModel {
         private RelayCommand _RefreshDataCommand;
         public RelayCommand RefreshDataCommand {
             get => _RefreshDataCommand ??= new RelayCommand(async obj => {
-                FilterFlyoutVisible = false;
-                LatesPultOutputList.Clear();
-                DateTime start1 = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
-                DateTime end1 = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
-                var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start1 && x.NewAlarmDt < end1).AsNoTracking().ToList();
-                if (result != null)
-                    if (result.Any()) {
-                        foreach (var item1 in result) {
-                            if (item1.NewDeparture.HasValue && item1.NewAlarmDt.HasValue) {
-                                if ((item1.NewDeparture - item1.NewAlarmDt).Value.TotalSeconds > 30) {
-                                    //using (Vityaz_MSCRMContext context1 = new Vityaz_MSCRMContext()) {
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += (s, e) => {
+                    Loading = true;
+                    FilterFlyoutVisible = false;
+                    App.Current.Dispatcher.Invoke((System.Action)delegate {
+                        LatesPultOutputList.Clear();
+                    });
+                    DateTime start1 = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
+                    DateTime end1 = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
+                    var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start1 && x.NewAlarmDt < end1).AsNoTracking().ToList();
+                    if (result != null)
+                        if (result.Any()) {
+                            foreach (var item1 in result) {
+                                if (item1.NewDeparture.HasValue && item1.NewAlarmDt.HasValue) {
+                                    if ((item1.NewDeparture - item1.NewAlarmDt).Value.TotalSeconds > 30) {
+                                        //using (Vityaz_MSCRMContext context1 = new Vityaz_MSCRMContext()) {
                                         var andromeda = context.NewAndromedaExtensionBase.Where(x => x.NewAndromedaId == item1.NewAndromedaAlarm).AsNoTracking().ToList();
                                         App.Current.Dispatcher.Invoke((System.Action)delegate {
                                             LatesPultOutputList.Add(new LatesOutputModel() {
@@ -104,11 +118,16 @@ namespace VityazReports.ViewModel {
                                                 HourSort = item1.NewAlarmDt.Value.AddHours(5).Hour.ToString()
                                             });
                                         });
-                                    //}
+                                        //}
+                                    }
                                 }
                             }
                         }
-                    }
+                };
+                bw.RunWorkerCompleted += (s, e) => {
+                    Loading = false;
+                };
+                bw.RunWorkerAsync();
             });
         }
     }

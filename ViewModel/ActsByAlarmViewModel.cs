@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using VityazReports.Data;
@@ -26,6 +27,15 @@ namespace VityazReports.ViewModel {
             set {
                 _DateStart = value;
                 OnPropertyChanged("DateStart");
+            }
+        }
+
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
             }
         }
 
@@ -71,14 +81,15 @@ namespace VityazReports.ViewModel {
         private RelayCommand _RefreshDataCommand;
         public RelayCommand RefreshDataCommand {
             get => _RefreshDataCommand ??= new RelayCommand(async obj => {
-                //TODO: Добавить Loading
-                DateTime start = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
-                DateTime end = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
-                var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start && x.NewAlarmDt < end && x.NewAct == true).AsNoTracking().ToList();
-                if (result != null)
-                    if (result.Any()) {
-                        foreach (var item in result) {
-                            //using (Vityaz_MSCRMContext context1 = new Vityaz_MSCRMContext()) {
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += (s, e) => {
+                    Loading = true;
+                    DateTime start = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
+                    DateTime end = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
+                    var result = context.NewAlarmExtensionBase.Where(x => x.NewAlarmDt >= start && x.NewAlarmDt < end && x.NewAct == true).AsNoTracking().ToList();
+                    if (result != null)
+                        if (result.Any()) {
+                            foreach (var item in result) {
                                 var andromeda = context.NewAndromedaExtensionBase.Where(x => x.NewAndromedaId == item.NewAndromedaAlarm).AsNoTracking().ToList();
                                 App.Current.Dispatcher.Invoke((Action)delegate {
                                     ActsByAlarmOutputList.Add(new ActsByAlarmOutputModel() {
@@ -100,9 +111,13 @@ namespace VityazReports.ViewModel {
                                         DateSort = item.NewAlarmDt.Value.AddHours(5).Date.ToShortDateString()
                                     });
                                 });
-                            //}
+                            }
                         }
-                    }
+                };
+                bw.RunWorkerCompleted += (s, e) => {
+                    Loading = false;
+                };
+                bw.RunWorkerAsync();
             });
         }
     }
