@@ -26,7 +26,7 @@
                     <PropertyGroupDescription PropertyName="WhoChanged"/>
                 </CollectionViewSource.GroupDescriptions>
                 <CollectionViewSource.SortDescriptions>
-                    <scm:SortDescription PropertyName="DateStart"/>
+                    <scm:SortDescription PropertyName="DateChanged"/>
                 </CollectionViewSource.SortDescriptions>
             </CollectionViewSource>
         </Grid.Resources>
@@ -57,7 +57,9 @@
                                             <Expander.Header>
                                                 <WrapPanel>
                                                     <TextBlock FontWeight="Bold" x:Name="ManagerName" Text="{Binding Name}" Margin="5"/>
-                                                    <Button Content="Итоги" Command="{Binding DataContext.ViewTotalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding ElementName=ManagerName, Path=Text}"/>
+                                                    <Button Style="{StaticResource MahApps.Styles.Button.Calendar.Header}" Content="Итоги" 
+                                                            Command="{Binding DataContext.ViewTotalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                            CommandParameter="{Binding ElementName=ManagerName, Path=Text}"/>
                                                 </WrapPanel>
                                             </Expander.Header>
                                             <Expander.Content>

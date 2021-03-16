@@ -102,15 +102,25 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private bool _DetailFlyoutVisible;
+        public bool DetailFlyoutVisible {
+            get => _DetailFlyoutVisible;
+            set {
+                _DetailFlyoutVisible = value;
+                OnPropertyChanged(nameof(DetailFlyoutVisible));
+            }
+        }
+
         private RelayCommand _GetDetailInfo;
         public RelayCommand GetDetailInfo {
             get => _GetDetailInfo ??= new RelayCommand(async obj => {
+                DetailFlyoutVisible = false;
                 #region данным кодом мы можем получить историю изменений  по галочкам
                 if (SelectedReglamentWork == null)
                     return;
 
                 //TODO: Перенести в get
-                Test=null;
+                Test = null;
                 ReglamentWorksDetailCollection.Clear();
                 NewGuardObjectHistory before = null;
                 NewGuardObjectHistory after = null;
@@ -118,7 +128,7 @@ namespace VityazReports.ViewModel {
                 DateTime end = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
                 List<NewGuardObjectHistory> history = context.NewGuardObjectHistory.Where(x => x.ModifiedOn >= start && x.ModifiedOn <= end && x.NewGuardObjectId == SelectedReglamentWork.ObjectID).AsNoTracking().ToList();
                 if (history.Where(x => x.NewRrOnOff != null || x.NewRrOs != null || x.NewRrPs != null || x.NewRrSkud != null || x.NewRrVideo != null).Count() > 0) {
-                    var r = history.GroupBy(a => new { a.NewGuardObjectId, a.ModifiedBy, DateTime = DateTime.Parse(a.ModifiedOn.ToString()) }).ToList();
+                    var r = history.GroupBy(a => new { a.NewGuardObjectId, a.ModifiedBy, a.ModifiedOn.Date }).ToList();
                     foreach (var item in r) {
                         before = null;
                         after = null;
@@ -127,8 +137,6 @@ namespace VityazReports.ViewModel {
                                 before = i;
                             else
                                 after = i;
-                        //if ((after.NewRrOnOff != null || after.NewRrOs != null || after.NewRrPs != null || after.NewRrSkud != null || after.NewRrVideo != null) &&
-                        //(before.NewRrOnOff != null || before.NewRrOs != null || before.NewRrPs != null || before.NewRrSkud != null || before.NewRrVideo != null)) {
                         List<Comparator> t = compare.CompareObject(before, after);
                         if (t != null)
                             foreach (var compr in t.Where(x => x.FieldName.Equals("NewRrOnOff") || x.FieldName.Equals("NewRrOs") || x.FieldName.Equals("NewRrPs") || x.FieldName.Equals("NewRrVideo") || x.FieldName.Equals("NewRrSkud"))) {
@@ -143,25 +151,130 @@ namespace VityazReports.ViewModel {
                                 }
                                 DateTime? WhenChanged = after.ModifiedOn;
                                 NewGuardObjectExtensionBase objectExtensionBase = context.NewGuardObjectExtensionBase.FirstOrDefault(x => x.NewGuardObjectId == after.NewGuardObjectId);
-                            if (objectExtensionBase != null) {
-                                //App.Current.Dispatcher.Invoke((System.Action)delegate {
-                                ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
-                                    UserChanged = WhoChanged,
-                                    DateChanged = WhenChanged,
-                                    FieldChanged = compr.FieldName,
-                                    BeforeChanged = compr.OldValue.ToString(),
-                                    AfterChanged = compr.NewValue.ToString()
-                                });
-                                Test = "111111111";
-                            }
-                                //});
+                                if (objectExtensionBase != null) {
+                                    App.Current.Dispatcher.Invoke((System.Action)delegate {
+                                        ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                                            UserChanged = WhoChanged,
+                                            DateChanged = WhenChanged,
+                                            //FieldChanged = compr.FieldName,
+                                            FieldChanged = GetRealFieldName(compr.FieldName),
+                                            BeforeChanged = compr.OldValue.ToString(),
+                                            AfterChanged = compr.NewValue.ToString()
+                                        });
+                                    });
+                                }
                             }
                         //}
                     }
+                    if (ReglamentWorksDetailCollection.Count <= 0) {
+                        foreach (var item in r) {
+                            before = null;
+                            after = null;
+                            foreach (var ite in item) {
+                                if (ite.HistoryState == "Старый")
+                                    before = ite;
+                                else
+                                    after = ite;
+                                if (before != null && after != null) {
+                                    List<Comparator> comparators = compare.CompareObject(before, after);
+                                    if (comparators.Any(x => x.FieldName.Equals("NewRrOnOff") || x.FieldName.Equals("NewRrOs") || x.FieldName.Equals("NewRrPs") || x.FieldName.Equals("NewRrVideo") || x.FieldName.Equals("NewRrSkud"))) {
+                                        //var hj = 0;
+                                        foreach (var compr in comparators) {
+                                            string FieldChanged = GetRealFieldName(compr.FieldName);
+                                            if (!string.IsNullOrEmpty(FieldChanged)) {
+                                                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                                                    ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                                                        UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == after.ModifiedBy).FullName,
+                                                        DateChanged = after.ModifiedOn,
+                                                        //FieldChanged = compr.FieldName,
+                                                        FieldChanged = FieldChanged,
+                                                        BeforeChanged = compr.OldValue.ToString(),
+                                                        AfterChanged = compr.NewValue.ToString()
+                                                    });
+                                                });
+                                            }
+                                        }
+                                    }
+                                    before = null;
+                                    after = null;
+                                }
+                            }
+                            
+
+                            //foreach (var item in it.Where(x => x.NewRrOnOff != null || x.NewRrOs != null || x.NewRrPs != null || x.NewRrSkud != null || x.NewRrVideo != null).Distinct()) {
+                            //    if (item.NewRrOnOff != null)
+                            //        App.Current.Dispatcher.Invoke((System.Action)delegate {
+                            //            ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                            //                UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == item.ModifiedBy).FullName,
+                            //                DateChanged = item.ModifiedOn,
+                            //                FieldChanged = "Ежем. рег. работы",
+                            //                BeforeChanged = (!item.NewRrOnOff.Value).ToString(),
+                            //                AfterChanged = (item.NewRrOnOff.Value).ToString()
+                            //            });
+                            //        });
+                            //    if (item.NewRrOs != null)
+                            //        App.Current.Dispatcher.Invoke((System.Action)delegate {
+                            //            ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                            //                UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == item.ModifiedBy).FullName,
+                            //                DateChanged = item.ModifiedOn,
+                            //                FieldChanged = "Ежем. рег. работы (ОС)",
+                            //                BeforeChanged = (!item.NewRrOnOff.Value).ToString(),
+                            //                AfterChanged = (item.NewRrOnOff.Value).ToString()
+                            //            });
+                            //        });
+                            //    if (item.NewRrPs != null)
+                            //        App.Current.Dispatcher.Invoke((System.Action)delegate {
+                            //            ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                            //                UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == item.ModifiedBy).FullName,
+                            //                DateChanged = item.ModifiedOn,
+                            //                FieldChanged = "Ежем. рег. работы (ПС)",
+                            //                BeforeChanged = (!item.NewRrOnOff.Value).ToString(),
+                            //                AfterChanged = (item.NewRrOnOff.Value).ToString()
+                            //            });
+                            //        });
+                            //    if (item.NewRrSkud != null)
+                            //        App.Current.Dispatcher.Invoke((System.Action)delegate {
+                            //            ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                            //                UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == item.ModifiedBy).FullName,
+                            //                DateChanged = item.ModifiedOn,
+                            //                FieldChanged = "Ежем. рег. работы (СКУД)",
+                            //                BeforeChanged = (!item.NewRrOnOff.Value).ToString(),
+                            //                AfterChanged = (item.NewRrOnOff.Value).ToString()
+                            //            });
+                            //        });
+                            //    if (item.NewRrVideo != null)
+                            //        App.Current.Dispatcher.Invoke((System.Action)delegate {
+                            //            ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                            //                UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == item.ModifiedBy).FullName,
+                            //                DateChanged = item.ModifiedOn,
+                            //                FieldChanged = "Ежем. рег. работы (Видео)",
+                            //                BeforeChanged = (!item.NewRrOnOff.Value).ToString(),
+                            //                AfterChanged = (item.NewRrOnOff.Value).ToString()
+                            //            });
+                            //        });
+                            //}
+                        }
+                    }
+                    if (ReglamentWorksDetailCollection.Count > 0)
+                        DetailFlyoutVisible = true;
                 }
                 #endregion
             });
         }
+
+        private string GetRealFieldName(string field) {
+            if (string.IsNullOrEmpty(field))
+                return null;
+            switch (field) {
+                case "NewRrOnOff": return "Ежем. рег. работы";
+                case "NewRrOs": return "Ежем. рег. работы (ОС)";
+                case "NewRrPs": return "Ежем. рег. работы (ПС)";
+                case "NewRrVideo": return "Ежем. рег. работы (Видео)";
+                case "NewRrSkud": return "Ежем. рег. работы (СКУД)";
+                default: return null;
+            }
+        }
+
         private RelayCommand _RefreshDataCommand;
         public RelayCommand RefreshDataCommand {
             get => _RefreshDataCommand ??= new RelayCommand(async obj => {

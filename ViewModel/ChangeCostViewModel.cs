@@ -207,12 +207,13 @@ namespace VityazReports.ViewModel {
                                             compr.NewValue.ToString(),
                                             curatorName,
                                             WhenChanged,
-                                            objectExtensionBase.NewDateStart,
+                                            //objectExtensionBase.NewDateStart.Value.AddHours(5).Date,
+                                            objectExtensionBase.NewDateStart.HasValue ? objectExtensionBase.NewDateStart.Value.AddHours(5).Date : DateTime.MinValue,
                                             WhoChanged,
                                             objectExtensionBase.NewAddress,
                                             objectExtensionBase.NewName,
                                             objectExtensionBase.NewObjectNumber
-                                            ));
+                                            )) ;
                                     });
                             }
                     }
