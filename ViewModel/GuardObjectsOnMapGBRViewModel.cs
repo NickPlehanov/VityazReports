@@ -54,9 +54,22 @@ namespace VityazReports.ViewModel {
             ColorList.Add(new ColorModel() { Color = Brushes.Black, Isfree = true });//черный
             ColorList.Add(new ColorModel() { Color = Brushes.Purple, Isfree = true });//фиолетовый
             ColorList.Add(new ColorModel() { Color = Brushes.Orange, Isfree = true });//оранжевый
-            //ColorList.Add(new ColorModel() { Color = Brushes.Yellow, Isfree = true });//желтый
-            ColorList.Add(new ColorModel() { Color = Brushes.Blue, Isfree = true });//голубой
-            //ColorList.Add(new ColorModel() { Color = Brushes.White, Isfree = true });//белый
+            ColorList.Add(new ColorModel() { Color = Brushes.DodgerBlue, Isfree = true });//защитный голубой
+            ColorList.Add(new ColorModel() { Color = Brushes.Aquamarine, Isfree = true });//аквамарин
+            ColorList.Add(new ColorModel() { Color = Brushes.BurlyWood, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Crimson, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Lime, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Pink, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Khaki, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Magenta, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Indigo, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.LightSeaGreen, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Blue, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.DarkOrange, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.Olive, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.HotPink, Isfree = true });
+            ColorList.Add(new ColorModel() { Color = Brushes.MediumTurquoise, Isfree = true });
+
         }
         /// <summary>
         /// Контрол карты
@@ -244,10 +257,10 @@ namespace VityazReports.ViewModel {
                     List<Models.GuardObjectsOnMapGBR.Object> ObjectsList = (from o in context.Object
                                                                             join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
                                                                             where ot.ObjTypeName.Contains(number.ToString())
-                                                                            && o.RecordDeleted == false 
-                                                                            && ot.RecordDeleted==false
-                                                                            && o.Latitude!=null
-                                                                            && o.Longitude!=null
+                                                                            && o.RecordDeleted == false
+                                                                            && ot.RecordDeleted == false
+                                                                            && o.Latitude != null
+                                                                            && o.Longitude != null
                                                                             select o).AsNoTracking().ToList();
                     if (ObjectsList.Count <= 0) {
                         System.Windows.Forms.MessageBox.Show("Для данного маршрута отсутсвуют объекты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
