@@ -62,18 +62,18 @@
                     <DataGrid.InputBindings>
                         <MouseBinding MouseAction="LeftClick" Command="{Binding SelectedObjectCommand}"/>
                     </DataGrid.InputBindings>
-                    <DataGrid.RowDetailsTemplate>
+                    <!--<DataGrid.RowDetailsTemplate>
                         <DataTemplate>
-                            <!--<Grid>
+                            --><!--<Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="2*"/>
                                 </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Margin="5" Content="Адрес"/>-->
+                                <Label Grid.Column="0" Margin="5" Content="Адрес"/>--><!--
                                 <Label Margin="5" Content="{Binding DataContext.ObjAddress, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                            <!--</Grid>-->
+                            --><!--</Grid>--><!--
                         </DataTemplate>
-                    </DataGrid.RowDetailsTemplate>
+                    </DataGrid.RowDetailsTemplate>-->
                 </DataGrid>
             </Grid>
         </mah:Flyout>
@@ -86,7 +86,14 @@
         </UserControl>
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=GuardObjectOnMapWindow}" 
               Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=GuardObjectOnMapWindow}" Grid.ColumnSpan="3">
-            <mah:ProgressRing IsActive="{Binding Loading}"/>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="7*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <!--<StackPanel>-->
+            <mah:ProgressRing Grid.Row="0" IsActive="{Binding Loading}"/>
+            <Label Grid.Row="1" Content="{Binding LoadingText, Mode=TwoWay}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="24" Foreground="DarkRed" Margin="5"/>
+            <!--</StackPanel>-->
         </Grid>
     </Grid>
 </mah:MetroWindow>
