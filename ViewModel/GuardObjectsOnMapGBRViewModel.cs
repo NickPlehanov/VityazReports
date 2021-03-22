@@ -24,50 +24,60 @@ using Newtonsoft.Json;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
-        private readonly A28Context context;
-        private readonly CommonMethods commonMethods;
+        private readonly A28Context context = new A28Context();
+        private readonly CommonMethods commonMethods = new CommonMethods();
 
         public GuardObjectsOnMapGBRViewModel() {
-            context = new A28Context();
-            commonMethods = new CommonMethods();
             LoadingText = "";
             ContextMenuIsOpen = true;
-            RefreshFlag = false;
 
-            GMaps.Instance.Mode = AccessMode.ServerAndCache;
-            gmaps_contol.MapProvider = GMap.NET.MapProviders.YandexMapProvider.Instance;
-            gmaps_contol.MinZoom = 5;
-            gmaps_contol.MaxZoom = 17;
-            gmaps_contol.Zoom = 5;
-            gmaps_contol.MouseWheelZoomType = MouseWheelZoomType.MousePositionAndCenter;
-            gmaps_contol.CanDragMap = true;
-            gmaps_contol.DragButton = MouseButton.Left;
-            gmaps_contol.CenterPosition = new PointLatLng(55.159904, 61.401919);
+            InitializeMapControl.Execute(null);
 
             GetObjTypes.Execute(null);
 
-            ColorList.Add(new ColorModel() { Color = Brushes.Red, Isfree = true });//красный
-            ColorList.Add(new ColorModel() { Color = Brushes.DarkBlue, Isfree = true });//синий
-            ColorList.Add(new ColorModel() { Color = Brushes.Green, Isfree = true });//зеленый
-            ColorList.Add(new ColorModel() { Color = Brushes.Black, Isfree = true });//черный
-            ColorList.Add(new ColorModel() { Color = Brushes.Purple, Isfree = true });//фиолетовый
-            ColorList.Add(new ColorModel() { Color = Brushes.Orange, Isfree = true });//оранжевый
-            ColorList.Add(new ColorModel() { Color = Brushes.DodgerBlue, Isfree = true });//защитный голубой
-            ColorList.Add(new ColorModel() { Color = Brushes.Aquamarine, Isfree = true });//аквамарин
-            ColorList.Add(new ColorModel() { Color = Brushes.BurlyWood, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Crimson, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Lime, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Pink, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Khaki, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Magenta, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Indigo, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.LightSeaGreen, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Blue, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.DarkOrange, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.Olive, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.HotPink, Isfree = true });
-            ColorList.Add(new ColorModel() { Color = Brushes.MediumTurquoise, Isfree = true });
+            InitializeColorList.Execute(null);
+        }
 
+        private RelayCommand _InitializeMapControl;
+        public RelayCommand InitializeMapControl {
+            get => _InitializeMapControl ??= new RelayCommand(async obj => {
+                GMaps.Instance.Mode = AccessMode.ServerAndCache;
+                gmaps_contol.MapProvider = GMap.NET.MapProviders.YandexMapProvider.Instance;
+                gmaps_contol.MinZoom = 5;
+                gmaps_contol.MaxZoom = 17;
+                gmaps_contol.Zoom = 5;
+                gmaps_contol.MouseWheelZoomType = MouseWheelZoomType.MousePositionAndCenter;
+                gmaps_contol.CanDragMap = true;
+                gmaps_contol.DragButton = MouseButton.Left;
+                gmaps_contol.CenterPosition = new PointLatLng(55.159904, 61.401919);
+            });
+        }
+
+        private RelayCommand _InitializeColorList;
+        public RelayCommand InitializeColorList {
+            get => _InitializeColorList ??= new RelayCommand(async obj => {
+                ColorList.Add(new ColorModel(Brushes.Red));//красный
+                ColorList.Add(new ColorModel(Brushes.DarkBlue));//синий
+                ColorList.Add(new ColorModel(Brushes.Green));//зеленый
+                ColorList.Add(new ColorModel(Brushes.Black));//черный
+                ColorList.Add(new ColorModel(Brushes.Purple ));//фиолетовый
+                ColorList.Add(new ColorModel(Brushes.Orange ));//оранжевый
+                ColorList.Add(new ColorModel(Brushes.DodgerBlue ));//защитный голубой
+                ColorList.Add(new ColorModel(Brushes.Aquamarine ));//аквамарин
+                ColorList.Add(new ColorModel(Brushes.BurlyWood ));
+                ColorList.Add(new ColorModel(Brushes.Crimson ));
+                ColorList.Add(new ColorModel(Brushes.Lime ));
+                ColorList.Add(new ColorModel(Brushes.Pink ));
+                ColorList.Add(new ColorModel(Brushes.Khaki));
+                ColorList.Add(new ColorModel(Brushes.Magenta ));
+                ColorList.Add(new ColorModel(Brushes.Indigo ));
+                ColorList.Add(new ColorModel(Brushes.LightSeaGreen ));
+                ColorList.Add(new ColorModel(Brushes.Blue ));
+                ColorList.Add(new ColorModel(Brushes.DarkOrange ));
+                ColorList.Add(new ColorModel(Brushes.Olive));
+                ColorList.Add(new ColorModel(Brushes.HotPink ));
+                ColorList.Add(new ColorModel(Brushes.MediumTurquoise));
+            });
         }
         /// <summary>
         /// Контрол карты
@@ -147,10 +157,11 @@ namespace VityazReports.ViewModel {
         private RelayCommand _CreateLegend;
         public RelayCommand CreateLegend {
             get => _CreateLegend ??= new RelayCommand(async obj => {
-                ChartLegent = new DefaultLegend();
-                ChartLegent.BulletSize = 15;
-                ChartLegent.Foreground = Brushes.White;
-                ChartLegent.Orientation = System.Windows.Controls.Orientation.Vertical;
+                ChartLegent = new DefaultLegend {
+                    BulletSize = 15,
+                    Foreground = Brushes.White,
+                    Orientation = System.Windows.Controls.Orientation.Vertical
+                };
             });
         }
         /// <summary>
@@ -159,9 +170,10 @@ namespace VityazReports.ViewModel {
         private RelayCommand _CreateToolTip;
         public RelayCommand CreateToolTip {
             get => _CreateToolTip ??= new RelayCommand(async obj => {
-                ChartToolTip = new DefaultTooltip();
-                ChartToolTip.Background = Brushes.Black;
-                ChartToolTip.Foreground = Brushes.White;
+                ChartToolTip = new DefaultTooltip {
+                    Background = Brushes.Black,
+                    Foreground = Brushes.White
+                };
             });
         }
         /// <summary>
@@ -175,7 +187,8 @@ namespace VityazReports.ViewModel {
                     throw new Exception("Не найдено типов объектов");
                 foreach (var item in _obj_types) {
                     int number = commonMethods.ParseDigit(item.ObjTypeName);
-                    //ObjectTypeList.Add(item);
+                    if (number == 0)
+                        continue;
                     int? _obj_count = (from o in context.Object
                                        join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
                                        where ot.ObjTypeName.Contains(number.ToString())
@@ -217,24 +230,6 @@ namespace VityazReports.ViewModel {
             set {
                 _Loading = value;
                 OnPropertyChanged(nameof(Loading));
-            }
-        }
-
-        private ToggleButton _SelectedToggleButton;
-        public ToggleButton SelectedToggleButton {
-            get => _SelectedToggleButton;
-            set {
-                _SelectedToggleButton = value;
-                OnPropertyChanged(nameof(SelectedToggleButton));
-            }
-        }
-
-        private bool _RefreshFlag;
-        public bool RefreshFlag {
-            get => _RefreshFlag;
-            set {
-                _RefreshFlag = value;
-                OnPropertyChanged(nameof(RefreshFlag));
             }
         }
         /// <summary>
