@@ -24,6 +24,9 @@
             <Button Command="{Binding ClearGroup}">
                 <iconPacks:BootstrapIcons Kind="Bucket"/>
             </Button>
+            <Button Command="{Binding UpdateMarkers}">
+                <iconPacks:BootstrapIcons Kind="CloudUploadFill"/>
+            </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
@@ -39,7 +42,7 @@
                 <ListBox ItemsSource="{Binding ObjectTypeList}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <ToggleButton Margin="5" Content="{Binding ObjTypeName}" Tag="{Binding ObjTypeId}"
+                            <ToggleButton Margin="5" Content="{Binding Name}" Tag="{Binding ObjTypeId}"
                                           Command="{Binding DataContext.SelectGroupCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -78,11 +81,16 @@
             </Grid>
         </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}">
-            <i:Interaction.Triggers>
-                <i:EventTrigger EventName="MouseRightButtonDown">
-                    <command:EventToCommand Command="{Binding Mode=OneWay, Path=CreateLabelGbr}" PassEventArgsToCommand="True"/>
-                </i:EventTrigger>
-            </i:Interaction.Triggers>
+            <UserControl.ContextMenu>
+                <ContextMenu IsOpen="{Binding ContextMenuIsOpen}">
+                    <Button Command="{Binding Mode=OneWay, Path=CreateLabelGbr}" Content="Поставить метку ГБР" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
+                    <Separator/>
+                    <Button Command="{Binding ClearGroup}" Content="Убрать метку ГБР"/>
+                    <Button Command="{Binding CalculateCommand}" Content="Рассчитать прибытие"/>
+                    <Separator/>
+                    <Button Command="{Binding UpdateMarkers}" Content="Обновить"/>
+                </ContextMenu>
+            </UserControl.ContextMenu>
         </UserControl>
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=GuardObjectOnMapWindow}" 
               Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=GuardObjectOnMapWindow}" Grid.ColumnSpan="3">

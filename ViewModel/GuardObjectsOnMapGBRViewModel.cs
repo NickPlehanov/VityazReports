@@ -3,7 +3,6 @@ using GMap.NET.WindowsPresentation;
 using System;
 using System.Linq;
 using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows.Input;
 using VityazReports.Data;
 using VityazReports.Helpers;
@@ -22,9 +21,6 @@ using System.Windows.Threading;
 using LiveCharts.Defaults;
 using System.Net.Http;
 using Newtonsoft.Json;
-using System.Threading;
-using System.ComponentModel;
-using GMap.NET.MapProviders;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
@@ -35,6 +31,8 @@ namespace VityazReports.ViewModel {
             context = new A28Context();
             commonMethods = new CommonMethods();
             LoadingText = "";
+            ContextMenuIsOpen = true;
+            RefreshFlag = false;
 
             GMaps.Instance.Mode = AccessMode.ServerAndCache;
             gmaps_contol.MapProvider = GMap.NET.MapProviders.YandexMapProvider.Instance;
@@ -172,11 +170,22 @@ namespace VityazReports.ViewModel {
         private RelayCommand _GetObjTypes;
         public RelayCommand GetObjTypes {
             get => _GetObjTypes ??= new RelayCommand(async obj => {
-                var _obj_types = context.ObjType.Where(x => x.RecordDeleted == false && x.ObjTypeName.ToLower().Contains("маршрут")).ToList();
+                var _obj_types = context.ObjType.Where(x => x.RecordDeleted == false && x.ObjTypeName.ToLower().Contains("маршрут")).AsNoTracking().ToList();
                 if (_obj_types.Count <= 0)
                     throw new Exception("Не найдено типов объектов");
-                foreach (var item in _obj_types)
-                    ObjectTypeList.Add(item);
+                foreach (var item in _obj_types) {
+                    int number = commonMethods.ParseDigit(item.ObjTypeName);
+                    //ObjectTypeList.Add(item);
+                    int? _obj_count = (from o in context.Object
+                                       join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                       where ot.ObjTypeName.Contains(number.ToString())
+                                       && o.RecordDeleted == false
+                                       && ot.RecordDeleted == false
+                                       && o.Latitude != null
+                                       && o.Longitude != null
+                                       select o).AsNoTracking().ToList().Count;
+                    ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, item.ObjTypeName, item.Description, item.RecordDeleted, false, item.ObjTypeName, _obj_count));
+                }
             });
         }
         /// <summary>
@@ -210,6 +219,40 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(Loading));
             }
         }
+
+        private ToggleButton _SelectedToggleButton;
+        public ToggleButton SelectedToggleButton {
+            get => _SelectedToggleButton;
+            set {
+                _SelectedToggleButton = value;
+                OnPropertyChanged(nameof(SelectedToggleButton));
+            }
+        }
+
+        private bool _RefreshFlag;
+        public bool RefreshFlag {
+            get => _RefreshFlag;
+            set {
+                _RefreshFlag = value;
+                OnPropertyChanged(nameof(RefreshFlag));
+            }
+        }
+        /// <summary>
+        /// Обновление списка маркеров
+        /// </summary>
+        private RelayCommand _UpdateMarkers;
+        public RelayCommand UpdateMarkers {
+            get => _UpdateMarkers ??= new RelayCommand(async obj => {
+                Dispatcher.CurrentDispatcher.Invoke(() => {
+                    var markers = gmaps_contol.Markers.Where(x => x.Tag != null && x.Tag.ToString() != "ГБР").ToList();
+                    foreach (var item in markers) {
+                        var i = context.Object.FirstOrDefault(x => x.ObjectId.ToString() == item.Tag.ToString());
+                        if (i.Latitude != null && i.Longitude != null)
+                            item.Position = new PointLatLng((double)i.Latitude, (double)i.Longitude);
+                    }
+                });
+            });
+        }
         /// <summary>
         /// Команда выбора группы. 
         /// Выбрав в плавающем меню экипаж, начинаем рисовать на карте объекты относящиеся к этому экипажу
@@ -217,11 +260,11 @@ namespace VityazReports.ViewModel {
         private RelayCommand _SelectGroupCommand;
         public RelayCommand SelectGroupCommand {
             get => _SelectGroupCommand ??= new RelayCommand(async obj => {
-                ToggleButton toggleButton = obj as ToggleButton;
-                //TODO: место потенциальной ошибки
+                if (!(obj is ToggleButton toggleButton))
+                    return;
                 int? ObjId = int.Parse(toggleButton.Tag.ToString());
                 if (!ObjId.HasValue)
-                    throw new Exception("Не указан идентификатор объекта");
+                    return;
                 List<ColorModel> cm = ColorList.Where(x => x.Isfree == true).ToList();
 
                 //требуется проверить что такой маршрут уже есть/нет на карте
@@ -233,14 +276,14 @@ namespace VityazReports.ViewModel {
                     ColorList.First(x => x.ObjTypeId == ObjId.ToString()).Isfree = true;
                     toggleButton.IsChecked = false;
                     toggleButton.Background = null;
-                    toggleButton.Content = toggleButton.Content.ToString().Substring(0, 10);
+                    //toggleButton.Content = toggleButton.Content.ToString().Substring(0, 10);
                     cm = ColorList.Where(x => x.Isfree == true).ToList();
                 }
                 if (cm.Count <= 0) {
                     System.Windows.Forms.MessageBox.Show("Достигнуто ограничение по количеству одновременно отображаемых экипажей", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     toggleButton.IsChecked = false;
                     toggleButton.Background = null;
-                    toggleButton.Content = toggleButton.Content.ToString().Substring(0, 10);
+                    //toggleButton.Content = toggleButton.Content.ToString().Substring(0, 10);
                     return;
                 }
 
@@ -284,12 +327,10 @@ namespace VityazReports.ViewModel {
                     }
 
                     toggleButton.Background = cm.First().Color;
-                    toggleButton.Content += " (" + ObjectsList.Count.ToString() + ")";
                     ColorList.First(x => x.Color == cm.First().Color).Isfree = false;
                     ColorList.First(x => x.Color == cm.First().Color).ObjTypeId = ObjId.ToString();
                     ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).IsShowOnMap = true;
                     toggleButton.IsChecked = true;
-                    //}
                 }
             });
         }
@@ -304,16 +345,35 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(ChartObjectsList));
             }
         }
-        /// <summary>
-        /// Помещаем на карту метку ГБР
-        /// Отлавливаем нажатие правой кнопки мыши, получаем позицию мыши на контроле, из которого вычисляем координаты и на них ставим точку.
-        /// </summary>
-        private RelayCommand _CreateLabelGbr;
-        public RelayCommand CreateLabelGbr {
-            get => _CreateLabelGbr ??= new RelayCommand(async obj => {
-                MouseEventArgs mouseEventArgs = obj as MouseEventArgs;
-                var y = mouseEventArgs.Source;
-                if (mouseEventArgs.RightButton == MouseButtonState.Pressed) {
+
+        private TimeSpan _StartSpan;
+        public TimeSpan StartSpan {
+            get => _StartSpan;
+            set {
+                _StartSpan = value;
+                OnPropertyChanged(nameof(StartSpan));
+            }
+        }
+        private RelayCommand _MouseMiddleButtonDown;
+        public RelayCommand MouseMiddleButtonDown {
+            get => _MouseMiddleButtonDown ??= new RelayCommand(async obj => {
+                StartSpan = new TimeSpan(DateTime.Now.Ticks);
+            });
+        }
+
+        private RelayCommand _MouseMiddleButtonUp;
+        public RelayCommand MouseMiddleButtonUp {
+            get => _MouseMiddleButtonUp ??= new RelayCommand(async obj => {
+                if (StartSpan == TimeSpan.Zero)
+                    return;
+                TimeSpan ts = new TimeSpan(DateTime.Now.Ticks) - StartSpan;
+                if (ts.TotalSeconds >= 3) {
+                    //return;
+                    StartSpan = TimeSpan.Zero;
+
+                    MouseEventArgs mouseEventArgs = obj as MouseEventArgs;
+                    var y = mouseEventArgs.Source;
+                    //if (mouseEventArgs.RightButton == MouseButtonState.Pressed) {
                     if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
                         if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
                             Point p = mouseEventArgs.GetPosition((IInputElement)mouseEventArgs.Source);
@@ -340,6 +400,87 @@ namespace VityazReports.ViewModel {
                     else
                         System.Windows.Forms.MessageBox.Show("Необходимо выбрать хоть один маршрут", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+                //}
+            });
+        }
+        /// <summary>
+        /// определяет состояние открыто/закрыто контекстного меню на карте
+        /// </summary>
+        private bool _ContextMenuIsOpen;
+        public bool ContextMenuIsOpen {
+            get => _ContextMenuIsOpen;
+            set {
+                _ContextMenuIsOpen = value;
+                OnPropertyChanged(nameof(ContextMenuIsOpen));
+            }
+        }
+        /// <summary>
+        /// Помещаем на карту метку ГБР
+        /// Отлавливаем нажатие правой кнопки мыши, получаем позицию мыши на контроле, из которого вычисляем координаты и на них ставим точку.
+        /// </summary>
+        private RelayCommand _CreateLabelGbr;
+        public RelayCommand CreateLabelGbr {
+            get => _CreateLabelGbr ??= new RelayCommand(async obj => {
+                var u = obj as System.Windows.Controls.Button;
+                if (u == null)
+                    return;
+                if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
+                    if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
+                        Point point = u.TranslatePoint(new Point(), gmaps_contol);
+                        GMapMarker marker = new GMapMarker(new PointLatLng()) {
+                            Shape = new Ellipse {
+                                Width = 20,
+                                Height = 20,
+                                Stroke = Brushes.Chocolate,
+                                StrokeThickness = 7.5,
+                                ToolTip = "ГБР",
+                                AllowDrop = true
+                            }
+                        };
+                        marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X - 35, (int)point.Y - 15);
+                        marker.ZIndex = -1;
+                        marker.Tag = "ГБР";
+                        gmaps_contol.Markers.Add(marker);
+                        ChartSeries = null;
+                    }
+                    else
+                        System.Windows.Forms.MessageBox.Show("На карте уже есть экипаж", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else {
+                    System.Windows.Forms.MessageBox.Show("Необходимо выбрать хоть один маршрут", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    FlyoutShowGroupsVisibleState = true;
+                }
+                ContextMenuIsOpen = false;
+
+                //MouseEventArgs mouseEventArgs = obj as MouseEventArgs;
+                //var y = mouseEventArgs.Source;
+                //if (mouseEventArgs.RightButton == MouseButtonState.Pressed) {
+                //    if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
+                //        if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
+                //            Point p = mouseEventArgs.GetPosition((IInputElement)mouseEventArgs.Source);
+
+                //            GMapMarker marker = new GMapMarker(new PointLatLng()) {
+                //                Shape = new Ellipse {
+                //                    Width = 20,
+                //                    Height = 20,
+                //                    Stroke = Brushes.Chocolate,
+                //                    StrokeThickness = 7.5,
+                //                    ToolTip = "ГБР",
+                //                    AllowDrop = true
+                //                }
+                //            };
+                //            marker.Position = gmaps_contol.FromLocalToLatLng((int)p.X, (int)p.Y);
+                //            marker.ZIndex = -1;
+                //            marker.Tag = "ГБР";
+                //            gmaps_contol.Markers.Add(marker);
+                //            ChartSeries = null;
+                //        }
+                //        else
+                //            System.Windows.Forms.MessageBox.Show("На карте уже есть экипаж", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //    }
+                //    else
+                //        System.Windows.Forms.MessageBox.Show("Необходимо выбрать хоть один маршрут", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //}
             });
         }
         /// <summary>

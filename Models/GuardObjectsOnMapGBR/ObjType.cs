@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using VityazReports.Data;
 
 #nullable disable
 
@@ -11,6 +12,25 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
 {
     public partial class ObjType
     {
+        public ObjType(int objTypeId, int orderNumber, string objTypeName, string description, bool recordDeleted, bool isShowOnMap, string name, int? countObjects) {
+            ObjTypeId = objTypeId;
+            OrderNumber = orderNumber;
+            ObjTypeName = objTypeName;
+            Description = description;
+            RecordDeleted = recordDeleted;
+            IsShowOnMap = isShowOnMap;
+            Name = name;
+            CountObjects = countObjects;
+        }
+
+        public ObjType(int objTypeId, int orderNumber, string objTypeName, string description, bool recordDeleted) {
+            ObjTypeId = objTypeId;
+            OrderNumber = orderNumber;
+            ObjTypeName = objTypeName;
+            Description = description;
+            RecordDeleted = recordDeleted;
+        }
+
         [Key]
         [Column("ObjTypeID")]
         public int ObjTypeId { get; set; }
@@ -23,5 +43,25 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
         public bool RecordDeleted { get; set; }
         [NotMapped]
         public bool IsShowOnMap { get; set; }
+        [NotMapped]
+        private string _Name { get; set; }
+        [NotMapped]
+        public string Name { 
+            get {
+                if (string.IsNullOrEmpty(_Name) && !CountObjects.HasValue)
+                    return "";
+                if (!string.IsNullOrEmpty(_Name) && !CountObjects.HasValue)
+                    return _Name;
+                if (string.IsNullOrEmpty(_Name) && CountObjects.HasValue)
+                    return "";
+                return _Name+" ("+CountObjects.Value.ToString()+")";
+            }
+            set {
+                _Name = value;
+
+            }
+        }
+        [NotMapped]
+        public int? CountObjects { get; set; }
     }
 }
