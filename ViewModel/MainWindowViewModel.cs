@@ -72,6 +72,10 @@ namespace VityazReports.ViewModel {
                         ReglamentWorks rw = new ReglamentWorks();
                         rw.ShowDialog();
                         break;
+                    case "B8441A22-FCBC-45E3-A767-4B593027018D": //Экипажи на карте
+                        GuardsOnMap gom = new GuardsOnMap();
+                        gom.ShowDialog();
+                        break;
                 }
             }, obj => obj != null);
         }

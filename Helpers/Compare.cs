@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using VityazReports.Models.ChangeCost;
+using VityazReports.Models;
 
 namespace VityazReports.Helpers {
     public class Compare {

@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using VityazReports.Data;
 using VityazReports.Helpers;
+using VityazReports.Models;
 using VityazReports.Models.ChangeCost;
 
 namespace VityazReports.ViewModel {
@@ -172,11 +173,11 @@ namespace VityazReports.ViewModel {
                 bw.DoWork += (s, e) => {
                     FilterFlyoutVisible = false;
                     Loading = true;
-                    NewGuardObjectHistory before = null;
-                    NewGuardObjectHistory after = null;
+                    Models.NewGuardObjectHistory before = null;
+                    Models.NewGuardObjectHistory after = null;
                     DateTime start = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
                     DateTime end = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
-                    List<NewGuardObjectHistory> history = context.NewGuardObjectHistory.Where(x => x.ModifiedOn >= start && x.ModifiedOn <= end).ToList();
+                    List<Models.NewGuardObjectHistory> history = context.NewGuardObjectHistory.Where(x => x.ModifiedOn >= start && x.ModifiedOn <= end).ToList();
                     var r = history.GroupBy(a => new { a.NewGuardObjectId, a.ModifiedBy, DateTime = DateTime.Parse(a.ModifiedOn.ToString()) }).ToList();
                     foreach (var item in r) {
                         before = null;
@@ -199,7 +200,7 @@ namespace VityazReports.ViewModel {
                                     }
                                 }
                                 DateTime? WhenChanged = after.ModifiedOn;
-                                NewGuardObjectExtensionBase objectExtensionBase = context.NewGuardObjectExtensionBase.FirstOrDefault(x => x.NewGuardObjectId == after.NewGuardObjectId);
+                                Models.NewGuardObjectExtensionBase objectExtensionBase = context.NewGuardObjectExtensionBase.FirstOrDefault(x => x.NewGuardObjectId == after.NewGuardObjectId);
                                 if (objectExtensionBase != null)
                                     App.Current.Dispatcher.Invoke(delegate {
                                         ChangeCostOutputList.Add(new ChangeCostOutputModel(

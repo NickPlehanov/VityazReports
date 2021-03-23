@@ -2,8 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using VityazReports.Models.ActsByAlarm;
-using VityazReports.Models.ChangeCost;
+using VityazReports.Models;
 
 #nullable disable
 
@@ -25,6 +24,8 @@ namespace VityazReports.Data
         public virtual DbSet<NewGuardObjectBase> NewGuardObjectBase { get; set; }
         public virtual DbSet<NewGuardObjectExtensionBase> NewGuardObjectExtensionBase { get; set; }
         public virtual DbSet<NewGuardObjectHistory> NewGuardObjectHistory { get; set; }
+        public virtual DbSet<NewPlacesGbrbase> NewPlacesGbrbase { get; set; }
+        public virtual DbSet<NewPlacesGbrextensionBase> NewPlacesGbrextensionBase { get; set; }
         public virtual DbSet<SystemUserBase> SystemUserBase { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -154,6 +155,49 @@ namespace VityazReports.Data
             {
                 entity.HasKey(e => e.ModifiedOn)
                     .HasName("PK_ModifiedOn");
+            });
+
+            modelBuilder.Entity<NewPlacesGbrbase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.OwningUser, e.OwningBusinessUnit }, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewPlacesGbrid, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewPlacesGbrid).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+
+                entity.HasOne(d => d.OwningUserNavigation)
+                    .WithMany(p => p.NewPlacesGbrbase)
+                    .HasForeignKey(d => d.OwningUser)
+                    .HasConstraintName("user_new_placesgbr");
+            });
+
+            modelBuilder.Entity<NewPlacesGbrextensionBase>(entity =>
+            {
+                entity.HasIndex(e => e.NewName, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewPlacesGbrid).ValueGeneratedNever();
+
+                entity.HasOne(d => d.NewPlacesGbr)
+                    .WithOne(p => p.NewPlacesGbrextensionBase)
+                    .HasForeignKey<NewPlacesGbrextensionBase>(d => d.NewPlacesGbrid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_PlacesGBRExtensionBase_New_PlacesGBRBase");
             });
 
             modelBuilder.Entity<SystemUserBase>(entity =>

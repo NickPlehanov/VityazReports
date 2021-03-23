@@ -7,8 +7,9 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.ObjectModel;
 using VityazReports.Models.ReglamentWorks;
-using VityazReports.Models.ChangeCost;
+//using VityazReports.Models.ChangeCost;
 using System.ComponentModel;
+using VityazReports.Models;
 
 namespace VityazReports.ViewModel {
     public class ReglamentWorksViewModel : BaseViewModel {

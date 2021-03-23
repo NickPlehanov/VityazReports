@@ -7,15 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
-namespace VityazReports.Models.ChangeCost
+namespace VityazReports.Models
 {
     [Index(nameof(ActiveDirectoryGuid), Name = "UQ_SystemUserBaseActiveDirectoryGuid", IsUnique = true)]
     public partial class SystemUserBase
     {
         public SystemUserBase()
         {
-            //InverseParentSystemUser = new HashSet<SystemUserBase>();
-            //NewGuardObjectBase = new HashSet<NewGuardObjectBase>();
+            InverseParentSystemUser = new HashSet<SystemUserBase>();
+            NewGuardObjectBase = new HashSet<NewGuardObjectBase>();
+            NewPlacesGbrbase = new HashSet<NewPlacesGbrbase>();
         }
 
         [Key]
@@ -109,12 +110,14 @@ namespace VityazReports.Models.ChangeCost
         [StringLength(50)]
         public string YomiFirstName { get; set; }
 
-    //    [ForeignKey(nameof(ParentSystemUserId))]
-    //    [InverseProperty(nameof(SystemUserBase.InverseParentSystemUser))]
-    //    public virtual SystemUserBase ParentSystemUser { get; set; }
-    //    [InverseProperty(nameof(SystemUserBase.ParentSystemUser))]
-    //    public virtual ICollection<SystemUserBase> InverseParentSystemUser { get; set; }
-    //    [InverseProperty("OwningUserNavigation")]
-    //    public virtual ICollection<NewGuardObjectBase> NewGuardObjectBase { get; set; }
+        [ForeignKey(nameof(ParentSystemUserId))]
+        [InverseProperty(nameof(SystemUserBase.InverseParentSystemUser))]
+        public virtual SystemUserBase ParentSystemUser { get; set; }
+        [InverseProperty(nameof(SystemUserBase.ParentSystemUser))]
+        public virtual ICollection<SystemUserBase> InverseParentSystemUser { get; set; }
+        [InverseProperty("OwningUserNavigation")]
+        public virtual ICollection<NewGuardObjectBase> NewGuardObjectBase { get; set; }
+        [InverseProperty("OwningUserNavigation")]
+        public virtual ICollection<NewPlacesGbrbase> NewPlacesGbrbase { get; set; }
     }
 }

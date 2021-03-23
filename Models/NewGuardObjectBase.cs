@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
-namespace VityazReports.Models.ChangeCost
+namespace VityazReports.Models
 {
     [Table("New_guard_objectBase")]
     public partial class NewGuardObjectBase
@@ -39,8 +39,8 @@ namespace VityazReports.Models.ChangeCost
         [Column(TypeName = "decimal(23, 10)")]
         public decimal? ExchangeRate { get; set; }
 
-        //[ForeignKey(nameof(OwningUser))]
-        //[InverseProperty(nameof(SystemUserBase.NewGuardObjectBase))]
-        //public virtual SystemUserBase OwningUserNavigation { get; set; }
+        [ForeignKey(nameof(OwningUser))]
+        [InverseProperty(nameof(SystemUserBase.NewGuardObjectBase))]
+        public virtual SystemUserBase OwningUserNavigation { get; set; }
     }
 }

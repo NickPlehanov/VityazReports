@@ -7,7 +7,7 @@
    "IncludeConnectionString": true,
    "ModelNamespace": null,
    "OutputContextPath": "Data",
-   "OutputPath": "Models\\ChangeCost",
+   "OutputPath": "Models",
    "ProjectRootNamespace": "VityazReports",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
@@ -34,6 +34,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[New_PlacesGBRBase]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[New_PlacesGBRExtensionBase]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[SystemUserBase]",
          "ObjectType": 0
       }
@@ -48,6 +56,7 @@
    "UseLegacyPluralizer": false,
    "UseNoConstructor": false,
    "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
    "UseNodaTime": false,
    "UseNullableReferences": false,
    "UseSpatial": false
