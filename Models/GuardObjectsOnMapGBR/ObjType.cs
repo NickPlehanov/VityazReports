@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Windows.Controls.Primitives;
 using Microsoft.EntityFrameworkCore;
 using VityazReports.Data;
 
@@ -63,5 +64,8 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
         }
         [NotMapped]
         public int? CountObjects { get; set; }
+
+        [NotMapped]
+        public ToggleButton TgBtn { get; set; } = null;
     }
 }

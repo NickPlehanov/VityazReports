@@ -15,17 +15,20 @@
     </mah:MetroWindow.DataContext>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
-            <Button Command="{Binding ShowGroups}">
+            <Button Command="{Binding ShowGroups}" ToolTip="Показать экипажи">
                 <iconPacks:BootstrapIcons Kind="FilterCircle"/>
             </Button>
-            <Button Command="{Binding CalculateCommand}">
+            <Button Command="{Binding CalculateCommand}" ToolTip="Рассчитать маршруты">
                 <iconPacks:BootstrapIcons Kind="PieChart"/>
             </Button>
-            <Button Command="{Binding ClearGroup}">
+            <Button Command="{Binding ClearGroup}" ToolTip="Убрать метку ГБР">
                 <iconPacks:BootstrapIcons Kind="Bucket"/>
             </Button>
-            <Button Command="{Binding UpdateMarkers}">
+            <Button Command="{Binding UpdateMarkers}" ToolTip="Обновить">
                 <iconPacks:BootstrapIcons Kind="CloudUploadFill"/>
+            </Button>
+            <Button Command="{Binding CreateReportCommand}" ToolTip="Выгрузить отчёт">
+                <iconPacks:BootstrapIcons Kind="Download"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
@@ -38,6 +41,7 @@
             </CollectionViewSource>
         </Grid.Resources>
         <mah:Flyout Width="150" Position="Right" IsModal="True" AnimateOpacity="True" IsOpen="{Binding FlyoutShowGroupsVisibleState}" Panel.ZIndex="1">
+            <Grid>
             <StackPanel>
                 <ListBox ItemsSource="{Binding ObjectTypeList}">
                     <ListBox.ItemTemplate>
@@ -48,6 +52,8 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </StackPanel>
+            <Button Content="?" Margin="5" Panel.ZIndex="15" Opacity="1" Height="35" Width="35" HorizontalAlignment="Right" VerticalAlignment="Bottom" Style="{StaticResource MahApps.Styles.Button.Circle}" Command="{Binding HelpCommand}"/>
+            </Grid>
         </mah:Flyout>
         <mah:Flyout Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding ChartVisible}">
             <Grid>
@@ -58,8 +64,8 @@
                 <wpf:PieChart Margin="5" Grid.Column="0" Series="{Binding ChartSeries}" LegendLocation="Left" ChartLegend="{Binding ChartLegent}" DataTooltip="{Binding ChartToolTip}"/>
                 <DataGrid IsReadOnly="True" SelectionMode="Single" Margin="5" Grid.Column="1" SelectedItem="{Binding SelectedObject}" ItemsSource="{Binding Source={StaticResource sort}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Объект" Binding="{Binding ObjectInfo}"/>
-                        <DataGridTextColumn Header="Время" Binding="{Binding DurationText}"/>
+                        <DataGridTextColumn Header="Объект" Binding="{Binding ObjectInfo, Mode=TwoWay}"/>
+                        <DataGridTextColumn Header="Время" Binding="{Binding DurationText, Mode=TwoWay}"/>
                         <!--<DataGridTextColumn Header="Время" Binding="{Binding Duration}"/>-->
                     </DataGrid.Columns>
                     <DataGrid.InputBindings>
@@ -84,11 +90,14 @@
             <UserControl.ContextMenu>
                 <ContextMenu IsOpen="{Binding ContextMenuIsOpen}">
                     <Button Command="{Binding Mode=OneWay, Path=CreateLabelGbr}" Content="Поставить метку ГБР" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
+                    <!--<Button Command="{Binding CalculateCommand}" Content="Рассчитать прибытие"/>-->
+                    <Button Command="{Binding CalculateCommand}" Content="{Binding CalculateCommandContent}"/>
                     <Separator/>
                     <Button Command="{Binding ClearGroup}" Content="Убрать метку ГБР"/>
-                    <Button Command="{Binding CalculateCommand}" Content="Рассчитать прибытие"/>
                     <Separator/>
                     <Button Command="{Binding UpdateMarkers}" Content="Обновить"/>
+                    <Separator/>
+                    <Button Command="{Binding CreateReportCommand}" Content="Выгрузить отчёт"/>
                 </ContextMenu>
             </UserControl.ContextMenu>
         </UserControl>

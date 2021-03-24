@@ -28,6 +28,25 @@ namespace VityazReports.ViewModel {
             foreach (var item in _rpt_lst)
                 ReportList.Add(item);
 
+            LoadingText = "Открыто окно отчёта. Для просмотра другого отчёта, закройте окно текущего отчёта";
+        }
+
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
+            }
+        }
+
+        private string _LoadingText;
+        public string LoadingText {
+            get => _LoadingText;
+            set {
+                _LoadingText = value;
+                OnPropertyChanged(nameof(LoadingText));
+            }
         }
 
         private ObservableCollection<Reports> _ReportList = new ObservableCollection<Reports>();
@@ -50,31 +69,31 @@ namespace VityazReports.ViewModel {
                 switch (btn.Tag.ToString().ToUpper()) {
                     case "23F71A51-F909-417C-9B09-69534715C689": //охр. объекты на карте
                         GuardObjectsOnMap map = new GuardObjectsOnMap();
-                        map.ShowDialog();
+                        map.Show();
                         break;
                     case "B904A30B-16B1-4F59-A76D-BD981E18C930": //изм.абон.платы
                         ChangeCost changeCost = new ChangeCost();
-                        changeCost.ShowDialog();
+                        changeCost.Show();
                         break;
                     case "FA4DD0A5-5B15-45B4-A55A-433267FA50FF": //Акты по тревогам
                         ActsByAlarm acts = new ActsByAlarm();
-                        acts.ShowDialog();
+                        acts.Show();
                         break;
                     case "A35A2859-3E10-42F1-9E9B-5F29B5E953D9": //Опоздания пульта
                         LatePult latePult = new LatePult();
-                        latePult.ShowDialog();
+                        latePult.Show();
                         break;
                     case "8A7E33DF-E27D-413C-80D5-E3812B57853C": //Опоздания ГБР
                         LateGBR lateGBR = new LateGBR();
-                        lateGBR.ShowDialog();
+                        lateGBR.Show();
                         break;
                     case "7C9C1F49-6218-4C9A-8F17-126626E5D1D3": //Регламентные работы
                         ReglamentWorks rw = new ReglamentWorks();
-                        rw.ShowDialog();
+                        rw.Show();
                         break;
                     case "B8441A22-FCBC-45E3-A767-4B593027018D": //Экипажи на карте
                         GuardsOnMap gom = new GuardsOnMap();
-                        gom.ShowDialog();
+                        gom.Show();
                         break;
                 }
             }, obj => obj != null);

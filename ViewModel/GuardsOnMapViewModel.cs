@@ -98,7 +98,12 @@ namespace VityazReports.ViewModel {
                     CreatedOn = DateTime.Now.AddHours(-5), 
                     ModifiedOn= DateTime.Now.AddHours(-5), 
                     CreatedBy =  user.SystemUserId,
-                    ModifiedBy = user.SystemUserId
+                    ModifiedBy = user.SystemUserId,
+                    Statecode=0,
+                    Statuscode=1,
+                    DeletionStateCode=0,
+                    OwningUser=user.SystemUserId,
+                    OwningBusinessUnit = user.BusinessUnitId
                     });
                 await context.SaveChangesAsync();
                 context.NewPlacesGbrextensionBase.Add(new NewPlacesGbrextensionBase() { NewPlacesGbrid = NewPlacesGbrbaseID, NewName = GroupName, NewLatitude = Latitude, NewLongitude = Longitude });
@@ -164,15 +169,9 @@ namespace VityazReports.ViewModel {
         public RelayCommand CreateLabelGBRCommand {
             get => _CreateLabelGBRCommand ??= new RelayCommand(async obj => {
                 GroupInfoFlyoutVisible = true;
-                //if (string.IsNullOrEmpty(GroupName)) {
-                //    System.Windows.Forms.MessageBox.Show("Наименование экипажа не может быть пустым");
-                //    return;
-                //}
                 var u = obj as System.Windows.Controls.Button;
                 if (u == null)
                     return;
-                //if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
-                //if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
                 Point point = u.TranslatePoint(new Point(), gmaps_contol);
                 GMapMarker marker = new GMapMarker(new PointLatLng()) {
                     Shape = new Ellipse {
@@ -190,19 +189,32 @@ namespace VityazReports.ViewModel {
                 PointLatLng p = gmaps_contol.FromLocalToLatLng((int)point.X - 35, (int)point.Y - 15);
                 Latitude = p.Lat.ToString().Replace('.', ',');
                 Longitude = p.Lng.ToString().Replace('.', ',');
-
-                //ChartSeries = null;
-                //}
-                //else
-                //    System.Windows.Forms.MessageBox.Show("На карте уже есть экипаж", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //}
-                //else {
-                //    System.Windows.Forms.MessageBox.Show("Необходимо выбрать хоть один маршрут", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //    //FlyoutShowGroupsVisibleState = true;
-                //}
+                if (SelectedMarker != null) {
+                    GroupInfoFlyoutVisible = false;
+                    NewPlacesGbrbase gbrbase = context.NewPlacesGbrbase.FirstOrDefault(x => x.NewPlacesGbrid.ToString() == SelectedMarker.Tag.ToString());
+                    if (gbrbase == null)
+                        return;
+                    NewPlacesGbrextensionBase gbrextensionBase = context.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewPlacesGbrid.ToString() == SelectedMarker.Tag.ToString());
+                    if (gbrextensionBase == null)
+                        return;
+                    gbrextensionBase.NewLatitude = Latitude;
+                    gbrextensionBase.NewLongitude = Longitude;
+                    gbrextensionBase.NewName = GroupName;
+                    context.SaveChanges();
+                    SelectedMarker = null;
+                }
                 ContextMenuIsOpen = false;
-                GroupName = null;
+                //GroupName = null;
             });
+        }
+
+        private GMapMarker _SelectedMarker;
+        public GMapMarker SelectedMarker {
+            get => _SelectedMarker;
+            set {
+                _SelectedMarker = value;
+                OnPropertyChanged(nameof(SelectedMarker));
+            }
         }
 
         private void Shape_MouseRightButtonUp(object sender, MouseButtonEventArgs e) {
@@ -214,6 +226,7 @@ namespace VityazReports.ViewModel {
             GMapMarker marker = ellipse.DataContext as GMapMarker;
             if (marker == null)
                 return;
+            SelectedMarker = marker;
             Guid id = Guid.TryParse(marker.Tag.ToString(), out id) ? id : Guid.Empty;
             if (id == Guid.Empty)
                 return;
@@ -228,7 +241,11 @@ namespace VityazReports.ViewModel {
         private RelayCommand _EditMarkerCommand;
         public RelayCommand EditMarkerCommand {
             get => _EditMarkerCommand ??= new RelayCommand(async obj => {
-                var t = 0;
+                string lat = Latitude;
+                string lon = Longitude;
+                GroupInfoFlyoutVisible = true;
+                System.Windows.Forms.MessageBox.Show(string.Format("Укажите новые координаты для экипажа: {0}",GroupName));
+                gmaps_contol.Markers.Remove(SelectedMarker);
             }, obj=>!string.IsNullOrEmpty(Latitude) && !string.IsNullOrEmpty(Longitude) && !string.IsNullOrEmpty(GroupName));
         }
         /// <summary>
