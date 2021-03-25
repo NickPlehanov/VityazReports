@@ -10,33 +10,52 @@
                   xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity" xmlns:wpf="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
         Title="Охраняемые объекты на карте" Height="450" Width="800" x:Name="GuardObjectOnMapWindow">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closing">
+            <command:EventToCommand Command="{Binding WindowCloseCommand}" PassEventArgsToCommand="True"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <mah:MetroWindow.DataContext>
         <vm:GuardObjectsOnMapGBRViewModel/>
     </mah:MetroWindow.DataContext>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
             <Button Command="{Binding ShowGroups}" ToolTip="Показать экипажи">
-                <iconPacks:BootstrapIcons Kind="FilterCircle"/>
+                <iconPacks:BoxIcons Kind="SolidShow"/>
             </Button>
             <Button Command="{Binding CalculateCommand}" ToolTip="Рассчитать маршруты">
-                <iconPacks:BootstrapIcons Kind="PieChart"/>
+                <iconPacks:BoxIcons Kind="SolidPieChart"/>
+                <!--<iconPacks:BootstrapIcons Kind="PieChart"/>-->
+            </Button>
+            <Button Command="{Binding ChangeVisibleAnalyzeCommand}" ToolTip="Анализировать расположение объектов">
+                <iconPacks:BoxIcons Kind="SolidAnalyse"/>
             </Button>
             <Button Command="{Binding ClearGroup}" ToolTip="Убрать метку ГБР">
-                <iconPacks:BootstrapIcons Kind="Bucket"/>
+                <iconPacks:BoxIcons Kind="SolidTrash"/>
             </Button>
             <Button Command="{Binding UpdateMarkers}" ToolTip="Обновить">
-                <iconPacks:BootstrapIcons Kind="CloudUploadFill"/>
+                <iconPacks:BoxIcons Kind="RegularRefresh"/>
             </Button>
             <Button Command="{Binding CreateReportCommand}" ToolTip="Выгрузить отчёт">
-                <iconPacks:BootstrapIcons Kind="Download"/>
+                <iconPacks:BoxIcons Kind="SolidDownload"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <TextBlock Text="{Binding LoadingText}" VerticalAlignment="Center" Margin="5"/>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
     <Grid>
         <Grid.Resources>
             <CollectionViewSource x:Key="sort" Source="{Binding ChartObjectsList}">
                 <CollectionViewSource.SortDescriptions>
                     <scm:SortDescription PropertyName="Duration" Direction="Descending"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+            <CollectionViewSource x:Key="fardistanceSort" Source="{Binding FarDistanceList}">
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="Distance" Direction="Descending"/>
                 </CollectionViewSource.SortDescriptions>
             </CollectionViewSource>
         </Grid.Resources>
@@ -52,7 +71,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </StackPanel>
-            <Button Content="?" Margin="5" Panel.ZIndex="15" Opacity="1" Height="35" Width="35" HorizontalAlignment="Right" VerticalAlignment="Bottom" Style="{StaticResource MahApps.Styles.Button.Circle}" Command="{Binding HelpCommand}"/>
+                <Button Content="?" Background="Red" Margin="5" Panel.ZIndex="15" Opacity="1" Height="35" Width="35" HorizontalAlignment="Right" VerticalAlignment="Bottom" Style="{StaticResource MahApps.Styles.Button.Circle}" Command="{Binding HelpCommand}"/>
             </Grid>
         </mah:Flyout>
         <mah:Flyout Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding ChartVisible}">
@@ -62,28 +81,42 @@
                     <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
                 <wpf:PieChart Margin="5" Grid.Column="0" Series="{Binding ChartSeries}" LegendLocation="Left" ChartLegend="{Binding ChartLegent}" DataTooltip="{Binding ChartToolTip}"/>
-                <DataGrid IsReadOnly="True" SelectionMode="Single" Margin="5" Grid.Column="1" SelectedItem="{Binding SelectedObject}" ItemsSource="{Binding Source={StaticResource sort}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <DataGrid IsReadOnly="True" SelectionMode="Single" Margin="5" Grid.Column="1" SelectedItem="{Binding SelectedObject}" 
+                          ItemsSource="{Binding Source={StaticResource sort}}" 
+                          CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" 
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Объект" Binding="{Binding ObjectInfo, Mode=TwoWay}"/>
                         <DataGridTextColumn Header="Время" Binding="{Binding DurationText, Mode=TwoWay}"/>
-                        <!--<DataGridTextColumn Header="Время" Binding="{Binding Duration}"/>-->
                     </DataGrid.Columns>
                     <DataGrid.InputBindings>
                         <MouseBinding MouseAction="LeftClick" Command="{Binding SelectedObjectCommand}"/>
                     </DataGrid.InputBindings>
-                    <!--<DataGrid.RowDetailsTemplate>
-                        <DataTemplate>
-                            --><!--<Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="2*"/>
-                                </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Margin="5" Content="Адрес"/>--><!--
-                                <Label Margin="5" Content="{Binding DataContext.ObjAddress, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                            --><!--</Grid>--><!--
-                        </DataTemplate>
-                    </DataGrid.RowDetailsTemplate>-->
                 </DataGrid>
+            </Grid>
+        </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding AnalyzeVisible}">
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="6*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="6*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+            <DataGrid Grid.Row="0" Grid.ColumnSpan="2" IsReadOnly="True" SelectionMode="Single" Margin="5" ItemsSource="{Binding Source={StaticResource fardistanceSort}}" 
+                      CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" 
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Номер" Binding="{Binding ObjectNumber, Mode=TwoWay}"/>
+                    <DataGridTextColumn Header="Название" Binding="{Binding ObjectName, Mode=TwoWay}"/>
+                    <DataGridTextColumn Header="Адрес" Binding="{Binding ObjectAddress, Mode=TwoWay}"/>
+                    <DataGridTextColumn Header="Расстояние" Binding="{Binding Distance, Mode=TwoWay}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+                <Button Grid.Column="0" Grid.Row="1" Content="Пересчитать" Command="{Binding GetCountFarObjectCommand}"/>
+                <Button Grid.Column="1" Grid.Row="1" ToolTip="Расстояние указано в КМ. -1 означает, невозможность построить маршрут" Background="Red" Content="?" Height="35" Width="35" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{StaticResource MahApps.Styles.Button.Circle}"/>
             </Grid>
         </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}">

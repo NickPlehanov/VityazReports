@@ -24,6 +24,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Diagnostics;
 using Notifications.Wpf;
+using System.ComponentModel;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
@@ -202,6 +203,113 @@ namespace VityazReports.ViewModel {
                 };
             });
         }
+
+        private bool _AnalyzeVisible;
+        public bool AnalyzeVisible {
+            get => _AnalyzeVisible;
+            set {
+                _AnalyzeVisible = value;
+                OnPropertyChanged(nameof(AnalyzeVisible));
+            }
+        }
+
+        private RelayCommand _ChangeVisibleAnalyzeCommand;
+        public RelayCommand ChangeVisibleAnalyzeCommand {
+            get => _ChangeVisibleAnalyzeCommand ??= new RelayCommand(async obj => {
+                if (FarDistanceList.Count()<=0)
+                    GetCountFarObjectCommand.Execute(null);
+                else
+                    AnalyzeVisible = !AnalyzeVisible;
+            }, obj => ObjectTypeList.Count(x => x.IsShowOnMap == true) >= 1);
+        }
+
+        private ObjType _SelectedObjType;
+        public ObjType SelectedObjType {
+            get => _SelectedObjType;
+            set {
+                _SelectedObjType = value;
+                OnPropertyChanged(nameof(SelectedObjType));
+            }
+        }
+        /// <summary>
+        /// Команда получения количества объектов удаленных от центра Челябинска, более чем на N километров
+        /// </summary>
+        private RelayCommand _GetCountFarObjectCommand;
+        public RelayCommand GetCountFarObjectCommand {
+            get => _GetCountFarObjectCommand ??= new RelayCommand(async obj => {
+                notificationManager.Show(new NotificationContent {
+                    Title = "Информация",
+                    Message = "Анализ расстояния по объектам начат и будет продолжен в фоновом режиме, по окончанию анализа, откроется окно с результатами",
+                    Type = NotificationType.Information
+                });
+                SelectedObjType = ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true);
+                if (SelectedObjType == null)
+                    return;
+
+                //За центр Челябинска примем центральную точку GmapControl
+                PointLatLng center = gmaps_contol.CenterPosition;
+                int? Nkm = 50;
+                if (center == null)
+                    return;
+                int number = commonMethods.ParseDigit(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true).ObjTypeName);
+                if (number == 0)
+                    return;
+                List<Models.GuardObjectsOnMapGBR.Object> ObjectsList = (from o in context.Object
+                                                                        join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                                                        where ot.ObjTypeName.Contains(number.ToString())
+                                                                        && o.RecordDeleted == false
+                                                                        && ot.RecordDeleted == false
+                                                                        select o).AsNoTracking().ToList();
+                if (!ObjectsList.Any())
+                    return;
+                FarDistanceList.Clear();
+                HttpClient client = new HttpClient();
+                int counter = 1;
+                foreach (var item in ObjectsList) {
+                    if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
+                        LoadingText = null;
+                        notificationManager.Show(new NotificationContent {
+                            Title = "Ошибка",
+                            Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
+                            Type = NotificationType.Error
+                        });
+                        return;
+                    }
+                    LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
+                    if (item.Latitude != null && item.Longitude != null) {
+                        string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
+                        HttpResponseMessage response = await client.GetAsync(resp);
+                        if (response.IsSuccessStatusCode) {
+                            var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
+                            if (osrm.code.Equals("Ok")) //так же обработать noRoutes
+                                if (osrm.routes.Count >= 1)
+                                    if (osrm.routes[0].distance / 1000 > Nkm)
+                                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
+                            if (osrm.code.Equals("NoRoute"))
+                                FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                        }
+                        else {
+                            FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                        }
+                    }
+                    else {
+                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                    }
+                    counter++;
+                }
+                AnalyzeVisible = true;
+                LoadingText = null;
+            }, obj => ObjectTypeList.Count(x => x.IsShowOnMap == true) >= 1);
+        }
+
+        private ObservableCollection<FarDistanceModel> _FarDistanceList = new ObservableCollection<FarDistanceModel>();
+        public ObservableCollection<FarDistanceModel> FarDistanceList {
+            get => _FarDistanceList;
+            set {
+                _FarDistanceList = value;
+                OnPropertyChanged(nameof(FarDistanceList));
+            }
+        }
         /// <summary>
         /// Команда получения списка маршрутов из базы
         /// </summary>
@@ -229,6 +337,13 @@ namespace VityazReports.ViewModel {
                                        select o).AsNoTracking().ToList().Count;
                     ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, item.ObjTypeName, item.Description, item.RecordDeleted, false, item.ObjTypeName, _obj_count));
                 }
+            });
+        }
+
+        private RelayCommand _WindowCloseCommand;
+        public RelayCommand WindowCloseCommand {
+            get => _WindowCloseCommand ??= new RelayCommand(async obj => {
+                notificationManager = null;
             });
         }
 
@@ -777,7 +892,7 @@ namespace VityazReports.ViewModel {
                     CalculateCommandContent = "Показать/скрыть расчёт";
                     Loading = false;
                 });
-            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "-1") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true)==1);
+            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "-1") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }
     }
 }
