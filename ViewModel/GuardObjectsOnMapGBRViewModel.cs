@@ -25,6 +25,7 @@ using System.IO;
 using System.Diagnostics;
 using Notifications.Wpf;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
@@ -55,7 +56,7 @@ namespace VityazReports.ViewModel {
         private RelayCommand _HelpCommand;
         public RelayCommand HelpCommand {
             get => _HelpCommand ??= new RelayCommand(async obj => {
-                if (File.Exists("Охраняемые объекты на карте.pdf"))
+                if (File.Exists(@"\\server-nass\Install\WORKPLACE\Инструкции\Охраняемые объекты на карте.pdf"))
                     Process.Start(new ProcessStartInfo(@"\\server-nass\Install\WORKPLACE\Инструкции\Охраняемые объекты на карте.pdf") { UseShellExecute = true });
                 else
                     notificationManager.Show(new NotificationContent {
@@ -216,7 +217,7 @@ namespace VityazReports.ViewModel {
         private RelayCommand _ChangeVisibleAnalyzeCommand;
         public RelayCommand ChangeVisibleAnalyzeCommand {
             get => _ChangeVisibleAnalyzeCommand ??= new RelayCommand(async obj => {
-                if (FarDistanceList.Count()<=0)
+                if (FarDistanceList.Count() <= 0)
                     GetCountFarObjectCommand.Execute(null);
                 else
                     AnalyzeVisible = !AnalyzeVisible;
@@ -262,41 +263,63 @@ namespace VityazReports.ViewModel {
                                                                         select o).AsNoTracking().ToList();
                 if (!ObjectsList.Any())
                     return;
-                FarDistanceList.Clear();
+                List<Task> Tasks = new List<Task>();
+                await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                    FarDistanceList.Clear();
+                });
                 HttpClient client = new HttpClient();
                 int counter = 1;
                 foreach (var item in ObjectsList) {
-                    if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
-                        LoadingText = null;
-                        notificationManager.Show(new NotificationContent {
-                            Title = "Ошибка",
-                            Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
-                            Type = NotificationType.Error
-                        });
-                        return;
-                    }
-                    LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
-                    if (item.Latitude != null && item.Longitude != null) {
-                        string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
-                        HttpResponseMessage response = await client.GetAsync(resp);
-                        if (response.IsSuccessStatusCode) {
-                            var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
-                            if (osrm.code.Equals("Ok")) //так же обработать noRoutes
-                                if (osrm.routes.Count >= 1)
-                                    if (osrm.routes[0].distance / 1000 > Nkm)
-                                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
-                            if (osrm.code.Equals("NoRoute"))
-                                FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                    //Tasks.Add(new Task((Action)async delegate {
+                        if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
+                            LoadingText = null;
+                            notificationManager.Show(new NotificationContent {
+                                Title = "Ошибка",
+                                Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
+                                Type = NotificationType.Error
+                            });
+                            return;
+                        }
+                        //await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                        LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
+                        //});
+                        if (item.Latitude != null && item.Longitude != null) {
+                            string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
+                            HttpResponseMessage response = await client.GetAsync(resp);
+                            if (response.IsSuccessStatusCode) {
+                                var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
+                                if (osrm.code.Equals("Ok")) //так же обработать noRoutes
+                                    if (osrm.routes.Count >= 1)
+                                        if (osrm.routes[0].distance / 1000 > Nkm)
+                                            await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                                FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
+                                            });
+                                if (osrm.code.Equals("NoRoute"))
+                                    await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                                    });
+                            }
+                            else {
+                                await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                    FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                                });
+                            }
                         }
                         else {
-                            FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                            await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                            });
                         }
-                    }
-                    else {
-                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
-                    }
-                    counter++;
+                        counter++;
+                    //},TaskCreationOptions.RunContinuationsAsynchronously));
                 }
+                //var block = 50;
+                //var numberblocks = Tasks.Count / 50;
+                //for (int i=0;i<(int)Math.Ceiling((double)(Tasks.Count / 50))+1;i++) {
+                //    var current = Tasks.Skip(i * 50).Take(50);
+                //    await Task.WhenAll(current);
+                //}
+                //await Task.WhenAll(Tasks);
                 AnalyzeVisible = true;
                 LoadingText = null;
             }, obj => ObjectTypeList.Count(x => x.IsShowOnMap == true) >= 1);
