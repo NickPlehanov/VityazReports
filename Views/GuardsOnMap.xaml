@@ -12,15 +12,25 @@
     </mah:MetroWindow.DataContext>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
+            <Button Command="{Binding CheckAccessCommand}">
+                <iconPacks:BoxIcons Kind="SolidUserAccount"/>
+            </Button>
             <Button Command="{Binding ShowAllGroupsCommand}">
-                <iconPacks:BootstrapIcons Kind="ReplyAll"/>
+                <iconPacks:BoxIcons Kind="SolidShow"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
-        <mah:Flyout Position="Bottom" IsOpen="{Binding GroupInfoFlyoutVisible}" IsModal="True" Height="250" Panel.ZIndex="1">
+        <mah:Flyout Position="Top" IsOpen="{Binding PasswordFlyoutVisible}" IsModal="True" Panel.ZIndex="15">
+            <WrapPanel Margin="5" VerticalAlignment="Center">
+                <TextBox Visibility="Visible" Margin="5" Width="100" Text="{Binding Password}"/>
+                <Button Content="ОК" Command="{Binding SetPasswordCommand}"/>
+            </WrapPanel>
+        </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsOpen="{Binding GroupInfoFlyoutVisible}" IsModal="True" Height="250" Panel.ZIndex="15">
             <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -35,13 +45,54 @@
                 </Grid.ColumnDefinitions>
                 <Label Grid.Row="0" Grid.Column="0" Margin="5" Content="Наименование экипажа"/>
                 <TextBox Grid.Row="1" Grid.Column="0" Margin="5,0" Text="{Binding GroupName, Mode=TwoWay}"/>
-                    <Label Margin="5" Grid.Column="0" Grid.Row="2" Content="Долгота"/>
+                <Label Margin="5" Grid.Column="0" Grid.Row="2" Content="Долгота"/>
                 <TextBox Margin="5,0" Grid.Column="0" Grid.Row="3" Text="{Binding Longitude, Mode=TwoWay}"/>
-                    <Label Margin="5" Grid.Column="0" Grid.Row="4" Content="Широта"/>
+                <Label Margin="5" Grid.Column="0" Grid.Row="4" Content="Широта"/>
                 <TextBox Margin="5,0" Grid.Column="0" Grid.Row="5" Text="{Binding Latitude, Mode=TwoWay}"/>
-
-                <Button Grid.Row="6" Grid.Column="0" Margin="10" Content="Сохранить" Command="{Binding SaveIntoDatabaseCommand}" Style="{StaticResource MahApps.Styles.Button.MetroSquare}"/>
+                <WrapPanel Grid.Row="6" >
+                    <Button Margin="10" Content="Сохранить" Command="{Binding SaveIntoDatabaseCommand}" Style="{StaticResource MahApps.Styles.Button.MetroSquare}"/>
+                    <Button Margin="10" Content="Убрать" Command="{Binding DeleteNewLabelCommand}" Style="{StaticResource MahApps.Styles.Button.MetroSquare}"/>
+                </WrapPanel>
             </Grid>
+        </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsOpen="{Binding GuardObjectVisible}" IsModal="True" Height="100" Panel.ZIndex="15">
+            <Grid Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <!--<Label Grid.Row="0" Grid.Column="0" Content="Введите адрес" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
+                <TextBox x:Name="Textbox" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="5" Text="{Binding Address, Mode=TwoWay}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="0" x:Name="Placeholder"
+                            Text="Введите адрес, например: Челябинск, Молодогвардейцев, 37а" FontStyle="Italic" VerticalAlignment="Center" Margin="10,0"  Foreground="DarkGray" HorizontalAlignment="Left">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=Textbox}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button Grid.Row="1" Grid.Column="0" Margin="5" Content="Рассчитать" BorderThickness="2" BorderBrush="Red" Command="{Binding CheckAddressAndGetCoordinatesCommand}"/>
+                <Button Grid.Row="1" Grid.Column="1" Margin="5" Content="Указать на карте"/>
+                <Button Grid.Row="1" Grid.Column="2" Margin="5" Content="Выбрать из CRM"/>
+            </Grid>
+        </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsModal="True" Height="250" IsOpen="{Binding ResultRoutesTimingListVisible}" Panel.ZIndex="15">
+            <DataGrid ItemsSource="{Binding RoutesTimingList}" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" AutoGenerateColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Экипаж" Binding="{Binding NameGroup}"/>
+                    <DataGridTextColumn Header="Время" Binding="{Binding DurationText}"/>
+                </DataGrid.Columns>
+            </DataGrid>
         </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}">
             <UserControl.ContextMenu>
@@ -49,6 +100,9 @@
                     <Button Command="{Binding CreateLabelGBRCommand}" Content="Поставить метку ГБР" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
                     <Button Command="{Binding ClearMapsCommand}" Content="Очистить карту"/>
                     <Button Command="{Binding EditMarkerCommand}" Content="Редактировать" ToolTip="На маркере правой кнопкой"/>
+                    <Button Command="{Binding DeleteMarkerCommand}" Content="Удалить" ToolTip="На маркере правой кнопкой"/>
+                    <Separator/>
+                    <Button Command="{Binding CalculateRoutesVisibleCommand}" Content="Расчет прибытия" ToolTip="Позволяет рассчитать прибытие экипажей до объекта"/>
                 </ContextMenu>
             </UserControl.ContextMenu>
         </UserControl>

@@ -814,7 +814,7 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(CalculateCommandContent));
             }
         }
-
+        
         private RelayCommand _CalculateCommand;
         public RelayCommand CalculateCommand {
             get => _CalculateCommand ??= new RelayCommand(async obj => {
