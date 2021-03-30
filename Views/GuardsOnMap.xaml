@@ -4,26 +4,43 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
-        xmlns:local="clr-namespace:VityazReports.Views" xmlns:vm="clr-namespace:VityazReports.ViewModel"
+        xmlns:local="clr-namespace:VityazReports.Views" xmlns:vm="clr-namespace:VityazReports.ViewModel" xmlns:helpers="clr-namespace:VityazReports.Helpers" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d"
-        Title="Экипажи на карте" Height="450" Width="800">
+        Title="Экипажи на карте" Height="450" Width="800" x:Name="GuardsWindow">
     <mah:MetroWindow.DataContext>
         <vm:GuardsOnMapViewModel/>
     </mah:MetroWindow.DataContext>
+    <mah:MetroWindow.Resources>
+        <helpers:BooleanToCollapsedVisibilityConverter x:Key="BoolToCollapsedVisible"/>
+    </mah:MetroWindow.Resources>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
-            <Button Command="{Binding CheckAccessCommand}">
+            <Button Command="{Binding CheckAccessCommand}" ToolTip="Ввод пароля для предоставления доступа к доп. функциям">
                 <iconPacks:BoxIcons Kind="SolidUserAccount"/>
             </Button>
-            <Button Command="{Binding ShowAllGroupsCommand}">
+            <!--<Button Command="{Binding ShowAllGroupsCommand}" ToolTip="Показать экипажи на карте">
                 <iconPacks:BoxIcons Kind="SolidShow"/>
+            </Button>-->
+            <Button Command="{Binding CalculateRoutesVisibleCommand}" ToolTip="Расчет времени прибытия по маршрутам">
+                <iconPacks:BoxIcons Kind="SolidCalculator"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="sort" Source="{Binding RoutesTimingList}">
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="Duration" Direction="Ascending"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
         <mah:Flyout Position="Top" IsOpen="{Binding PasswordFlyoutVisible}" IsModal="True" Panel.ZIndex="15">
             <WrapPanel Margin="5" VerticalAlignment="Center">
-                <TextBox Visibility="Visible" Margin="5" Width="100" Text="{Binding Password}"/>
+                <TextBox Visibility="Visible" Margin="5" Width="100" Text="{Binding Password}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SetPasswordCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
                 <Button Content="ОК" Command="{Binding SetPasswordCommand}"/>
             </WrapPanel>
         </mah:Flyout>
@@ -51,8 +68,10 @@
                 <TextBox Margin="5,0" Grid.Column="0" Grid.Row="5" Text="{Binding Latitude, Mode=TwoWay}"/>
                 <WrapPanel Grid.Row="6" >
                     <Button Margin="10" Content="Сохранить" Command="{Binding SaveIntoDatabaseCommand}" Style="{StaticResource MahApps.Styles.Button.MetroSquare}"/>
-                    <Button Margin="10" Content="Убрать" Command="{Binding DeleteNewLabelCommand}" Style="{StaticResource MahApps.Styles.Button.MetroSquare}"/>
+                    <Button Margin="10" Content="Убрать" Command="{Binding DeleteNewLabelCommand}" Style="{StaticResource MahApps.Styles.Button.MetroSquare}"/>                    
                 </WrapPanel>
+                <Button Grid.Row="6" Command="{Binding HelpCommand}" ToolTip="Открывает инструкцию" 
+                        Background="Red" Content="?" Height="35" Width="35" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{StaticResource MahApps.Styles.Button.Circle}"/>
             </Grid>
         </mah:Flyout>
         <mah:Flyout Position="Bottom" IsOpen="{Binding GuardObjectVisible}" IsModal="True" Height="100" Panel.ZIndex="15">
@@ -67,8 +86,8 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <!--<Label Grid.Row="0" Grid.Column="0" Content="Введите адрес" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
-                <TextBox x:Name="Textbox" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="5" Text="{Binding Address, Mode=TwoWay}" VerticalAlignment="Center" />
-                <TextBlock Grid.Row="0" Grid.Column="0" x:Name="Placeholder"
+                <TextBox IsReadOnly="{Binding SetLabelGuardObjectVisibility}" x:Name="Textbox" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="5" Text="{Binding Address, Mode=TwoWay}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" x:Name="Placeholder"
                             Text="Введите адрес, например: Челябинск, Молодогвардейцев, 37а" FontStyle="Italic" VerticalAlignment="Center" Margin="10,0"  Foreground="DarkGray" HorizontalAlignment="Left">
                     <TextBlock.Style>
                         <Style TargetType="{x:Type TextBlock}">
@@ -82,12 +101,14 @@
                     </TextBlock.Style>
                 </TextBlock>
                 <Button Grid.Row="1" Grid.Column="0" Margin="5" Content="Рассчитать" BorderThickness="2" BorderBrush="Red" Command="{Binding CheckAddressAndGetCoordinatesCommand}"/>
-                <Button Grid.Row="1" Grid.Column="1" Margin="5" Content="Указать на карте"/>
-                <Button Grid.Row="1" Grid.Column="2" Margin="5" Content="Выбрать из CRM"/>
+                <!--<Button Grid.Row="1" Grid.Column="1" Margin="5" Content="Указать на карте" Command="{Binding ManualSetAddressCommand}"/>-->
+                <!--<Button Grid.Row="1" Grid.Column="2" Margin="5" Content="Выбрать из CRM"/>-->
+                <Button Grid.Column="2" Grid.Row="1" Command="{Binding HelpCommand}" ToolTip="Открывает инструкцию" 
+                        Background="Red" Content="?" Height="35" Width="35" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{StaticResource MahApps.Styles.Button.Circle}"/>
             </Grid>
         </mah:Flyout>
         <mah:Flyout Position="Bottom" IsModal="True" Height="250" IsOpen="{Binding ResultRoutesTimingListVisible}" Panel.ZIndex="15">
-            <DataGrid ItemsSource="{Binding RoutesTimingList}" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" AutoGenerateColumns="False">
+            <DataGrid ItemsSource="{Binding Source={StaticResource sort}}" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Экипаж" Binding="{Binding NameGroup}"/>
                     <DataGridTextColumn Header="Время" Binding="{Binding DurationText}"/>
@@ -96,15 +117,33 @@
         </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}">
             <UserControl.ContextMenu>
-                <ContextMenu IsOpen="{Binding ContextMenuIsOpen}">
+                <RibbonContextMenu IsOpen="{Binding ContextMenuIsOpen}">
+                    <Button Visibility="{Binding SetLabelGuardObjectVisibility, Converter={StaticResource BooleanToVisibilityConverter}}" Command="{Binding SetLabelGuardObjectCommand}" 
+                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}" 
+                            Content="Поставить метку охр. объекта" ToolTip="Устанавливает на карте метку охраняемого объекта"/>
                     <Button Command="{Binding CreateLabelGBRCommand}" Content="Поставить метку ГБР" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
                     <Button Command="{Binding ClearMapsCommand}" Content="Очистить карту"/>
                     <Button Command="{Binding EditMarkerCommand}" Content="Редактировать" ToolTip="На маркере правой кнопкой"/>
                     <Button Command="{Binding DeleteMarkerCommand}" Content="Удалить" ToolTip="На маркере правой кнопкой"/>
                     <Separator/>
                     <Button Command="{Binding CalculateRoutesVisibleCommand}" Content="Расчет прибытия" ToolTip="Позволяет рассчитать прибытие экипажей до объекта"/>
-                </ContextMenu>
+                </RibbonContextMenu>
+                <!--<ContextMenu>
+                    
+                    
+                </ContextMenu>-->
             </UserControl.ContextMenu>
         </UserControl>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=GuardsWindow}" 
+              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=GuardsWindow}" Grid.ColumnSpan="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="7*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <!--<StackPanel>-->
+            <mah:ProgressRing Grid.Row="0" IsActive="{Binding Loading}"/>
+            <Label Grid.Row="1" Content="{Binding LoadingText, Mode=TwoWay}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="24" Foreground="DarkRed" Margin="5"/>
+            <!--</StackPanel>-->
+        </Grid>
     </Grid>
 </mah:MetroWindow>

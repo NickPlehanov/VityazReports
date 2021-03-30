@@ -157,6 +157,15 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(ChartSeries));
             }
         }
+
+        private ObservableCollection<SeriesCustomCollection> _SeriesCollectionList = new ObservableCollection<SeriesCustomCollection>();
+        public ObservableCollection<SeriesCustomCollection> SeriesCollectionList {
+            get => _SeriesCollectionList;
+            set {
+                _SeriesCollectionList = value;
+                OnPropertyChanged(nameof(SeriesCollectionList));
+            }
+        }
         /// <summary>
         /// Легенда диаграммы для кастомизации
         /// </summary>
@@ -663,7 +672,7 @@ namespace VityazReports.ViewModel {
                 if (u == null)
                     return;
                 if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
-                    if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
+                    if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1000") == 0) {
                         Point point = u.TranslatePoint(new Point(), gmaps_contol);
                         GMapMarker marker = new GMapMarker(new PointLatLng()) {
                             Shape = new Ellipse {
@@ -675,9 +684,11 @@ namespace VityazReports.ViewModel {
                                 AllowDrop = true
                             }
                         };
-                        marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X - 35, (int)point.Y - 15);
-                        marker.ZIndex = -1;
+                        //marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X, (int)point.Y - 15);
+                        marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X, (int)point.Y);
+                        marker.ZIndex = 1000;
                         marker.Tag = "ГБР";
+                        marker.Offset = new Point(-35, -15);
                         gmaps_contol.Markers.Add(marker);
                         ChartSeries = null;
                     }
@@ -707,7 +718,7 @@ namespace VityazReports.ViewModel {
             get => _ClearGroup ??= new RelayCommand(async obj => {
                 //TODO: задать вопрос на подтвреждение удаления
                 ChartVisible = false;
-                var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == "-1" || x.Tag == null).ToList();
+                var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == "-1000" || x.Tag == null).ToList();
                 foreach (var item in markers) {
                     gmaps_contol.Markers.Remove(item);
                 }
@@ -716,7 +727,7 @@ namespace VityazReports.ViewModel {
                     gmaps_contol.Markers.Remove(item);
 
                 //ChartObjectsList.Clear();
-            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1" || x.Tag == null) != 0);
+            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1000" || x.Tag == null) != 0);
         }
 
         private MatrixTotals _SelectedObject;
@@ -828,8 +839,8 @@ namespace VityazReports.ViewModel {
                     ChartVisible = false;
                     Loading = true;
                     GMapMarker gbr = null;
-                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "-1");
-                    var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "-1").ToList();
+                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000");
+                    var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "1000").ToList();
                     ChartObjectsList.Clear();
 
                     if (gbr != null && objects != null) {
@@ -915,7 +926,38 @@ namespace VityazReports.ViewModel {
                     CalculateCommandContent = "Показать/скрыть расчёт";
                     Loading = false;
                 });
-            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "-1") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
+            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
+        }
+
+        private RelayCommand _ChangeSeriesCommand;
+        public RelayCommand ChangeSeriesCommand {
+            get => _ChangeSeriesCommand ??= new RelayCommand(async obj => {
+                if (SeriesCollectionList == null)
+                    return;
+                if (SeriesCollectionList.Count <= 0)
+                    return;
+                string _id = obj as string;
+                if (string.IsNullOrEmpty(_id))
+                    return;
+                ChartSeries=SeriesCollectionList.FirstOrDefault(x => x.Id.Equals(_id)).SeriesCollectionBuild;
+            });
+        }
+        /// <summary>
+        /// Команда сохранения текущего расчета в коллекцию
+        /// </summary>
+        private RelayCommand _SaveChartSeriesCommand;
+        public RelayCommand SaveChartSeriesCommand {
+            get => _SaveChartSeriesCommand ??= new RelayCommand(async obj => {
+                if (ChartSeries == null) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Сохранение пустой коллекции невозможно",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                SeriesCollectionList.Add(new SeriesCustomCollection() { Id = DateTime.Now.ToString(), SeriesCollectionBuild = ChartSeries });
+            },obj=> ChartSeries!=null);
         }
     }
 }

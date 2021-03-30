@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:VityazReports" xmlns:vm="clr-namespace:VityazReports.ViewModel"
+        xmlns:local="clr-namespace:VityazReports" xmlns:vm="clr-namespace:VityazReports.ViewModel" xmlns:helpers="clr-namespace:VityazReports.Helpers"
                   mc:Ignorable="d"
         Title="Отчёты" Height="450" Width="800">
     <mah:MetroWindow.DataContext>
@@ -14,8 +14,11 @@
         <ListBox ItemsSource="{Binding ReportList}" SelectionMode="Single">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Button Content="{Binding RptName}" Tag="{Binding RptId}" Style="{StaticResource MahApps.Styles.Button.ToolBar}" Margin="5" 
+                    <!--<WrapPanel>-->
+                        <!--<helpers:FlatControl Text="{Binding RptName}" Tag="{Binding RptId}" ClickCommand="{Binding DataContext.SelectedReport, RelativeSource={RelativeSource AncestorType=ListBox}}"/>-->
+                        <Button Foreground="Black" Content="{Binding RptName}" Tag="{Binding RptId}" Style="{StaticResource MahApps.Styles.Button.Calendar.Header}" Margin="5" 
                             Command="{Binding DataContext.SelectedReport, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
+                    <!--</WrapPanel>-->
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

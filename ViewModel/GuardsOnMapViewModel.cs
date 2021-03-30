@@ -6,12 +6,17 @@ using Notifications.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using VityazReports.Data;
 using VityazReports.Helpers;
@@ -27,7 +32,24 @@ namespace VityazReports.ViewModel {
         public GuardsOnMapViewModel() {
             InitializeMapControl.Execute(null);
             InitializeColorList.Execute(null);
-            ContextMenuIsOpen = false;
+            ContextMenuIsOpen = true;
+            ManualAddress = false;
+            IsReadOnlyAddress = false;
+            SetLabelGuardObjectVisibility = true;
+            ShowAllGroupsCommand.Execute(null);
+            CalculateRoutesVisibleCommand.Execute(null);
+            Loading = false;
+
+            gmaps_contol.IgnoreMarkerOnMouseWheel = true;
+
+            PointLatLng point = new PointLatLng(Convert.ToDouble(0), Convert.ToDouble(0));
+            GMapMarker marker = new GMapMarker(point);
+            marker.Shape = new Image() {
+                Source = Conv.ToImageSource(Properties.Resources.Icon),
+                Stretch = Stretch.None
+            };
+            gmaps_contol.Markers.Add(marker);
+            gmaps_contol.UpdateLayout();
         }
 
         private GMapControl _gmaps_contol = new GMapControl();
@@ -176,6 +198,7 @@ namespace VityazReports.ViewModel {
                     Message = "Сохранение успешно",
                     Type = NotificationType.Success
                 });
+                ShowAllGroupsCommand.Execute(null);
             });
         }
         private RelayCommand _InitializeColorList;
@@ -240,6 +263,15 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
+            }
+        }
+
         private RelayCommand _CheckAccessCommand;
         public RelayCommand CheckAccessCommand {
             get => _CheckAccessCommand ??= new RelayCommand(async obj => {
@@ -250,7 +282,7 @@ namespace VityazReports.ViewModel {
         private RelayCommand _ClearMapsCommand;
         public RelayCommand ClearMapsCommand {
             get => _ClearMapsCommand ??= new RelayCommand(async obj => {
-                List<GMapMarker> markers = gmaps_contol.Markers.ToList();
+                List<GMapMarker> markers = gmaps_contol.Markers.Where(x => x.ZIndex != 100).ToList();
                 if (!markers.Any())
                     return;
                 foreach (GMapMarker item in markers)
@@ -276,12 +308,12 @@ namespace VityazReports.ViewModel {
                         AllowDrop = true
                     }
                 };
-                marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X - 35, (int)point.Y - 15);
+                marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X - 40, (int)point.Y - 45);
                 marker.ZIndex = -1;
                 marker.Shape.MouseRightButtonUp += Shape_MouseRightButtonUp;
                 gmaps_contol.Markers.Add(marker);
                 NewMarker = marker;
-                PointLatLng p = gmaps_contol.FromLocalToLatLng((int)point.X - 35, (int)point.Y - 15);
+                PointLatLng p = gmaps_contol.FromLocalToLatLng((int)point.X - 40, (int)point.Y - 45);
                 Latitude = p.Lat.ToString().Replace('.', ',');
                 Longitude = p.Lng.ToString().Replace('.', ',');
                 //Отрабатывает в случае если это редактирование
@@ -398,24 +430,57 @@ namespace VityazReports.ViewModel {
                 if (!groups_places.Any())
                     return;
                 foreach (Models.NewPlacesGbrextensionBase item in groups_places) {
-                    PointLatLng point = new PointLatLng(Convert.ToDouble(item.NewLatitude.Replace('.', ',')), Convert.ToDouble(item.NewLongitude.Replace('.', ',')));
-                    GMapMarker marker = new GMapMarker(point) {
-                        Shape = new Ellipse {
-                            Width = 12,
-                            Height = 12,
-                            Stroke = Brushes.DarkRed,
-                            StrokeThickness = 7.5,
-                            ToolTip = item.NewName,
-                            AllowDrop = true
-                        }
+                    //PointLatLng point = new PointLatLng(Convert.ToDouble(item.NewLatitude.Replace('.', ',')), Convert.ToDouble(item.NewLongitude.Replace('.', ',')));
+                    GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(item.NewLatitude.Replace('.', ',')), Convert.ToDouble(item.NewLongitude.Replace('.', ',')))) {
+                        //Shape = new Ellipse {
+                        //    Width = 12,
+                        //    Height = 12,
+                        //    Stroke = Brushes.DarkRed,
+                        //    StrokeThickness = 7.5,
+                        //    ToolTip = item.NewName,
+                        //    AllowDrop = true
+                        //}
+                        Shape = new Image() {
+                            Source = Conv.ToImageSource(Properties.Resources.Icon),
+                            Stretch = Stretch.Fill
+                        },
+                        ZIndex=1000,
+                        Position= new PointLatLng(Convert.ToDouble(item.NewLatitude.Replace('.', ',')), Convert.ToDouble(item.NewLongitude.Replace('.', ','))),
+                        Offset=new System.Windows.Point(0,0)
                     };
                     marker.Tag = item.NewPlacesGbrid.ToString();
-                    marker.Shape.MouseRightButtonUp += Shape_MouseRightButtonUp;
+                    //GMap.NET.PointLatLng pnt = gmaps_contol.FromLocalToLatLng(marker.LocalPositionY, marker.LocalPositionX);
+                    //marker.Position = pnt;
+                    //marker.Shape.MouseRightButtonUp += Shape_MouseRightButtonUp;
+                    marker.ZIndex = 100;
+
+                    //marker.Shape = new Image() {
+                    //    Source = Conv.ToImageSource(Properties.Resources.Icon),
+                    //    //Source = new BitmapImage(new Uri(@"C:\Users\pna\Downloads\marker.png", UriKind.RelativeOrAbsolute)),
+                    //    Stretch =Stretch.UniformToFill,
+                    //    Height=15,
+                    //    Width=15
+                    //};
                     gmaps_contol.Markers.Add(marker);
+
+
                 }
             });
         }
 
+        private RelayCommand _HelpCommand;
+        public RelayCommand HelpCommand {
+            get => _HelpCommand ??= new RelayCommand(async obj => {
+                if (File.Exists(@"\\server-nass\Install\WORKPLACE\Инструкции\Экипажи на карте.pdf"))
+                    Process.Start(new ProcessStartInfo(@"\\server-nass\Install\WORKPLACE\Инструкции\Экипажи на карте.pdf") { UseShellExecute = true });
+                else
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Файл инструкции не найден",
+                        Type = NotificationType.Error
+                    });
+            });
+        }
         private bool _GuardObjectVisible;
         public bool GuardObjectVisible {
             get => _GuardObjectVisible;
@@ -437,13 +502,28 @@ namespace VityazReports.ViewModel {
         private RelayCommand _CalculateRoutesVisibleCommand;
         public RelayCommand CalculateRoutesVisibleCommand {
             get => _CalculateRoutesVisibleCommand ??= new RelayCommand(async obj => {
+                if (GuardObjectVisible && RoutesTimingList.Count > 0) {
+                    ResultRoutesTimingListVisible = !ResultRoutesTimingListVisible;
+                    return;
+                }
                 GuardObjectVisible = !GuardObjectVisible;
+                if (GuardObjectVisible) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Информация",
+                        Message = @"Укажите адрес в поле для ввода и нажмите кнопку Рассчитать, либо Вы можете нажать правой кнопкой мыши на карте на ",
+                        Type = NotificationType.Information
+                    });
+                }
             });
         }
 
         private RelayCommand _CheckAddressAndGetCoordinatesCommand;
         public RelayCommand CheckAddressAndGetCoordinatesCommand {
             get => _CheckAddressAndGetCoordinatesCommand ??= new RelayCommand(async obj => {
+                if (!string.IsNullOrEmpty(Latitude) && !string.IsNullOrEmpty(Longitude)) {
+                    GetRoutes.Execute(null);
+                    return;
+                }
                 if (string.IsNullOrEmpty(Address))
                     return;
                 using (HttpClient client = new HttpClient()) {
@@ -513,6 +593,7 @@ namespace VityazReports.ViewModel {
         private RelayCommand _GetRoutes;
         public RelayCommand GetRoutes {
             get => _GetRoutes ??= new RelayCommand(async obj => {
+                Loading = true;
                 List<NewPlacesGbrextensionBase> groups_places = await context.NewPlacesGbrextensionBase.Where(x => x.NewLatitude != null && x.NewLongitude != null).AsNoTracking().ToListAsync();
                 if (!groups_places.Any())
                     return;
@@ -557,7 +638,108 @@ namespace VityazReports.ViewModel {
                         return;
                     }
                 }
+                ContextMenuIsOpen = false;
                 ResultRoutesTimingListVisible = true;
+                Loading = false;
+            });
+        }
+
+        private bool _SetLabelGuardObjectVisibility;
+        public bool SetLabelGuardObjectVisibility {
+            get => _SetLabelGuardObjectVisibility;
+            set {
+                _SetLabelGuardObjectVisibility = value;
+                OnPropertyChanged(nameof(SetLabelGuardObjectVisibility));
+            }
+        }
+        private bool _ManualAddress;
+        public bool ManualAddress {
+            get => _ManualAddress;
+            set {
+                _ManualAddress = value;
+                OnPropertyChanged(nameof(ManualAddress));
+            }
+        }
+        /// <summary>
+        /// Команда запускающая процесс ручного указания на карте охраняемого объекта и последующего получения координат для рассчета
+        /// </summary>
+        private RelayCommand _ManualSetAddressCommand;
+        public RelayCommand ManualSetAddressCommand {
+            get => _ManualSetAddressCommand ??= new RelayCommand(async obj => {
+                //ManualAddress = true;
+                //SetLabelGuardObjectVisibility = true;
+                //notificationManager.Show(new NotificationContent {
+                //    Title = "Информация",
+                //    Message = "Укажите охраняемый объект на карте" + Environment.NewLine + "Правой кнопкой мыши на карте",
+                //    Type = NotificationType.Information
+                //});
+            });
+        }
+
+        private bool _IsReadOnlyAddress;
+        public bool IsReadOnlyAddress {
+            get => _IsReadOnlyAddress;
+            set {
+                _IsReadOnlyAddress = value;
+                OnPropertyChanged(nameof(IsReadOnlyAddress));
+            }
+        }
+
+        //private Visibility _SetLabelGuardObjectVisibility1;
+        //public Visibility SetLabelGuardObjectVisibility1 {
+        //    get => _SetLabelGuardObjectVisibility1;
+        //    set {
+        //        _SetLabelGuardObjectVisibility1 = value;
+        //        OnPropertyChanged(nameof(SetLabelGuardObjectVisibility1));
+        //    }
+        //}
+        /// <summary>
+        /// Устанавливает на карте метку и получает координаты(географические) по координатам контрола
+        /// </summary>
+        private RelayCommand _SetLabelGuardObjectCommand;
+        public RelayCommand SetLabelGuardObjectCommand {
+            get => _SetLabelGuardObjectCommand ??= new RelayCommand(async obj => {
+                ClearMapsCommand.Execute(null);
+                System.Windows.Controls.Button u = obj as System.Windows.Controls.Button;
+                if (u == null)
+                    return;
+                System.Windows.Point point = u.TranslatePoint(new System.Windows.Point(), gmaps_contol);
+                GMapMarker marker = new GMapMarker(new PointLatLng()) {
+                    Shape = new Ellipse {
+                        Width = 20,
+                        Height = 20,
+                        Stroke = Brushes.Red,
+                        StrokeThickness = 7.5,
+                        AllowDrop = true
+                    }
+                };
+                marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X - 35, (int)point.Y - 15);
+                marker.ZIndex = -1;
+                gmaps_contol.Markers.Add(marker);
+                Latitude = marker.Position.Lat.ToString().Replace(',', '.');
+                Longitude = marker.Position.Lng.ToString().Replace(',', '.');
+
+                Root geocoder;
+                using (HttpClient client = new HttpClient()) {
+                    HttpResponseMessage response = await client.GetAsync(@"https://geocode-maps.yandex.ru/1.x/?apikey=68d35a07-648c-49a3-9403-9f1ceb903ca7&format=json&geocode=" + Longitude + "," + Latitude);
+                    if (response.IsSuccessStatusCode) {
+                        geocoder = JsonConvert.DeserializeObject<Root>(response.Content.ReadAsStringAsync().Result);
+                        if (geocoder != null) {
+                            Address = geocoder.response.GeoObjectCollection.featureMember[0].GeoObject.description + ", " + geocoder.response.GeoObjectCollection.featureMember[0].GeoObject.name;
+                            IsReadOnlyAddress = true;
+                        }
+                    }
+                }
+                if (string.IsNullOrEmpty(Latitude) || string.IsNullOrEmpty(Longitude)) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Координаты не были получены, укажите адрес вручную",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                GetRoutes.Execute(null);
+                //SetLabelGuardObjectVisibility = false;
             });
         }
     }

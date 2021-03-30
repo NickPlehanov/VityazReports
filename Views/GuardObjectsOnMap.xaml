@@ -39,6 +39,10 @@
             <Button Command="{Binding CreateReportCommand}" ToolTip="Выгрузить отчёт">
                 <iconPacks:BoxIcons Kind="SolidDownload"/>
             </Button>
+            <Button Command="{Binding SaveChartSeriesCommand}" ToolTip="Выгрузить отчёт">
+                <iconPacks:BoxIcons Kind="SolidSave"/>
+            </Button>
+            <mah:DropDownButton ItemsSource="{Binding SeriesCollectionList}" Content="{Binding Id}" Command="{Binding ChangeSeriesCommand}"/>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <mah:MetroWindow.RightWindowCommands>
@@ -59,7 +63,7 @@
                 </CollectionViewSource.SortDescriptions>
             </CollectionViewSource>
         </Grid.Resources>
-        <mah:Flyout Width="150" Position="Right" IsModal="True" AnimateOpacity="True" IsOpen="{Binding FlyoutShowGroupsVisibleState}" Panel.ZIndex="1">
+        <mah:Flyout Theme="Dark" Width="150" Position="Right" IsModal="True" AnimateOpacity="True" IsOpen="{Binding FlyoutShowGroupsVisibleState}" Panel.ZIndex="1">
             <Grid>
                 <ScrollViewer>
             <StackPanel>
@@ -77,7 +81,7 @@
                         Command="{Binding HelpCommand}"/>
             </Grid>
         </mah:Flyout>
-        <mah:Flyout Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding ChartVisible}">
+        <mah:Flyout Theme="Dark" Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding ChartVisible}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -98,7 +102,7 @@
                 </DataGrid>
             </Grid>
         </mah:Flyout>
-        <mah:Flyout Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding AnalyzeVisible}">
+        <mah:Flyout Theme="Dark" Position="Bottom" IsModal="True" Height="250" Panel.ZIndex="1" IsOpen="{Binding AnalyzeVisible}">
             <Grid Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="6*"/>
@@ -119,12 +123,13 @@
                 </DataGrid.Columns>
             </DataGrid>
                 <Button Grid.Column="0" Grid.Row="1" Content="Пересчитать" Command="{Binding GetCountFarObjectCommand}"/>
-                <Button Grid.Column="1" Grid.Row="1" Command="{Binding HelpCommand}" ToolTip="Расстояние указано в КМ. -1 означает, невозможность построить маршрут" Background="Red" Content="?" Height="35" Width="35" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{StaticResource MahApps.Styles.Button.Circle}"/>
+                <Button Grid.Column="1" Grid.Row="1" Command="{Binding HelpCommand}" ToolTip="Расстояние указано в КМ. -1 означает, невозможность построить маршрут" 
+                        Background="Red" Content="?" Height="35" Width="35" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{StaticResource MahApps.Styles.Button.Circle}"/>
             </Grid>
         </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}">
             <UserControl.ContextMenu>
-                <ContextMenu IsOpen="{Binding ContextMenuIsOpen}">
+                <RibbonContextMenu IsOpen="{Binding ContextMenuIsOpen}">
                     <Button Command="{Binding Mode=OneWay, Path=CreateLabelGbr}" Content="Поставить метку ГБР" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
                     <!--<Button Command="{Binding CalculateCommand}" Content="Рассчитать прибытие"/>-->
                     <Button Command="{Binding CalculateCommand}" Content="{Binding CalculateCommandContent}"/>
@@ -134,7 +139,7 @@
                     <Button Command="{Binding UpdateMarkers}" Content="Обновить"/>
                     <Separator/>
                     <Button Command="{Binding CreateReportCommand}" Content="Выгрузить отчёт"/>
-                </ContextMenu>
+                </RibbonContextMenu>
             </UserControl.ContextMenu>
         </UserControl>
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=GuardObjectOnMapWindow}" 
