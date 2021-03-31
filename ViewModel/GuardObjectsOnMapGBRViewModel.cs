@@ -929,6 +929,14 @@ namespace VityazReports.ViewModel {
             }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }
 
+        private SeriesCustomCollection _SelectedSeriesCollection;
+        public SeriesCustomCollection SelectedSeriesCollection {
+            get => _SelectedSeriesCollection;
+            set {
+                _SelectedSeriesCollection = value;
+                OnPropertyChanged(nameof(SelectedSeriesCollection));
+            }
+        }
         private RelayCommand _ChangeSeriesCommand;
         public RelayCommand ChangeSeriesCommand {
             get => _ChangeSeriesCommand ??= new RelayCommand(async obj => {
@@ -936,10 +944,10 @@ namespace VityazReports.ViewModel {
                     return;
                 if (SeriesCollectionList.Count <= 0)
                     return;
-                string _id = obj as string;
-                if (string.IsNullOrEmpty(_id))
+                SeriesCustomCollection _id = obj as SeriesCustomCollection;
+                if (_id==null)
                     return;
-                ChartSeries=SeriesCollectionList.FirstOrDefault(x => x.Id.Equals(_id)).SeriesCollectionBuild;
+                ChartSeries=SeriesCollectionList.FirstOrDefault(x => x.Id.Equals(_id.Id)).SeriesCollectionBuild;
             });
         }
         /// <summary>
@@ -957,6 +965,11 @@ namespace VityazReports.ViewModel {
                     return;
                 }
                 SeriesCollectionList.Add(new SeriesCustomCollection() { Id = DateTime.Now.ToString(), SeriesCollectionBuild = ChartSeries });
+                notificationManager.Show(new NotificationContent {
+                    Title = "Информация",
+                    Message = "Расчет сохранен",
+                    Type = NotificationType.Success
+                });
             },obj=> ChartSeries!=null);
         }
     }

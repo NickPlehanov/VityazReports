@@ -42,7 +42,15 @@
             <Button Command="{Binding SaveChartSeriesCommand}" ToolTip="Выгрузить отчёт">
                 <iconPacks:BoxIcons Kind="SolidSave"/>
             </Button>
-            <mah:DropDownButton ItemsSource="{Binding SeriesCollectionList}" Content="{Binding Id}" Command="{Binding ChangeSeriesCommand}"/>
+            <!--<mah:DropDownButton ItemsSource="{Binding SeriesCollectionList}">
+                <mah:DropDownButton.ItemContainerStyle>
+                    <Style TargetType="MenuItem">
+                        <Setter Property="Header" Value="{Binding Path=Id}"/>
+                        <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=ChangeSeriesCommand}"/>
+                    </Style>
+                </mah:DropDownButton.ItemContainerStyle>
+            </mah:DropDownButton>-->
+            <mah:SplitButton DisplayMemberPath="Id" ItemsSource="{Binding SeriesCollectionList}" SelectedItem="{Binding SelectedSeriesCollection}" Command="{Binding ChangeSeriesCommand}" CommandParameter="{Binding SelectedSeriesCollection}"/>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <mah:MetroWindow.RightWindowCommands>
