@@ -39,7 +39,7 @@
             <Button Command="{Binding CreateReportCommand}" ToolTip="Выгрузить отчёт">
                 <iconPacks:BoxIcons Kind="SolidDownload"/>
             </Button>
-            <Button Command="{Binding SaveChartSeriesCommand}" ToolTip="Выгрузить отчёт">
+            <Button Command="{Binding SaveChartSeriesCommand}" ToolTip="Сохранить расчёт">
                 <iconPacks:BoxIcons Kind="SolidSave"/>
             </Button>
             <!--<mah:DropDownButton ItemsSource="{Binding SeriesCollectionList}">
@@ -60,7 +60,7 @@
     </mah:MetroWindow.RightWindowCommands>
     <Grid>
         <Grid.Resources>
-            <CollectionViewSource x:Key="sort" Source="{Binding ChartObjectsList}">
+            <CollectionViewSource x:Key="sort" Source="{Binding ChartObjectsList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <CollectionViewSource.SortDescriptions>
                     <scm:SortDescription PropertyName="Duration" Direction="Descending"/>
                 </CollectionViewSource.SortDescriptions>

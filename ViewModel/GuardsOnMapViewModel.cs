@@ -83,8 +83,10 @@ namespace VityazReports.ViewModel {
         public bool GroupInfoFlyoutVisible {
             get => _GroupInfoFlyoutVisible;
             set {
-                if (_GroupInfoFlyoutVisible && !value && NewMarker != null)
+                if (_GroupInfoFlyoutVisible && !value && NewMarker != null) {
                     gmaps_contol.Markers.Remove(NewMarker);
+                    GuardObjectVisible = true;
+                }
                 _GroupInfoFlyoutVisible = value;
                 OnPropertyChanged(nameof(GroupInfoFlyoutVisible));
             }
@@ -112,6 +114,8 @@ namespace VityazReports.ViewModel {
         public RelayCommand SetPasswordCommand {
             get => _SetPasswordCommand ??= new RelayCommand(async obj => {
                 //TODO:Потом сделать из инишников 
+                if (string.IsNullOrEmpty(Password))
+                    return;
                 if (Password.Equals("0350")) {
                     notificationManager.Show(new NotificationContent {
                         Title = "Вход",
@@ -173,6 +177,7 @@ namespace VityazReports.ViewModel {
                         Type = NotificationType.Error
                     });
                     GroupInfoFlyoutVisible = false;
+                    GuardObjectVisible = true;
                     return;
                 }
                 Guid NewPlacesGbrbaseID = Guid.NewGuid();
@@ -193,6 +198,7 @@ namespace VityazReports.ViewModel {
                 context.NewPlacesGbrextensionBase.Add(new Models.NewPlacesGbrextensionBase() { NewPlacesGbrid = NewPlacesGbrbaseID, NewName = GroupName, NewLatitude = Latitude, NewLongitude = Longitude });
                 await context.SaveChangesAsync();
                 GroupInfoFlyoutVisible = false;
+                GuardObjectVisible = true;
                 notificationManager.Show(new NotificationContent {
                     Title = "Успех",
                     Message = "Сохранение успешно",
@@ -294,6 +300,7 @@ namespace VityazReports.ViewModel {
         private RelayCommand _CreateLabelGBRCommand;
         public RelayCommand CreateLabelGBRCommand {
             get => _CreateLabelGBRCommand ??= new RelayCommand(async obj => {
+                GuardObjectVisible = false;
                 GroupInfoFlyoutVisible = true;
                 var u = obj as System.Windows.Controls.Button;
                 if (u == null)
@@ -377,6 +384,7 @@ namespace VityazReports.ViewModel {
                 if (NewMarker == null)
                     return;
                 gmaps_contol.Markers.Remove(NewMarker);
+                GuardObjectVisible = true;
                 GroupInfoFlyoutVisible = false;
             });
         }
@@ -587,6 +595,9 @@ namespace VityazReports.ViewModel {
             get => _ResultRoutesTimingListVisible;
             set {
                 _ResultRoutesTimingListVisible = value;
+                if (!_ResultRoutesTimingListVisible) {
+                    GuardObjectVisible = true;
+                }
                 OnPropertyChanged(nameof(ResultRoutesTimingListVisible));
             }
         }
@@ -739,6 +750,7 @@ namespace VityazReports.ViewModel {
                     return;
                 }
                 GetRoutes.Execute(null);
+                GuardObjectVisible = false;
                 //SetLabelGuardObjectVisibility = false;
             });
         }

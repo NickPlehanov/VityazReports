@@ -1,52 +1,32 @@
 ﻿{
    "CodeGenerationMode": 0,
-   "ContextClassName": "MsCRMContext",
+   "ContextClassName": "ReportBaseContext",
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
    "IncludeConnectionString": true,
    "ModelNamespace": null,
    "OutputContextPath": "Data",
-   "OutputPath": "Models",
+   "OutputPath": "Models\\MainWindow",
    "ProjectRootNamespace": "VityazReports",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
-         "Name": "[dbo].[New_alarmExtensionBase]",
+         "Name": "[dbo].[CalculatedRoutes]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[New_andromedaExtensionBase]",
+         "Name": "[dbo].[Reports]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[New_guard_object_History]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[New_guard_objectBase]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[New_guard_objectExtensionBase]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[New_PlacesGBRBase]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[New_PlacesGBRExtensionBase]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[SystemUserBase]",
+         "Name": "[dbo].[UsersReports]",
          "ObjectType": 0
       }
    ],
-   "UiHint": "SQL-SERVICE.vityaz_MSCRM",
+   "UiHint": "SQL-SERVICE.ReportBase",
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,
    "UseDbContextSplitting": false,

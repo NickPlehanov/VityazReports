@@ -19,6 +19,7 @@ namespace VityazReports.Data
         {
         }
 
+        public virtual DbSet<CalculatedRoutes> CalculatedRoutes { get; set; }
         public virtual DbSet<Reports> Reports { get; set; }
         public virtual DbSet<UsersReports> UsersReports { get; set; }
 
@@ -34,6 +35,23 @@ namespace VityazReports.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Cyrillic_General_CI_AS");
+
+            modelBuilder.Entity<CalculatedRoutes>(entity =>
+            {
+                entity.Property(e => e.ClcRecordId)
+                    .ValueGeneratedNever()
+                    .HasComment("Задает уникальный идентификатор записи в базе");
+
+                entity.Property(e => e.ClcCalcName).HasComment("Наименование расчета для отображения пользователю");
+
+                entity.Property(e => e.ClcDuration).HasComment("Время прибытия экипажа до объекта в секундах");
+
+                entity.Property(e => e.ClcGroup).HasComment("Номер маршрута(экипажа)");
+
+                entity.Property(e => e.ClcKeyCalcId).HasComment("Поле для группировки расчётов(объекты из одного расчета имеют один KeyCalc)");
+
+                entity.Property(e => e.ClcObjectId).HasComment("Хранит идентификатор объекта базы A28");
+            });
 
             modelBuilder.Entity<Reports>(entity =>
             {

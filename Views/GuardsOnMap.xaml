@@ -36,7 +36,7 @@
         </Grid.Resources>
         <mah:Flyout Position="Top" IsOpen="{Binding PasswordFlyoutVisible}" IsModal="True" Panel.ZIndex="15">
             <WrapPanel Margin="5" VerticalAlignment="Center">
-                <TextBox Visibility="Visible" Margin="5" Width="100" Text="{Binding Password}">
+                <TextBox Visibility="Visible" Margin="5" Width="100" Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <TextBox.InputBindings>
                         <KeyBinding Key="Enter" Command="{Binding SetPasswordCommand}"/>
                     </TextBox.InputBindings>

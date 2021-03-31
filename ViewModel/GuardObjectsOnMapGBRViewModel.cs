@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
         private readonly A28Context context = new A28Context();
+        private readonly ReportBaseContext reportContext = new ReportBaseContext();
         private readonly CommonMethods commonMethods = new CommonMethods();
         NotificationManager notificationManager = new NotificationManager();
 
@@ -280,46 +281,46 @@ namespace VityazReports.ViewModel {
                 int counter = 1;
                 foreach (var item in ObjectsList) {
                     //Tasks.Add(new Task((Action)async delegate {
-                        if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
-                            LoadingText = null;
-                            notificationManager.Show(new NotificationContent {
-                                Title = "Ошибка",
-                                Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
-                                Type = NotificationType.Error
-                            });
-                            return;
-                        }
-                        //await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
-                        LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
-                        //});
-                        if (item.Latitude != null && item.Longitude != null) {
-                            string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
-                            HttpResponseMessage response = await client.GetAsync(resp);
-                            if (response.IsSuccessStatusCode) {
-                                var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
-                                if (osrm.code.Equals("Ok")) //так же обработать noRoutes
-                                    if (osrm.routes.Count >= 1)
-                                        if (osrm.routes[0].distance / 1000 > Nkm)
-                                            await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
-                                                FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
-                                            });
-                                if (osrm.code.Equals("NoRoute"))
-                                    await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
-                                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
-                                    });
-                            }
-                            else {
+                    if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
+                        LoadingText = null;
+                        notificationManager.Show(new NotificationContent {
+                            Title = "Ошибка",
+                            Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
+                            Type = NotificationType.Error
+                        });
+                        return;
+                    }
+                    //await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                    LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
+                    //});
+                    if (item.Latitude != null && item.Longitude != null) {
+                        string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
+                        HttpResponseMessage response = await client.GetAsync(resp);
+                        if (response.IsSuccessStatusCode) {
+                            var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
+                            if (osrm.code.Equals("Ok")) //так же обработать noRoutes
+                                if (osrm.routes.Count >= 1)
+                                    if (osrm.routes[0].distance / 1000 > Nkm)
+                                        await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                            FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
+                                        });
+                            if (osrm.code.Equals("NoRoute"))
                                 await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
                                     FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
                                 });
-                            }
                         }
                         else {
                             await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
                                 FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
                             });
                         }
-                        counter++;
+                    }
+                    else {
+                        await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                            FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                        });
+                    }
+                    counter++;
                     //},TaskCreationOptions.RunContinuationsAsynchronously));
                 }
                 //var block = 50;
@@ -584,6 +585,7 @@ namespace VityazReports.ViewModel {
                     ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).IsShowOnMap = true;
                     ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).TgBtn = toggleButton;
                     toggleButton.IsChecked = true;
+                    AddSeriesCollection.Execute(null);
                 }
             });
         }
@@ -691,6 +693,8 @@ namespace VityazReports.ViewModel {
                         marker.Offset = new Point(-35, -15);
                         gmaps_contol.Markers.Add(marker);
                         ChartSeries = null;
+                        //SeriesCollectionList.Clear();
+                        ChartVisible = false;
                     }
                     else
                         notificationManager.Show(new NotificationContent {
@@ -825,7 +829,7 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(CalculateCommandContent));
             }
         }
-        
+
         private RelayCommand _CalculateCommand;
         public RelayCommand CalculateCommand {
             get => _CalculateCommand ??= new RelayCommand(async obj => {
@@ -925,6 +929,7 @@ namespace VityazReports.ViewModel {
                     }
                     CalculateCommandContent = "Показать/скрыть расчёт";
                     Loading = false;
+                    PrivateID = null;
                 });
             }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }
@@ -937,6 +942,15 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(SelectedSeriesCollection));
             }
         }
+
+        private string _PrivateID;
+        public string PrivateID {
+            get => _PrivateID;
+            set {
+                _PrivateID = value;
+                OnPropertyChanged(nameof(PrivateID));
+            }
+        }
         private RelayCommand _ChangeSeriesCommand;
         public RelayCommand ChangeSeriesCommand {
             get => _ChangeSeriesCommand ??= new RelayCommand(async obj => {
@@ -945,9 +959,30 @@ namespace VityazReports.ViewModel {
                 if (SeriesCollectionList.Count <= 0)
                     return;
                 SeriesCustomCollection _id = obj as SeriesCustomCollection;
-                if (_id==null)
+                if (_id == null)
                     return;
-                ChartSeries=SeriesCollectionList.FirstOrDefault(x => x.Id.Equals(_id.Id)).SeriesCollectionBuild;
+                if (PrivateID != null)
+                    if (PrivateID.Equals(_id.Id)) {
+                        ChartVisible = !ChartVisible;
+                        return;
+                    }
+                ChartObjectsList.Clear();
+                var col = SeriesCollectionList.FirstOrDefault(x => x.Id.Equals(_id.Id));
+                PrivateID = col.Id;
+                ChartSeries = col.SeriesCollectionBuild;
+                foreach (var item in col.COL.ToList()) {
+                    var _obj = context.Object.FirstOrDefault(x => x.ObjectId == item.Id);
+                    ChartObjectsList.Add(new MatrixTotals(
+                        duration: item.Duration,
+                        durationText: TimeSpan.FromSeconds(item.Duration).Minutes.ToString() + ":" + TimeSpan.FromSeconds(item.Duration).Seconds.ToString(),
+                        objectInfo: Convert.ToString(_obj.ObjectNumber, 16) + Environment.NewLine + _obj.Name,
+                        item.Id,
+                        null
+                        ));
+                }
+                ChartVisible = true;
+                CreateLegend.Execute(null);
+                CreateToolTip.Execute(null);
             });
         }
         /// <summary>
@@ -964,13 +999,96 @@ namespace VityazReports.ViewModel {
                     });
                     return;
                 }
-                SeriesCollectionList.Add(new SeriesCustomCollection() { Id = DateTime.Now.ToString(), SeriesCollectionBuild = ChartSeries });
+                int objtype = gmaps_contol.Markers.First(x => x.ZIndex != 1000).ZIndex;
+                Guid ClcKey = Guid.NewGuid();
+                string nm = DateTime.Now.ToString();
+                foreach (var item in ChartObjectsList) {
+                    reportContext.CalculatedRoutes.Add(new Models.MainWindow.CalculatedRoutes() {
+                        ClcRecordId = Guid.NewGuid(),
+                        ClcObjectId = item.Id,
+                        ClcDuration = item.Duration,
+                        ClcGroup = objtype,
+                        ClcKeyCalcId = ClcKey,
+                        ClcCalcName = nm
+                    });
+                }
+                await reportContext.SaveChangesAsync();
+                SeriesCollectionList.Add(new SeriesCustomCollection(DateTime.Now.ToString(), ChartSeries, null));
                 notificationManager.Show(new NotificationContent {
                     Title = "Информация",
                     Message = "Расчет сохранен",
                     Type = NotificationType.Success
                 });
-            },obj=> ChartSeries!=null);
+            }, obj => ChartSeries != null && PrivateID==null /*&& !SeriesCollectionList.Any(x=>x.Id)*/);
+        }
+
+        private RelayCommand _AddSeriesCollection;
+        public RelayCommand AddSeriesCollection {
+            get => _AddSeriesCollection ??= new RelayCommand(async obj => {
+                int? objtype = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex != 1000).ZIndex;
+                if (objtype == null)
+                    return;
+                var collection = reportContext.CalculatedRoutes.Where(x => x.ClcGroup == objtype).AsNoTracking().ToList();
+                if (collection == null)
+                    return;
+                if (!collection.Any())
+                    return;
+                //TODO: требуется сделать группировки по ключу расчета, так как у нас может быть много расчетов
+                var grouped_collection = collection.GroupBy(a => new { a.ClcKeyCalcId }).ToList();
+                SeriesCollection series = null;
+                string id = null;
+                List<MatrixTotals> mt = new List<MatrixTotals>();
+                foreach (var grp in grouped_collection) {
+                    mt = new List<MatrixTotals>();
+                    foreach (var item in grp) {
+                        id = item.ClcCalcName;
+                        var _obj = context.Object.FirstOrDefault(x => x.ObjectId == item.ClcObjectId);
+                        mt.Add(new MatrixTotals(
+                            duration: item.ClcDuration,
+                            durationText: TimeSpan.FromSeconds(item.ClcDuration).Minutes.ToString() + ":" + TimeSpan.FromSeconds(item.ClcDuration).Seconds.ToString(),
+                            objectInfo: Convert.ToString(_obj.ObjectNumber, 16) + Environment.NewLine + _obj.Name,
+                            item.ClcObjectId,
+                            null
+                            ));
+                    }
+                    series = new SeriesCollection() {
+                            new PieSeries
+                            {
+                                Title = ">15",
+                                Values = new ChartValues<ObservableValue>{new ObservableValue(mt.Count(x => x.Duration > 900)) },
+                                DataLabels = true
+                            },
+                            new PieSeries
+                            {
+                                Title = "12-15",
+                                Values = new ChartValues<ObservableValue>{new ObservableValue(mt.Count(x => x.Duration >= 720 && x.Duration < 900)) },
+                                DataLabels = true
+                            },
+                            new PieSeries
+                            {
+                                Title = "7-12",
+                                Values = new ChartValues<ObservableValue>{new ObservableValue(mt.Count(x => x.Duration >= 420 && x.Duration < 720)) },
+                                DataLabels = true
+                            },
+                            new PieSeries
+                            {
+                                Title = "5-7",
+                                Values = new ChartValues<ObservableValue>{new ObservableValue(mt.Count(x => x.Duration >= 300 && x.Duration < 420)) },
+                                DataLabels = true
+                            },
+                            new PieSeries
+                            {
+                                Title = "<5",
+                                Values = new ChartValues<ObservableValue>{new ObservableValue(mt.Count(x => x.Duration < 300)) },
+                                DataLabels = true
+                            }
+                        };
+
+                    if (series != null) {
+                        SeriesCollectionList.Add(new SeriesCustomCollection(id, series, mt));
+                    }
+                }
+            });
         }
     }
 }
