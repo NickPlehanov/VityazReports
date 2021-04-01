@@ -26,12 +26,15 @@ using System.Diagnostics;
 using Notifications.Wpf;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using VityazReports.Models;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
         private readonly A28Context context = new A28Context();
         private readonly ReportBaseContext reportContext = new ReportBaseContext();
         private readonly CommonMethods commonMethods = new CommonMethods();
+        private readonly MsCRMContext CrmContext = new MsCRMContext();
+
         NotificationManager notificationManager = new NotificationManager();
 
         public GuardObjectsOnMapGBRViewModel() {
@@ -562,6 +565,32 @@ namespace VityazReports.ViewModel {
                         });
                         return;
                     }
+                    //Добавляем метку ГБР из базы данных (CRM - расположение экипажей)
+                    NewPlacesGbrextensionBase gbr_place =  CrmContext.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewName.Contains(number.ToString()));
+                    if (gbr_place == null) {
+                        notificationManager.Show(new NotificationContent {
+                            Title = "Ошибка",
+                            Message = "Не найдено сохраненное расположение экипажа на карте",
+                            Type = NotificationType.Error
+                        });
+                    }
+                    else {
+                        if (!string.IsNullOrEmpty(gbr_place.NewLatitude) && !string.IsNullOrEmpty(gbr_place.NewLongitude)) {
+                            GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(gbr_place.NewLatitude), Convert.ToDouble(gbr_place.NewLongitude))) {
+                                Shape = new Ellipse {
+                                    Width = 20,
+                                    Height = 20,
+                                    Stroke = Brushes.Chocolate,
+                                    StrokeThickness = 7.5,
+                                    ToolTip = "ГБР",
+                                    AllowDrop = true
+                                }
+                            };
+                            marker.ZIndex = 1000;
+                            marker.Tag = "ГБР";
+                            gmaps_contol.Markers.Add(marker);
+                        }
+                    }
                     foreach (Models.GuardObjectsOnMapGBR.Object item in ObjectsList) {
                         PointLatLng point = new PointLatLng((double)item.Latitude, (double)item.Longitude);
                         GMapMarker marker = new GMapMarker(point) {
@@ -609,49 +638,6 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(StartSpan));
             }
         }
-
-        //private RelayCommand _MouseMiddleButtonUp;
-        //public RelayCommand MouseMiddleButtonUp {
-        //    get => _MouseMiddleButtonUp ??= new RelayCommand(async obj => {
-        //        if (StartSpan == TimeSpan.Zero)
-        //            return;
-        //        TimeSpan ts = new TimeSpan(DateTime.Now.Ticks) - StartSpan;
-        //        if (ts.TotalSeconds >= 3) {
-        //            //return;
-        //            StartSpan = TimeSpan.Zero;
-
-        //            MouseEventArgs mouseEventArgs = obj as MouseEventArgs;
-        //            var y = mouseEventArgs.Source;
-        //            //if (mouseEventArgs.RightButton == MouseButtonState.Pressed) {
-        //            if (ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1) {
-        //                if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "-1") == 0) {
-        //                    Point p = mouseEventArgs.GetPosition((IInputElement)mouseEventArgs.Source);
-
-        //                    GMapMarker marker = new GMapMarker(new PointLatLng()) {
-        //                        Shape = new Ellipse {
-        //                            Width = 20,
-        //                            Height = 20,
-        //                            Stroke = Brushes.Chocolate,
-        //                            StrokeThickness = 7.5,
-        //                            ToolTip = "ГБР",
-        //                            AllowDrop = true
-        //                        }
-        //                    };
-        //                    marker.Position = gmaps_contol.FromLocalToLatLng((int)p.X, (int)p.Y);
-        //                    marker.ZIndex = -1;
-        //                    marker.Tag = "ГБР";
-        //                    gmaps_contol.Markers.Add(marker);
-        //                    ChartSeries = null;
-        //                }
-        //                else
-        //                    System.Windows.Forms.MessageBox.Show("На карте уже есть экипаж", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //            }
-        //            else
-        //                System.Windows.Forms.MessageBox.Show("Необходимо выбрать хоть один маршрут", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        }
-        //        //}
-        //    });
-        //}
         /// <summary>
         /// определяет состояние открыто/закрыто контекстного меню на карте
         /// </summary>
@@ -686,7 +672,6 @@ namespace VityazReports.ViewModel {
                                 AllowDrop = true
                             }
                         };
-                        //marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X, (int)point.Y - 15);
                         marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X, (int)point.Y);
                         marker.ZIndex = 1000;
                         marker.Tag = "ГБР";
