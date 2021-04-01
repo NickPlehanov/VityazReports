@@ -30,6 +30,15 @@ namespace VityazReports.ViewModel {
 
             LoadingText = "Открыто окно отчёта. Для просмотра другого отчёта, закройте окно текущего отчёта";
         }
+        /// <summary>
+        /// Команда закрытия окна, 
+        /// </summary>
+        private RelayCommand _WindowCloseCommand;
+        public RelayCommand WindowCloseCommand {
+            get => _WindowCloseCommand ??= new RelayCommand(async obj => {
+                Environment.Exit(0);
+            });
+        }
 
         private bool _Loading;
         public bool Loading {

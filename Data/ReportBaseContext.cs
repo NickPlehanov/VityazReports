@@ -48,6 +48,10 @@ namespace VityazReports.Data
 
                 entity.Property(e => e.ClcGroup).HasComment("Номер маршрута(экипажа)");
 
+                entity.Property(e => e.ClcGroupLatitude).HasComment("Широта (55...)");
+
+                entity.Property(e => e.ClcGroupLongitude).HasComment("Долгота (61...)");
+
                 entity.Property(e => e.ClcKeyCalcId).HasComment("Поле для группировки расчётов(объекты из одного расчета имеют один KeyCalc)");
 
                 entity.Property(e => e.ClcObjectId).HasComment("Хранит идентификатор объекта базы A28");

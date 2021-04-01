@@ -43,5 +43,15 @@ namespace VityazReports.Models.MainWindow
         [Required]
         [Column("clc_CalcName")]
         public string ClcCalcName { get; set; }
+        /// <summary>
+        /// Широта (55...)
+        /// </summary>
+        [Column("clc_GroupLatitude")]
+        public double? ClcGroupLatitude { get; set; }
+        /// <summary>
+        /// Долгота (61...)
+        /// </summary>
+        [Column("clc_GroupLongitude")]
+        public double? ClcGroupLongitude { get; set; }
     }
 }

@@ -46,7 +46,7 @@ namespace VityazReports.ViewModel {
             GMapMarker marker = new GMapMarker(point);
             marker.Shape = new Image() {
                 Source = Conv.ToImageSource(Properties.Resources.Icon),
-                Stretch = Stretch.None
+                Stretch = Stretch.UniformToFill
             };
             gmaps_contol.Markers.Add(marker);
             gmaps_contol.UpdateLayout();
