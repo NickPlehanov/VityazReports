@@ -1,0 +1,80 @@
+﻿<mah:MetroWindow  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" x:Class="VityazReports.Views.UnmountDevices"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VityazReports.Views" 
+                  xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" 
+                  xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" 
+                  xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                  mc:Ignorable="d"
+        Title="Оборудование с демонтажей" x:Name="UnmountDeviceWindow" Height="450" Width="800">
+    <mah:MetroWindow.DataContext>
+        <viewmodel:UnmountDevicesViewModel/>
+    </mah:MetroWindow.DataContext>
+    <mah:MetroWindow.LeftWindowCommands>
+        <mah:WindowCommands>
+            <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
+                <iconPacks:BootstrapIcons Kind="Filter"/>
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.LeftWindowCommands>
+    <Grid>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="UnmountDevices" Source="{Binding UnmountDevicesList}" >
+                <!--<CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="ObjectNumber"/>
+                    <PropertyGroupDescription PropertyName="{Binding PropertyGroupName}"/>
+                </CollectionViewSource.GroupDescriptions>-->
+                <CollectionViewSource.SortDescriptions >
+                    <scm:SortDescription PropertyName="ObjectNumber"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
+        <mah:Flyout Position="Top" IsModal="True" AnimateOpacity="True" Panel.ZIndex="1" IsOpen="{Binding FilterFlyoutVisible}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Column="0" Grid.Row="0" Content="Дата начала" HorizontalAlignment="Center" VerticalAlignment="Center"  FontSize="16" FontWeight="UltraLight"/>
+                <mah1:DatePicker Grid.Column="1" Grid.Row="0" Margin="5" SelectedDateFormat="Short" SelectedDate="{Binding DateStart, StringFormat=\{0:dd.MM.yyyy\}}" FontSize="16" FontWeight="UltraLight"/>
+
+                <Label Grid.Column="0" Grid.Row="1" Content="Дата окончания" HorizontalAlignment="Center" VerticalAlignment="Center"  FontSize="16" FontWeight="UltraLight"/>
+                <mah1:DatePicker Grid.Column="1" Grid.Row="1" Margin="5" SelectedDateFormat="Short" SelectedDate="{Binding DateEnd, StringFormat=\{0:dd.MM.yyyy\}}"  FontSize="16" FontWeight="UltraLight"/>
+
+                <Label Grid.Column="0" Grid.Row="2" Content="Дата расторжения" HorizontalAlignment="Center" VerticalAlignment="Center"  FontSize="16" FontWeight="UltraLight"/>
+                <mah1:DatePicker Grid.Column="1" Grid.Row="2" Margin="5" SelectedDateFormat="Short" SelectedDate="{Binding DateRemove, StringFormat=\{0:dd.MM.yyyy\}}"  FontSize="16" FontWeight="UltraLight"/>
+
+                <Button Grid.Column="2" Grid.RowSpan="3" Content="Обновить" Command="{Binding RefreshDataCommand}" FontSize="16" FontWeight="UltraLight" Margin="5"/>
+            </Grid>
+        </mah:Flyout>
+        <DataGrid Name="DG_UDL" IsReadOnly="True" Panel.ZIndex="0" FontWeight="UltraLight"        
+                  ItemsSource="{Binding UnmountDevicesList}"
+                  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
+                  CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
+                <DataGridTextColumn Header="Название объекта" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="Название объект(пульт)" Binding="{Binding NameForPult}"/>
+                <DataGridTextColumn Header="Адрес объекта" Binding="{Binding Address}"/>
+                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
+                <DataGridTextColumn Header="Устройство" Binding="{Binding DeviceName}"/>
+                <DataGridTextColumn Header="Цена" Binding="{Binding DevicePrice}"/>
+                <DataGridTextColumn Header="Количество" Binding="{Binding DeviceCount}"/>
+                <DataGridCheckBoxColumn Header="Возвращено" Binding="{Binding IsReturn}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="89" Width="{Binding ActualWidth, ElementName=UnmountDeviceWindow}" 
+              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=UnmountDeviceWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
+    </Grid>
+</mah:MetroWindow>

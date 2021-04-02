@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VityazReports.Views"
         mc:Ignorable="d"                  
-                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation"
+                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel" 
+                  xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation"
                   Title="Регламентные работы" Height="450" Width="800" x:Name="ReglamentWorksWindow">
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
@@ -43,25 +44,15 @@
                 <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshDataCommand}" FontSize="16" FontWeight="UltraLight" Margin="5"/>
             </Grid>
         </mah:Flyout>
-        <mah:Flyout Position="Bottom" IsModal="True" AnimateOpacity="True" Panel.ZIndex="1"  IsOpen="{Binding DetailFlyoutVisible}">
+        <mah:Flyout Position="Bottom" IsModal="True" AnimateOpacity="True" Panel.ZIndex="150"  IsOpen="{Binding DetailFlyoutVisible}">
             <DataGrid IsReadOnly="True" ItemsSource="{Binding ReglamentWorksDetailCollection}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
                   CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <DataGrid.Resources>
-                    <!--Дата изменения-->
-                    <DataTemplate x:Key="dt_DateChanged">
-                        <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=DateChanged,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
-                    </DataTemplate>
-                    <DataTemplate x:Key="edt_DateChanged">
-                        <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=DateChanged,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
-                    </DataTemplate>
-                </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Сотрудник" Binding="{Binding UserChanged}" IsReadOnly="True"/>
-                    <!--<DataGridTextColumn Header="Дата изменения" Binding="{Binding DateChanged}"/>-->
-                    <DataGridTemplateColumn Header="Дата изменения" CellTemplate="{StaticResource dt_DateChanged}" CellEditingTemplate="{StaticResource edt_DateChanged}"/>
-                    <DataGridTextColumn Header="Наименование поля" Binding="{Binding FieldChanged}" IsReadOnly="True"/>
-                    <DataGridCheckBoxColumn Header="Было" Binding="{Binding BeforeChanged}" IsReadOnly="True"/>
-                    <DataGridCheckBoxColumn Header="Стало" Binding="{Binding AfterChanged}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="дата заявки" Binding="{Binding DateTimeOrder, StringFormat=\{0:dd.MM.yyyy\}}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Категория" Binding="{Binding Category}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Техник" Binding="{Binding ServicemanName}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Причина посещения" Binding="{Binding Reason}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Заключение техника" Binding="{Binding TechConclusion}" IsReadOnly="True"/>
                 </DataGrid.Columns>
             </DataGrid>
         </mah:Flyout>
@@ -86,6 +77,7 @@
                 <DataGridCheckBoxColumn Header="ПС рег. работы" Binding="{Binding RrPS}"/>
                 <DataGridCheckBoxColumn Header="СКУД рег. работы" Binding="{Binding RrSkud}"/>
                 <DataGridCheckBoxColumn Header="Видео рег. работы" Binding="{Binding RrVideo}"/>
+                <!--<DataGridCheckBoxColumn Header="Заявки" Binding="{Binding IsOrderExist}"/>-->
             </DataGrid.Columns>
             <DataGrid.InputBindings>
                 <MouseBinding MouseAction="LeftClick" Command="{Binding GetDetailInfo}"/>

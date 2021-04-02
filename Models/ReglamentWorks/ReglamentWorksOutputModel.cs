@@ -44,5 +44,6 @@ namespace VityazReports.Models.ReglamentWorks {
                 _RrSkud = value.HasValue ? value : false;
             }
         }
+        public bool IsOrderExist { get; set; }
     }
 }

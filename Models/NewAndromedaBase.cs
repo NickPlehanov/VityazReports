@@ -7,11 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
-namespace VityazReports.Models.ChangeCost
+namespace VityazReports.Models
 {
-    [Table("New_guard_objectBase")]
-    public partial class NewGuardObjectBase
+    [Table("New_andromedaBase")]
+    public partial class NewAndromedaBase
     {
+        public NewAndromedaBase()
+        {
+            NewRentDeviceExtensionBase = new HashSet<NewRentDeviceExtensionBase>();
+        }
+
         public Guid? CreatedBy { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? CreatedOn { get; set; }
@@ -21,8 +26,8 @@ namespace VityazReports.Models.ChangeCost
         [Column(TypeName = "datetime")]
         public DateTime? ModifiedOn { get; set; }
         [Key]
-        [Column("New_guard_objectId")]
-        public Guid NewGuardObjectId { get; set; }
+        [Column("New_andromedaId")]
+        public Guid NewAndromedaId { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? OverriddenCreatedOn { get; set; }
         public Guid? OwningBusinessUnit { get; set; }
@@ -35,12 +40,13 @@ namespace VityazReports.Models.ChangeCost
         public int? UtcconversionTimeZoneCode { get; set; }
         public byte[] VersionNumber { get; set; }
         public Guid? OwningUser { get; set; }
-        public Guid? TransactionCurrencyId { get; set; }
-        [Column(TypeName = "decimal(23, 10)")]
-        public decimal? ExchangeRate { get; set; }
 
-        //[ForeignKey(nameof(OwningUser))]
-        //[InverseProperty(nameof(SystemUserBase.NewGuardObjectBase))]
-        //public virtual SystemUserBase OwningUserNavigation { get; set; }
+        [ForeignKey(nameof(OwningUser))]
+        [InverseProperty(nameof(SystemUserBase.NewAndromedaBase))]
+        public virtual SystemUserBase OwningUserNavigation { get; set; }
+        [InverseProperty("NewAndromeda")]
+        public virtual NewAndromedaExtensionBase NewAndromedaExtensionBase { get; set; }
+        [InverseProperty("NewAndromedaNavigation")]
+        public virtual ICollection<NewRentDeviceExtensionBase> NewRentDeviceExtensionBase { get; set; }
     }
 }

@@ -440,6 +440,10 @@ namespace VityazReports.Models
         [Column("New_result_to_ps")]
         public int? NewResultToPs { get; set; }
 
+        [ForeignKey(nameof(NewAccountAgent))]
+        public virtual AccountBase NewAccountAgentNavigation { get; set; }
+        [ForeignKey(nameof(NewAccount))]
+        public virtual AccountBase NewAccountNavigation { get; set; }
         [ForeignKey(nameof(NewCuratorMount))]
         public virtual NewGuardObjectBase NewCuratorMountNavigation { get; set; }
         [ForeignKey(nameof(NewCurator))]
@@ -450,7 +454,13 @@ namespace VityazReports.Models
         public virtual NewGuardObjectBase NewGuardObject { get; set; }
         [ForeignKey(nameof(NewInspector))]
         public virtual SystemUserBase NewInspectorNavigation { get; set; }
+        [ForeignKey(nameof(NewReactionAccount))]
+        public virtual AccountBase NewReactionAccountNavigation { get; set; }
         [ForeignKey(nameof(NewRetention))]
         public virtual SystemUserBase NewRetentionNavigation { get; set; }
+        [ForeignKey(nameof(NewTechserviceAccount))]
+        public virtual AccountBase NewTechserviceAccountNavigation { get; set; }
+        [ForeignKey(nameof(NewUvoUnit))]
+        public virtual AccountBase NewUvoUnitNavigation { get; set; }
     }
 }

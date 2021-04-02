@@ -571,6 +571,7 @@ namespace VityazReports.ViewModel {
                         });
                         toggleButton.IsChecked = false;
                         toggleButton.Background = null;
+                        Loading = false;
                         return;
                     }
 
@@ -598,6 +599,7 @@ namespace VityazReports.ViewModel {
                                 Message = "Для данного маршрута отсутсвуют объекты",
                                 Type = NotificationType.Error
                             });
+                            Loading = false;
                             return;
                         }
                         //Добавляем метку ГБР из базы данных (CRM - расположение экипажей)
@@ -622,7 +624,8 @@ namespace VityazReports.ViewModel {
                                     //}
                                     Shape = new System.Windows.Controls.Image() {
                                         Source = Conv.ToImageSource(Properties.Resources.Icon),
-                                        Stretch = Stretch.UniformToFill
+                                        Stretch = Stretch.UniformToFill,
+                                        ToolTip = gbr_place.NewName
                                     }
                                 };
                                 marker.ZIndex = 1000;
@@ -790,7 +793,8 @@ namespace VityazReports.ViewModel {
                             //}
                             Shape = new System.Windows.Controls.Image() {
                                 Source = Conv.ToImageSource(Properties.Resources.Icon),
-                                Stretch = Stretch.UniformToFill
+                                Stretch = Stretch.UniformToFill,
+                                ToolTip = "ГБР"
                             }
                         };
                         marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X, (int)point.Y);
@@ -1135,10 +1139,15 @@ namespace VityazReports.ViewModel {
                     }
                     if (col.Latitude.HasValue && col.Longitude.HasValue) {
                         //Добавляем экипаж на карту
+                        SelectedRoute = ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true).TgBtn;
+                        string name = null;
+                        if (SelectedRoute != null)
+                            name = SelectedRoute.Content.ToString();
                         GMapMarker marker = new GMapMarker(new PointLatLng((double)col.Latitude, (double)col.Longitude)) {
                             Shape = new System.Windows.Controls.Image() {
                                 Source = Conv.ToImageSource(Properties.Resources.Icon),
-                                Stretch = Stretch.UniformToFill
+                                Stretch = Stretch.UniformToFill,
+                                ToolTip= name
                             }
                         };
                         marker.ZIndex = 1000;

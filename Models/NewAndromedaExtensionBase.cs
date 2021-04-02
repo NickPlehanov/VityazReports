@@ -65,5 +65,12 @@ namespace VityazReports.Models
         public int? NewRoute { get; set; }
         [Column("New_termination")]
         public bool? NewTermination { get; set; }
+
+        [ForeignKey(nameof(NewAndromedaId))]
+        [InverseProperty(nameof(NewAndromedaBase.NewAndromedaExtensionBase))]
+        public virtual NewAndromedaBase NewAndromeda { get; set; }
+        [ForeignKey(nameof(NewPost))]
+        [InverseProperty(nameof(NewAlarmBase.NewAndromedaExtensionBase))]
+        public virtual NewAlarmBase NewPostNavigation { get; set; }
     }
 }

@@ -12,6 +12,12 @@ namespace VityazReports.Models
     [Table("New_guard_objectBase")]
     public partial class NewGuardObjectBase
     {
+        public NewGuardObjectBase()
+        {
+            NewRentDeviceExtensionBaseNewGuardObjectRentDeviceNavigation = new HashSet<NewRentDeviceExtensionBase>();
+            NewRentDeviceExtensionBaseNewReturnGuardNavigation = new HashSet<NewRentDeviceExtensionBase>();
+        }
+
         public Guid? CreatedBy { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? CreatedOn { get; set; }
@@ -42,5 +48,9 @@ namespace VityazReports.Models
         [ForeignKey(nameof(OwningUser))]
         [InverseProperty(nameof(SystemUserBase.NewGuardObjectBase))]
         public virtual SystemUserBase OwningUserNavigation { get; set; }
+        [InverseProperty(nameof(NewRentDeviceExtensionBase.NewGuardObjectRentDeviceNavigation))]
+        public virtual ICollection<NewRentDeviceExtensionBase> NewRentDeviceExtensionBaseNewGuardObjectRentDeviceNavigation { get; set; }
+        [InverseProperty(nameof(NewRentDeviceExtensionBase.NewReturnGuardNavigation))]
+        public virtual ICollection<NewRentDeviceExtensionBase> NewRentDeviceExtensionBaseNewReturnGuardNavigation { get; set; }
     }
 }

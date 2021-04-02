@@ -14,7 +14,10 @@ namespace VityazReports.Models
     {
         public SystemUserBase()
         {
+            AccountBaseOwningUserNavigation = new HashSet<AccountBase>();
+            AccountBasePreferredSystemUser = new HashSet<AccountBase>();
             InverseParentSystemUser = new HashSet<SystemUserBase>();
+            NewAndromedaBase = new HashSet<NewAndromedaBase>();
             NewGuardObjectBase = new HashSet<NewGuardObjectBase>();
             NewPlacesGbrbase = new HashSet<NewPlacesGbrbase>();
         }
@@ -113,8 +116,14 @@ namespace VityazReports.Models
         [ForeignKey(nameof(ParentSystemUserId))]
         [InverseProperty(nameof(SystemUserBase.InverseParentSystemUser))]
         public virtual SystemUserBase ParentSystemUser { get; set; }
+        [InverseProperty(nameof(AccountBase.OwningUserNavigation))]
+        public virtual ICollection<AccountBase> AccountBaseOwningUserNavigation { get; set; }
+        [InverseProperty(nameof(AccountBase.PreferredSystemUser))]
+        public virtual ICollection<AccountBase> AccountBasePreferredSystemUser { get; set; }
         [InverseProperty(nameof(SystemUserBase.ParentSystemUser))]
         public virtual ICollection<SystemUserBase> InverseParentSystemUser { get; set; }
+        [InverseProperty("OwningUserNavigation")]
+        public virtual ICollection<NewAndromedaBase> NewAndromedaBase { get; set; }
         [InverseProperty("OwningUserNavigation")]
         public virtual ICollection<NewGuardObjectBase> NewGuardObjectBase { get; set; }
         [InverseProperty("OwningUserNavigation")]

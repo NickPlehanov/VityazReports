@@ -68,5 +68,12 @@ namespace VityazReports.Models
         [Column("New_history_button")]
         [StringLength(100)]
         public string NewHistoryButton { get; set; }
+
+        [ForeignKey(nameof(NewAlarmId))]
+        public virtual NewAlarmBase NewAlarm { get; set; }
+        [ForeignKey(nameof(NewAndromedaAlarm))]
+        public virtual NewAndromedaBase NewAndromedaAlarmNavigation { get; set; }
+        [ForeignKey(nameof(NewServiceorderAlarm))]
+        public virtual NewServiceorderBase NewServiceorderAlarmNavigation { get; set; }
     }
 }

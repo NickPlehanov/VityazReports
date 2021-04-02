@@ -19,13 +19,28 @@ namespace VityazReports.Data
         {
         }
 
+        public virtual DbSet<AccountBase> AccountBase { get; set; }
+        public virtual DbSet<Models.Attribute> Attribute { get; set; }
+        public virtual DbSet<AttributePicklistValue> AttributePicklistValue { get; set; }
+        public virtual DbSet<Entity> Entity { get; set; }
+        public virtual DbSet<LocalizedLabel> LocalizedLabel { get; set; }
+        public virtual DbSet<NewAlarmBase> NewAlarmBase { get; set; }
         public virtual DbSet<NewAlarmExtensionBase> NewAlarmExtensionBase { get; set; }
+        public virtual DbSet<NewAndromedaBase> NewAndromedaBase { get; set; }
         public virtual DbSet<NewAndromedaExtensionBase> NewAndromedaExtensionBase { get; set; }
+        public virtual DbSet<NewDeviceBase> NewDeviceBase { get; set; }
+        public virtual DbSet<NewDeviceExtensionBase> NewDeviceExtensionBase { get; set; }
         public virtual DbSet<NewGuardObjectBase> NewGuardObjectBase { get; set; }
         public virtual DbSet<NewGuardObjectExtensionBase> NewGuardObjectExtensionBase { get; set; }
         public virtual DbSet<NewGuardObjectHistory> NewGuardObjectHistory { get; set; }
         public virtual DbSet<NewPlacesGbrbase> NewPlacesGbrbase { get; set; }
         public virtual DbSet<NewPlacesGbrextensionBase> NewPlacesGbrextensionBase { get; set; }
+        public virtual DbSet<NewRentDeviceBase> NewRentDeviceBase { get; set; }
+        public virtual DbSet<NewRentDeviceExtensionBase> NewRentDeviceExtensionBase { get; set; }
+        public virtual DbSet<NewServicemanBase> NewServicemanBase { get; set; }
+        public virtual DbSet<NewServicemanExtensionBase> NewServicemanExtensionBase { get; set; }
+        public virtual DbSet<NewServiceorderBase> NewServiceorderBase { get; set; }
+        public virtual DbSet<NewServiceorderExtensionBase> NewServiceorderExtensionBase { get; set; }
         public virtual DbSet<SystemUserBase> SystemUserBase { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -41,6 +56,226 @@ namespace VityazReports.Data
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Cyrillic_General_CI_AI");
 
+            modelBuilder.Entity<AccountBase>(entity =>
+            {
+                entity.HasKey(e => e.AccountId)
+                    .HasName("cndx_PrimaryKey_Account");
+
+                entity.HasIndex(e => e.AccountNumber, "ndx_Account_AccountNumber")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.Name, "ndx_Account_Name")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.StateCode, e.StatusCode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.EmailAddress1, "ndx_Email_1")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.EmailAddress2, "ndx_Email_2")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.EmailAddress3, "ndx_Email_3")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.OwningUser, e.OwningBusinessUnit }, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync_VersionNumber")
+                    .IsUnique()
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.Telephone1, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.MasterId, "ndx_for_cascaderelationship_account_master_account")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.OriginatingLeadId, "ndx_for_cascaderelationship_account_originating_lead")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.ParentAccountId, "ndx_for_cascaderelationship_account_parent_account")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.PrimaryContactId, "ndx_for_cascaderelationship_account_primary_contact")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.PreferredEquipmentId, "ndx_for_cascaderelationship_equipment_accounts")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.DefaultPriceLevelId, "ndx_for_cascaderelationship_price_level_accounts")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.PreferredServiceId, "ndx_for_cascaderelationship_service_accounts")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.PreferredSystemUserId, "ndx_for_cascaderelationship_system_user_accounts")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.TerritoryId, "ndx_for_cascaderelationship_territory_accounts")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.AccountId).ValueGeneratedNever();
+
+                entity.Property(e => e.DoNotBulkEmail).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.DoNotBulkPostalMail).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.DoNotEmail).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.DoNotFax).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.DoNotPhone).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.DoNotPostalMail).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.DoNotSendMm).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsPrivate).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.Merged).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.ParticipatesInWorkflow).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+
+                entity.HasOne(d => d.Master)
+                    .WithMany(p => p.InverseMaster)
+                    .HasForeignKey(d => d.MasterId)
+                    .HasConstraintName("account_master_account");
+
+                entity.HasOne(d => d.OwningUserNavigation)
+                    .WithMany(p => p.AccountBaseOwningUserNavigation)
+                    .HasForeignKey(d => d.OwningUser)
+                    .HasConstraintName("user_accounts");
+
+                entity.HasOne(d => d.ParentAccount)
+                    .WithMany(p => p.InverseParentAccount)
+                    .HasForeignKey(d => d.ParentAccountId)
+                    .HasConstraintName("account_parent_account");
+
+                entity.HasOne(d => d.PreferredSystemUser)
+                    .WithMany(p => p.AccountBasePreferredSystemUser)
+                    .HasForeignKey(d => d.PreferredSystemUserId)
+                    .HasConstraintName("system_user_accounts");
+            });
+
+            modelBuilder.Entity<Models.Attribute>(entity =>
+            {
+                entity.HasKey(e => new { e.AttributeId, e.InProduction, e.CustomizationLevel })
+                    .HasName("XPKAttribute");
+
+                entity.Property(e => e.InProduction).HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.AttributeRowId).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.DisplayMask).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsCustomField).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsReplicated).HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+
+                entity.Property(e => e.VisibleToPlatform).HasDefaultValueSql("((1))");
+            });
+
+            modelBuilder.Entity<AttributePicklistValue>(entity =>
+            {
+                entity.HasKey(e => new { e.AttributePicklistValueId, e.InProduction, e.CustomizationLevel })
+                    .HasName("XPKAttributePicklistValue");
+
+                entity.Property(e => e.AttributePicklistValueRowId).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<Entity>(entity =>
+            {
+                entity.HasKey(e => new { e.EntityId, e.CustomizationLevel })
+                    .HasName("XPKEntity");
+
+                entity.Property(e => e.DbCascadeMask).HasDefaultValueSql("((-1))");
+
+                entity.Property(e => e.EntityAssembly).HasDefaultValueSql("('')");
+
+                entity.Property(e => e.EntityClassName).HasDefaultValueSql("('')");
+
+                entity.Property(e => e.EntityMask).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.EntityRowId).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.HasDeletionStateCode).HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.IsActivity).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsCollaboration).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsCustomizable).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsLogicalEntity).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.IsMappable).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.ObjectTypeCode).HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.ServiceAssembly).HasDefaultValueSql("('')");
+
+                entity.Property(e => e.ServiceClassName).HasDefaultValueSql("('')");
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<LocalizedLabel>(entity =>
+            {
+                entity.HasKey(e => new { e.LocalizedLabelId, e.InProduction, e.CustomizationLevel })
+                    .HasName("XPKLocalizedLabel");
+
+                entity.Property(e => e.InProduction).HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.LocalizedLabelRowId).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<NewAlarmBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.OrganizationId, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewAlarmId, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewAlarmId).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
             modelBuilder.Entity<NewAlarmExtensionBase>(entity =>
             {
                 entity.HasIndex(e => new { e.NewAlarmDt, e.NewAndromedaAlarm }, "AlarmDtAndromedaINDEX")
@@ -48,6 +283,51 @@ namespace VityazReports.Data
 
                 entity.HasIndex(e => new { e.NewName, e.NewOwner, e.NewDeparture, e.NewArrival, e.NewCancel, e.NewAlarmDt, e.NewPs, e.NewAct, e.NewOnc, e.NewPolice, e.NewTpc, e.NewOrder, e.NewGroup }, "ndx_SystemManaged")
                     .HasFillFactor((byte)80);
+
+                entity.HasOne(d => d.NewAlarm)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewAlarmId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_alarmExtensionBase_New_alarmBase");
+
+                entity.HasOne(d => d.NewAndromedaAlarmNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewAndromedaAlarm)
+                    .HasConstraintName("new_andromeda_alarm");
+
+                entity.HasOne(d => d.NewServiceorderAlarmNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewServiceorderAlarm)
+                    .HasConstraintName("new_serviceorder_alarm");
+            });
+
+            modelBuilder.Entity<NewAndromedaBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.OwningUser, e.OwningBusinessUnit }, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewAndromedaId, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewAndromedaId).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+
+                entity.HasOne(d => d.OwningUserNavigation)
+                    .WithMany(p => p.NewAndromedaBase)
+                    .HasForeignKey(d => d.OwningUser)
+                    .HasConstraintName("user_new_andromeda");
             });
 
             modelBuilder.Entity<NewAndromedaExtensionBase>(entity =>
@@ -59,6 +339,55 @@ namespace VityazReports.Data
                     .HasFillFactor((byte)80);
 
                 entity.Property(e => e.NewAndromedaId).ValueGeneratedNever();
+
+                entity.HasOne(d => d.NewAndromeda)
+                    .WithOne(p => p.NewAndromedaExtensionBase)
+                    .HasForeignKey<NewAndromedaExtensionBase>(d => d.NewAndromedaId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_andromedaExtensionBase_New_andromedaBase");
+
+                entity.HasOne(d => d.NewPostNavigation)
+                    .WithMany(p => p.NewAndromedaExtensionBase)
+                    .HasForeignKey(d => d.NewPost)
+                    .HasConstraintName("new_new_alarm_new_andromeda");
+            });
+
+            modelBuilder.Entity<NewDeviceBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.OrganizationId, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewDeviceId, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewDeviceId).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<NewDeviceExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => e.NewName, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewDeviceId).ValueGeneratedNever();
+
+                entity.HasOne(d => d.NewDevice)
+                    .WithOne(p => p.NewDeviceExtensionBase)
+                    .HasForeignKey<NewDeviceExtensionBase>(d => d.NewDeviceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_deviceExtensionBase_New_deviceBase");
             });
 
             modelBuilder.Entity<NewGuardObjectBase>(entity =>
@@ -119,6 +448,16 @@ namespace VityazReports.Data
                 entity.HasIndex(e => e.NewContact, "ndx_for_cascaderelationship_new_contact_new_guard_object")
                     .HasFillFactor((byte)80);
 
+                entity.HasOne(d => d.NewAccountNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewAccount)
+                    .HasConstraintName("new_account_new_guard_object");
+
+                entity.HasOne(d => d.NewAccountAgentNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewAccountAgent)
+                    .HasConstraintName("new_account_agent_new_guard_object");
+
                 entity.HasOne(d => d.NewCuratorNavigation)
                     .WithMany()
                     .HasForeignKey(d => d.NewCurator)
@@ -145,10 +484,25 @@ namespace VityazReports.Data
                     .HasForeignKey(d => d.NewInspector)
                     .HasConstraintName("new_systemuser_guard_object");
 
+                entity.HasOne(d => d.NewReactionAccountNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewReactionAccount)
+                    .HasConstraintName("new_account_new_guard_object_reaction");
+
                 entity.HasOne(d => d.NewRetentionNavigation)
                     .WithMany()
                     .HasForeignKey(d => d.NewRetention)
                     .HasConstraintName("new_systemuser_retention_new_guard_object");
+
+                entity.HasOne(d => d.NewTechserviceAccountNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewTechserviceAccount)
+                    .HasConstraintName("new_account_new_guard_object_techservice");
+
+                entity.HasOne(d => d.NewUvoUnitNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewUvoUnit)
+                    .HasConstraintName("new_account_new_guard_object_uvo_unit");
             });
 
             modelBuilder.Entity<NewGuardObjectHistory>(entity =>
@@ -198,6 +552,167 @@ namespace VityazReports.Data
                     .HasForeignKey<NewPlacesGbrextensionBase>(d => d.NewPlacesGbrid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_New_PlacesGBRExtensionBase_New_PlacesGBRBase");
+            });
+
+            modelBuilder.Entity<NewRentDeviceBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.OrganizationId, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewRentDeviceId, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewRentDeviceId).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<NewRentDeviceExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.NewDeviceRentDevice, e.NewPrice, e.NewGuardObjectRentDevice, e.NewQty }, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewRentDeviceId).ValueGeneratedNever();
+
+                entity.HasOne(d => d.NewAndromedaNavigation)
+                    .WithMany(p => p.NewRentDeviceExtensionBase)
+                    .HasForeignKey(d => d.NewAndromeda)
+                    .HasConstraintName("new_new_andromeda_new_rent_device");
+
+                entity.HasOne(d => d.NewDeviceRentDeviceNavigation)
+                    .WithMany(p => p.NewRentDeviceExtensionBase)
+                    .HasForeignKey(d => d.NewDeviceRentDevice)
+                    .HasConstraintName("new_device_rent_device");
+
+                entity.HasOne(d => d.NewGuardObjectRentDeviceNavigation)
+                    .WithMany(p => p.NewRentDeviceExtensionBaseNewGuardObjectRentDeviceNavigation)
+                    .HasForeignKey(d => d.NewGuardObjectRentDevice)
+                    .HasConstraintName("new_guard_object_rent_device");
+
+                entity.HasOne(d => d.NewRentDevice)
+                    .WithOne(p => p.NewRentDeviceExtensionBase)
+                    .HasForeignKey<NewRentDeviceExtensionBase>(d => d.NewRentDeviceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_rent_deviceExtensionBase_New_rent_deviceBase");
+
+                entity.HasOne(d => d.NewReturnGuardNavigation)
+                    .WithMany(p => p.NewRentDeviceExtensionBaseNewReturnGuardNavigation)
+                    .HasForeignKey(d => d.NewReturnGuard)
+                    .HasConstraintName("new_new_guard_object_new_rent_device");
+            });
+
+            modelBuilder.Entity<NewServicemanBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.OrganizationId, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewServicemanId, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewServicemanId).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<NewServicemanExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => e.NewName, "Name_ClusteredIndex")
+                    .IsClustered();
+
+                entity.HasIndex(e => new { e.NewIswork, e.NewName, e.NewPhone, e.NewCategory }, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.HasOne(d => d.NewGenTechNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewGenTech)
+                    .HasConstraintName("new_new_serviceman_new_serviceman");
+
+                entity.HasOne(d => d.NewServiceman)
+                    .WithOne()
+                    .HasForeignKey<NewServicemanExtensionBase>(d => d.NewServicemanId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_servicemanExtensionBase_New_servicemanBase");
+            });
+
+            modelBuilder.Entity<NewServiceorderBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.OrganizationId, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewServiceorderId, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewServiceorderId).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<NewServiceorderExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.NewNumber, e.NewAddress }, "IndexNumberAdress")
+                    .IsClustered();
+
+                entity.HasIndex(e => new { e.NewOutgone, e.NewDate, e.NewResult, e.NewCategory }, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.HasOne(d => d.NewAndromedaServiceorderNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewAndromedaServiceorder)
+                    .HasConstraintName("new_andromeda_serviceorder");
+
+                entity.HasOne(d => d.NewNewServicemanNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewNewServiceman)
+                    .HasConstraintName("new_new_serviceman");
+
+                entity.HasOne(d => d.NewServicemanServiceorderNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewServicemanServiceorder)
+                    .HasConstraintName("new_new_serviceman_serviceorder");
+
+                entity.HasOne(d => d.NewServiceorder)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewServiceorderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_serviceorderExtensionBase_New_serviceorderBase");
+
+                entity.HasOne(d => d.NewTechniqueEndNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewTechniqueEnd)
+                    .HasConstraintName("new_new_serviceman_new_serviceorder");
             });
 
             modelBuilder.Entity<SystemUserBase>(entity =>

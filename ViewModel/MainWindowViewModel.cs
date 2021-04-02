@@ -104,6 +104,10 @@ namespace VityazReports.ViewModel {
                         GuardsOnMap gom = new GuardsOnMap();
                         gom.Show();
                         break;
+                    case "F8FC782C-AD41-4BE7-9D50-293F7E45D6AB": //оборудование с демонтажа
+                        UnmountDevices ud = new UnmountDevices();
+                        ud.Show();
+                        break;
                 }
             }, obj => obj != null);
         }
