@@ -41,6 +41,7 @@ namespace VityazReports.Data
         public virtual DbSet<NewServicemanExtensionBase> NewServicemanExtensionBase { get; set; }
         public virtual DbSet<NewServiceorderBase> NewServiceorderBase { get; set; }
         public virtual DbSet<NewServiceorderExtensionBase> NewServiceorderExtensionBase { get; set; }
+        public virtual DbSet<ServiceOrderCoordinates> ServiceOrderCoordinates { get; set; }
         public virtual DbSet<SystemUserBase> SystemUserBase { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -713,6 +714,12 @@ namespace VityazReports.Data
                     .WithMany()
                     .HasForeignKey(d => d.NewTechniqueEnd)
                     .HasConstraintName("new_new_serviceman_new_serviceorder");
+            });
+
+            modelBuilder.Entity<ServiceOrderCoordinates>(entity =>
+            {
+                entity.HasIndex(e => e.SocServiceOrderId, "CI_ServiceOrderID")
+                    .IsClustered();
             });
 
             modelBuilder.Entity<SystemUserBase>(entity =>

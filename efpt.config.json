@@ -8,6 +8,7 @@
    "ModelNamespace": null,
    "OutputContextPath": "Data",
    "OutputPath": "Models",
+   "ProceduresReturnList": false,
    "ProjectRootNamespace": "VityazReports",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
@@ -83,6 +84,10 @@
       },
       {
          "Name": "[dbo].[New_serviceorderExtensionBase]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ServiceOrderCoordinates]",
          "ObjectType": 0
       },
       {
