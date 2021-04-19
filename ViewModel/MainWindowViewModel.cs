@@ -108,6 +108,10 @@ namespace VityazReports.ViewModel {
                         UnmountDevices ud = new UnmountDevices();
                         ud.Show();
                         break;
+                    case "A7DCE7A5-D92E-4568-B531-94A888F4787A": //техники на карте
+                        ServicemanOnMap som = new ServicemanOnMap();
+                        som.Show();
+                        break;
                 }
             }, obj => obj != null);
         }

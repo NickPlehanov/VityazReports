@@ -7,10 +7,11 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.ObjectModel;
 using VityazReports.Models.ReglamentWorks;
-//using VityazReports.Models.ChangeCost;
 using System.ComponentModel;
 using VityazReports.Models;
 using System.Windows.Threading;
+using System.IO;
+using System.Diagnostics;
 
 namespace VityazReports.ViewModel {
     public class ReglamentWorksViewModel : BaseViewModel {
@@ -120,6 +121,20 @@ namespace VityazReports.ViewModel {
                 _Loading = value;
                 OnPropertyChanged(nameof(Loading));
             }
+        }
+
+        private RelayCommand _HelpCommand;
+        public RelayCommand HelpCommand {
+            get => _HelpCommand ??= new RelayCommand(async obj => {
+                if (File.Exists(@"\\server-nass\Install\WORKPLACE\Инструкции\Регламентные работы.pdf"))
+                    Process.Start(new ProcessStartInfo(@"\\server-nass\Install\WORKPLACE\Инструкции\Регламентные работы.pdf") { UseShellExecute = true });
+                //else
+                //    NotificationManager.Show(new NotificationContent {
+                //        Title = "Ошибка",
+                //        Message = "Файл инструкции не найден",
+                //        Type = NotificationType.Error
+                //    });
+            });
         }
 
         private RelayCommand _GetDetailInfo;
