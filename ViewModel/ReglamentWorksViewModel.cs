@@ -321,36 +321,60 @@ namespace VityazReports.ViewModel {
         public RelayCommand RefreshDataCommand {
             get => _RefreshDataCommand ??= new RelayCommand(async obj => {
                 BackgroundWorker bw = new BackgroundWorker();
-                bw.DoWork += (s, e) => {
+                bw.DoWork += (s, e1) => {
                     Loading = true;
                     FilterFlyoutVisible = false;
-                    var rr = (from goeb in context.NewGuardObjectExtensionBase
-                              join gob in context.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
-                              //join soeb in context.NewServiceorderExtensionBase on goeb.NewObjectNumber equals soeb.NewNumber
-                              //join sob in context.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
-                              where gob.Statecode == 0 && gob.Statuscode == 1 && gob.DeletionStateCode == 0
-                                 && goeb.NewRemoveDate == null && goeb.NewPriostDate == null && goeb.NewObjDeleteDate == null &&
-                                 goeb.NewRrOnOff == true
-                                 //&& sob.DeletionStateCode == 0
-                                 //     && sob.Statecode == 0
-                                 //     && sob.Statuscode == 1
-                              select new {
-                                  NewObjectNumber = goeb.NewObjectNumber,
-                                  NewName = goeb.NewName,
-                                  NewAddress = goeb.NewAddress,
-                                  NewRrOnOff = goeb.NewRrOnOff,
-                                  NewRrOs = goeb.NewRrOs,
-                                  NewRrPs = goeb.NewRrPs,
-                                  NewRrVideo = goeb.NewRrVideo,
-                                  NewRrSkud = goeb.NewRrSkud,
-                                  NewGuardObjectId = goeb.NewGuardObjectId,
-                                  //Category = soeb.NewCategory
-                              }).AsNoTracking().Distinct().ToList();
-                    if (rr != null)
-                        App.Current.Dispatcher.Invoke((System.Action)delegate {
-                            ReglamentWorksList.Clear();
-                        });
-                    foreach (var item in rr) {
+
+                    //получаем список охр. объектов с регламентными работами
+                    var guardObjectsWithReglament = (from goeb in context.NewGuardObjectExtensionBase
+                                                     join gob in context.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
+                                                     where gob.Statecode == 0
+                                                         && gob.Statuscode == 1
+                                                         && gob.DeletionStateCode == 0
+                                                         && goeb.NewRemoveDate == null
+                                                         && goeb.NewPriostDate == null
+                                                         && goeb.NewObjDeleteDate == null
+                                                         && goeb.NewRrOnOff == true
+                                                     select new {
+                                                         NewObjectNumber = goeb.NewObjectNumber,
+                                                         NewName = goeb.NewName,
+                                                         NewAddress = goeb.NewAddress,
+                                                         NewRrOnOff = goeb.NewRrOnOff,
+                                                         NewRrOs = goeb.NewRrOs,
+                                                         NewRrPs = goeb.NewRrPs,
+                                                         NewRrVideo = goeb.NewRrVideo,
+                                                         NewRrSkud = goeb.NewRrSkud,
+                                                         NewGuardObjectId = goeb.NewGuardObjectId
+                                                     }
+                                                     ).AsNoTracking().Distinct().ToList();
+                    if (guardObjectsWithReglament == null)
+                        return;
+                    App.Current.Dispatcher.Invoke((System.Action)delegate {
+                        ReglamentWorksList.Clear();
+                    });
+                    foreach (var item in guardObjectsWithReglament) {
+                        var so = (from soeb in context.NewServiceorderExtensionBase
+                                  join sob in context.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
+                                  join goeb in context.NewGuardObjectExtensionBase on soeb.NewNumber equals goeb.NewObjectNumber
+                                  join smeb in context.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                                  join apv in context.AttributePicklistValue on soeb.NewCategory equals apv.Value
+                                  join ll in context.LocalizedLabel on apv.AttributePicklistValueId equals ll.ObjectId
+                                  join a in context.Attribute on apv.AttributeId equals a.AttributeId
+                                  join e in context.Entity on a.EntityId equals e.EntityId
+                                  where sob.DeletionStateCode == 0
+                                      && sob.Statecode == 0
+                                      && sob.Statuscode == 1
+                                      && (goeb.NewPriostDate == null || goeb.NewObjDeleteDate == null || goeb.NewRemoveDate == null)
+                                      && soeb.NewNumber == item.NewObjectNumber
+                                      && goeb.NewObjectNumber == item.NewObjectNumber
+                                      //&& soeb.NewDate.Value.Date >= DateStart.Date
+                                      //&& soeb.NewDate.Value.Date <= DateEnd.Date
+                                      && a.PhysicalName.Equals("New_category")
+                                      && e.Name.Equals("New_serviceorder")
+                                      && goeb.NewGuardObjectId == item.NewGuardObjectId
+                                      && soeb.NewCategory == 14
+                                  select new { soeb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.soeb.NewDate).ToList();
+                        //var so_period = so.Where(x => x.soeb.NewDate.Value.Date >= DateStart.Date && x.soeb.NewDate.Value.Date <= DateEnd.Date).Distinct().OrderByDescending(x => x.soeb.NewDate).ToList();
                         App.Current.Dispatcher.Invoke((System.Action)delegate {
                             ReglamentWorksList.Add(new ReglamentWorksOutputModel() {
                                 ObjectNumber = item.NewObjectNumber,
@@ -361,13 +385,64 @@ namespace VityazReports.ViewModel {
                                 RrPS = item.NewRrPs,
                                 RrVideo = item.NewRrVideo,
                                 RrSkud = item.NewRrSkud,
-                                ObjectID = item.NewGuardObjectId
-                                //IsOrderExist = item.Category == 11 ? true : false
-                            });
+                                ObjectID = item.NewGuardObjectId,
+                                IsOrderExist = so.Where(x => x.soeb.NewDate.Value.Date >= DateStart.Date && x.soeb.NewDate.Value.Date <= DateEnd.Date).Count() > 0,
+                                //DaysAgoReglamentOrder = so.Count <= 0 ? 99999 : (DateTime.Now - so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)).TotalDays
+                                DaysAgoReglamentOrder = so.Count>0 ? 
+                                so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5) < DateTime.Now ?
+                                    (-1)*Math.Round((DateTime.Now - so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)).TotalDays,0) :
+                                    Math.Round(((so.Where(x=>x.soeb.NewDate>=DateTime.Now).OrderBy(x=>x.soeb.NewDate).FirstOrDefault().soeb.NewDate.Value.AddHours(5)-DateTime.Now).TotalDays),0) :
+                                    //Math.Round((so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)- DateTime.Now).TotalDays, 0) :
+                                    //double.NaN:
+                                double.NaN
+                            }); ;
                         });
                     }
+
+                    //var rr = (from goeb in context.NewGuardObjectExtensionBase
+                    //          join gob in context.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
+                    //          //join soeb in context.NewServiceorderExtensionBase on goeb.NewObjectNumber equals soeb.NewNumber
+                    //          //join sob in context.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
+                    //          where gob.Statecode == 0 && gob.Statuscode == 1 && gob.DeletionStateCode == 0
+                    //             && goeb.NewRemoveDate == null && goeb.NewPriostDate == null && goeb.NewObjDeleteDate == null &&
+                    //             goeb.NewRrOnOff == true
+                    //             //&& sob.DeletionStateCode == 0
+                    //             //     && sob.Statecode == 0
+                    //             //     && sob.Statuscode == 1
+                    //          select new {
+                    //              NewObjectNumber = goeb.NewObjectNumber,
+                    //              NewName = goeb.NewName,
+                    //              NewAddress = goeb.NewAddress,
+                    //              NewRrOnOff = goeb.NewRrOnOff,
+                    //              NewRrOs = goeb.NewRrOs,
+                    //              NewRrPs = goeb.NewRrPs,
+                    //              NewRrVideo = goeb.NewRrVideo,
+                    //              NewRrSkud = goeb.NewRrSkud,
+                    //              NewGuardObjectId = goeb.NewGuardObjectId,
+                    //              //Category = soeb.NewCategory
+                    //          }).AsNoTracking().Distinct().ToList();
+                    //if (rr != null)
+                    //    App.Current.Dispatcher.Invoke((System.Action)delegate {
+                    //        ReglamentWorksList.Clear();
+                    //    });
+                    //foreach (var item in rr) {
+                    //    App.Current.Dispatcher.Invoke((System.Action)delegate {
+                    //        ReglamentWorksList.Add(new ReglamentWorksOutputModel() {
+                    //            ObjectNumber = item.NewObjectNumber,
+                    //            ObjectName = item.NewName,
+                    //            ObjectAddress = item.NewAddress,
+                    //            RrEveryMonth = item.NewRrOnOff,
+                    //            RrOS = item.NewRrOs,
+                    //            RrPS = item.NewRrPs,
+                    //            RrVideo = item.NewRrVideo,
+                    //            RrSkud = item.NewRrSkud,
+                    //            ObjectID = item.NewGuardObjectId
+                    //            //IsOrderExist = item.Category == 11 ? true : false
+                    //        });
+                    //    });
+                    //}
                 };
-                bw.RunWorkerCompleted += (s, e) => {
+                bw.RunWorkerCompleted += (s, e1) => {
                     Loading = false;
                 };
                 bw.RunWorkerAsync();

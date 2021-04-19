@@ -45,5 +45,6 @@ namespace VityazReports.Models.ReglamentWorks {
             }
         }
         public bool IsOrderExist { get; set; }
+        public double? DaysAgoReglamentOrder { get; set; }
     }
 }
