@@ -63,95 +63,124 @@
                 </DataGrid.Columns>
             </DataGrid>
         </mah:Flyout>
-        <DataGrid IsReadOnly="True" SelectedItem="{Binding SelectedReglamentWork}" x:Name="dgReglamentWorks" Panel.ZIndex="0" FontWeight="UltraLight" 
-                  ItemsSource="{Binding Source={StaticResource ReglamentWorks}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
-                  CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <!--<DataGrid.GroupStyle>
-                <GroupStyle>
-                    <GroupStyle.ContainerStyle>
-                        <Style TargetType="{x:Type GroupItem}">
-                            <Setter Property="Margin" Value="5"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type GroupItem}">
-                                        <Expander IsExpanded="False" BorderThickness="1">
-                                            <Expander.Header>
-                                                <WrapPanel>
-                                                    <TextBlock FontWeight="Bold" x:Name="ManagerName" Text="{Binding IsOrderExist}" Margin="5"/>
-                                                    --><!--<Button Style="{StaticResource MahApps.Styles.Button.Calendar.Header}" Content="Итоги" 
-                                                            Command="{Binding DataContext.ViewTotalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                            CommandParameter="{Binding ElementName=ManagerName, Path=Text}"/>--><!--
-                                                </WrapPanel>
-                                            </Expander.Header>
-                                            <Expander.Content>
-                                                <ItemsPresenter/>
-                                            </Expander.Content>
-                                        </Expander>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </GroupStyle.ContainerStyle>
-                </GroupStyle>
-            </DataGrid.GroupStyle>-->
-            <!--<b:Interaction.Triggers>
-                <b:EventTrigger EventName="MouseDoubleClick">
-                    <b:InvokeCommandAction Command="{Binding DetailCommand}" CommandParameter="{Binding ElementName=dgReglamentWorks, Path=SelectedReportData}"/>
-                </b:EventTrigger>
-            </b:Interaction.Triggers>-->
-            <!--<DataGrid.InputBindings>
-                <KeyBinding Key="F2" Command="{Binding Path=DetailCommand}" CommandParameter="{Binding ElementName=dgReglamentWorks, Path=SelectedItem}"/>
-                <MouseBinding MouseAction="LeftClick" Command="{Binding Path=DetailCommand}" CommandParameter="{Binding ElementName=dgReglamentWorks, Path=SelectedItem}"/>
-            </DataGrid.InputBindings>-->
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
-                <DataGridTextColumn Header="Название объекта" Binding="{Binding ObjectName}"/>
-                <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
-                <DataGridCheckBoxColumn Header="Ежемес. рег. работы" Binding="{Binding RrEveryMonth}"/>
-                <DataGridCheckBoxColumn Header="ОС рег. работы" Binding="{Binding RrOS}"/>
-                <DataGridCheckBoxColumn Header="ПС рег. работы" Binding="{Binding RrPS}"/>
-                <DataGridCheckBoxColumn Header="СКУД рег. работы" Binding="{Binding RrSkud}"/>
-                <DataGridCheckBoxColumn Header="Видео рег. работы" Binding="{Binding RrVideo}"/>
-                <DataGridCheckBoxColumn Header="Заявка на регламент(период)" Binding="{Binding IsOrderExist}"/>
-                <DataGridTextColumn Header="Дней с последней заявки на регламент" Binding="{Binding DaysAgoReglamentOrder}"/>
-            </DataGrid.Columns>
-            <DataGrid.InputBindings>
-                <MouseBinding MouseAction="LeftClick" Command="{Binding GetDetailInfo}"/>
-            </DataGrid.InputBindings>
-            <!--<DataGrid.RowDetailsTemplate>
-                <DataTemplate>
-                    <StackPanel>
-                        <DataGrid x:Name="dg_agreement" Margin="5" ItemsSource="{Binding Source={StaticResource AgreementDetail}}" AutoGenerateColumns="False" CanUserReorderColumns="True" CanUserDeleteRows="False" CanUserAddRows="False" 
-                                  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                            <DataGrid.Resources>
-                                <DataTemplate x:Key="dt_AgreementDate">
-                                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=AgreementDate,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
-                                </DataTemplate>
-                                <DataTemplate x:Key="edt_AgreementDate">
-                                    <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=AgreementDate,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
-                                </DataTemplate>
-                            </DataGrid.Resources>
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="№ договора" Binding="{Binding AgreementNumber}"/>
-                                <DataGridTextColumn Header="Исполнитель" Binding="{Binding AgreementExecutor}"/>
-                                --><!--<DataGridTextColumn Header="Дата подписания" Binding="{Binding AgreementDate}"/>--><!--
-                                <DataGridTemplateColumn CellTemplate="{StaticResource dt_AgreementDate}" CellEditingTemplate="{StaticResource edt_AgreementDate}" Header="Дата подписания"/>
-                                <DataGridTextColumn Header="Тип договора" Binding="{Binding AgreementType}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        --><!--<DataGrid Margin="5" ItemsSource="{Binding ReglamentWorksDetailCollection}" CanUserAddRows="False" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserDeleteRows="False" AutoGenerateColumns="false" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Сотрудник" Binding="{Binding UserChanged}"/>
-                                <DataGridTextColumn Header="Дата изменения" Binding="{Binding DateChanged}"/>
-                                <DataGridTextColumn Header="Наименование поля" Binding="{Binding FieldChanged}"/>
-                                <DataGridTextColumn Header="Было" Binding="{Binding BeforeChanged}"/>
-                                <DataGridTextColumn Header="Стало" Binding="{Binding AfterChanged}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>--><!--
-                    </StackPanel>
-                </DataTemplate>
-            </DataGrid.RowDetailsTemplate>-->
-        </DataGrid>
+        <mah:MetroAnimatedTabControl>
+            <mah:MetroTabItem Header="ОС/ТРС">
+                <DataGrid IsReadOnly="True" SelectedItem="{Binding SelectedReglamentWork}" x:Name="dgReglamentWorks" Panel.ZIndex="0" FontWeight="UltraLight" 
+                      ItemsSource="{Binding Source={StaticResource ReglamentWorks}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
+                      CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
+                        <DataGridTextColumn Header="Название объекта" Binding="{Binding ObjectName}"/>
+                        <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
+                        <DataGridCheckBoxColumn Header="Ежемес. рег. работы" Binding="{Binding RrEveryMonth}"/>
+                        <DataGridCheckBoxColumn Header="ОС рег. работы" Binding="{Binding RrOS}"/>
+                        <DataGridCheckBoxColumn Header="ПС рег. работы" Binding="{Binding RrPS}"/>
+                        <DataGridCheckBoxColumn Header="СКУД рег. работы" Binding="{Binding RrSkud}"/>
+                        <DataGridCheckBoxColumn Header="Видео рег. работы" Binding="{Binding RrVideo}"/>
+                        <DataGridCheckBoxColumn Header="Заявка на регламент(период)" Binding="{Binding IsOrderExist}"/>
+                        <DataGridTextColumn Header="Дней с последней заявки на регламент" Binding="{Binding DaysAgoReglamentOrder}"/>
+                    </DataGrid.Columns>
+                    <DataGrid.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding GetDetailInfo}"/>
+                    </DataGrid.InputBindings>
+                    <!--<DataGrid.RowDetailsTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <DataGrid x:Name="dg_agreement" Margin="5" ItemsSource="{Binding Source={StaticResource AgreementDetail}}" AutoGenerateColumns="False" CanUserReorderColumns="True" CanUserDeleteRows="False" CanUserAddRows="False" 
+                                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Resources>
+                                    <DataTemplate x:Key="dt_AgreementDate">
+                                        <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=AgreementDate,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                    <DataTemplate x:Key="edt_AgreementDate">
+                                        <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=AgreementDate,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="№ договора" Binding="{Binding AgreementNumber}"/>
+                                    <DataGridTextColumn Header="Исполнитель" Binding="{Binding AgreementExecutor}"/>
+                                    -->
+                    <!--<DataGridTextColumn Header="Дата подписания" Binding="{Binding AgreementDate}"/>-->
+                    <!--
+                                    <DataGridTemplateColumn CellTemplate="{StaticResource dt_AgreementDate}" CellEditingTemplate="{StaticResource edt_AgreementDate}" Header="Дата подписания"/>
+                                    <DataGridTextColumn Header="Тип договора" Binding="{Binding AgreementType}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            -->
+                    <!--<DataGrid Margin="5" ItemsSource="{Binding ReglamentWorksDetailCollection}" CanUserAddRows="False" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserDeleteRows="False" AutoGenerateColumns="false" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Сотрудник" Binding="{Binding UserChanged}"/>
+                                    <DataGridTextColumn Header="Дата изменения" Binding="{Binding DateChanged}"/>
+                                    <DataGridTextColumn Header="Наименование поля" Binding="{Binding FieldChanged}"/>
+                                    <DataGridTextColumn Header="Было" Binding="{Binding BeforeChanged}"/>
+                                    <DataGridTextColumn Header="Стало" Binding="{Binding AfterChanged}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>-->
+                    <!--
+                        </StackPanel>
+                    </DataTemplate>
+                </DataGrid.RowDetailsTemplate>-->
+                </DataGrid>
+            </mah:MetroTabItem>
+            <mah:MetroTabItem Header="ПС">
+                <DataGrid IsReadOnly="True" SelectedItem="{Binding SelectedReglamentWork}" Panel.ZIndex="0" FontWeight="UltraLight" 
+                      ItemsSource="{Binding Source={StaticResource ReglamentWorks}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
+                      CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
+                        <DataGridTextColumn Header="Название объекта" Binding="{Binding ObjectName}"/>
+                        <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
+                        <DataGridCheckBoxColumn Header="Ежемес. рег. работы" Binding="{Binding RrEveryMonth}"/>
+                        <DataGridCheckBoxColumn Header="ОС рег. работы" Binding="{Binding RrOS}"/>
+                        <DataGridCheckBoxColumn Header="ПС рег. работы" Binding="{Binding RrPS}"/>
+                        <DataGridCheckBoxColumn Header="СКУД рег. работы" Binding="{Binding RrSkud}"/>
+                        <DataGridCheckBoxColumn Header="Видео рег. работы" Binding="{Binding RrVideo}"/>
+                        <DataGridCheckBoxColumn Header="Заявка на регламент(период)" Binding="{Binding IsOrderExist}"/>
+                        <DataGridTextColumn Header="Дней с последней заявки на регламент" Binding="{Binding DaysAgoReglamentOrder}"/>
+                    </DataGrid.Columns>
+                    <DataGrid.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding GetDetailInfo}"/>
+                    </DataGrid.InputBindings>
+                    <!--<DataGrid.RowDetailsTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <DataGrid x:Name="dg_agreement" Margin="5" ItemsSource="{Binding Source={StaticResource AgreementDetail}}" AutoGenerateColumns="False" CanUserReorderColumns="True" CanUserDeleteRows="False" CanUserAddRows="False" 
+                                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Resources>
+                                    <DataTemplate x:Key="dt_AgreementDate">
+                                        <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=AgreementDate,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                    <DataTemplate x:Key="edt_AgreementDate">
+                                        <mah:DateTimePicker IsEnabled="False" Culture="ru-RU" SelectedDateTime="{Binding Mode=TwoWay, Path=AgreementDate,StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="№ договора" Binding="{Binding AgreementNumber}"/>
+                                    <DataGridTextColumn Header="Исполнитель" Binding="{Binding AgreementExecutor}"/>
+                                    -->
+                    <!--<DataGridTextColumn Header="Дата подписания" Binding="{Binding AgreementDate}"/>-->
+                    <!--
+                                    <DataGridTemplateColumn CellTemplate="{StaticResource dt_AgreementDate}" CellEditingTemplate="{StaticResource edt_AgreementDate}" Header="Дата подписания"/>
+                                    <DataGridTextColumn Header="Тип договора" Binding="{Binding AgreementType}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            -->
+                    <!--<DataGrid Margin="5" ItemsSource="{Binding ReglamentWorksDetailCollection}" CanUserAddRows="False" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserDeleteRows="False" AutoGenerateColumns="false" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Сотрудник" Binding="{Binding UserChanged}"/>
+                                    <DataGridTextColumn Header="Дата изменения" Binding="{Binding DateChanged}"/>
+                                    <DataGridTextColumn Header="Наименование поля" Binding="{Binding FieldChanged}"/>
+                                    <DataGridTextColumn Header="Было" Binding="{Binding BeforeChanged}"/>
+                                    <DataGridTextColumn Header="Стало" Binding="{Binding AfterChanged}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>-->
+                    <!--
+                        </StackPanel>
+                    </DataTemplate>
+                </DataGrid.RowDetailsTemplate>-->
+                </DataGrid>
+            </mah:MetroTabItem>
+        </mah:MetroAnimatedTabControl>
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="89" Width="{Binding ActualWidth, ElementName=ReglamentWorksWindow}" 
               Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=ReglamentWorksWindow}" Grid.ColumnSpan="3">
             <mah:ProgressRing IsActive="{Binding Loading}"/>

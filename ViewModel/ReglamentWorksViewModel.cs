@@ -281,7 +281,186 @@ namespace VityazReports.ViewModel {
                 //}
                 #endregion
 
-                //TODO: Добавить отбор по дате
+
+                Dispatcher.CurrentDispatcher.Invoke((Action)delegate {
+                    if (SelectedReglamentWork == null)
+                        return;
+                    ReglamentWorksDetailCollection.Clear();
+                    var so = (from soeb in context.NewServiceorderExtensionBase
+                              join sob in context.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
+                              join goeb in context.NewGuardObjectExtensionBase on soeb.NewNumber equals goeb.NewObjectNumber
+                              join smeb in context.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                              join apv in context.AttributePicklistValue on soeb.NewCategory equals apv.Value
+                              join ll in context.LocalizedLabel on apv.AttributePicklistValueId equals ll.ObjectId
+                              join a in context.Attribute on apv.AttributeId equals a.AttributeId
+                              join e in context.Entity on a.EntityId equals e.EntityId
+                              where sob.DeletionStateCode == 0
+                                  && sob.Statecode == 0
+                                  && sob.Statuscode == 1
+                                  && (goeb.NewPriostDate == null || goeb.NewObjDeleteDate == null || goeb.NewRemoveDate == null)
+                                  && soeb.NewNumber == SelectedReglamentWork.ObjectNumber
+                                  && goeb.NewObjectNumber == SelectedReglamentWork.ObjectNumber
+                                  && soeb.NewDate.Value.Date >= DateStart.Date
+                                  && soeb.NewDate.Value.Date <= DateEnd.Date
+                                  && a.PhysicalName.Equals("New_category")
+                                  && e.Name.Equals("New_serviceorder")
+                              select new { soeb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.soeb.NewDate).ToList();
+                    if (so == null)
+                        return;
+                    if (so.Count <= 0)
+                        return;
+                    foreach (var item in so)
+                        ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail(item.soeb.NewDate.Value.AddHours(5), item.ll.Label, item.smeb.NewName, item.soeb.NewName, item.soeb.NewTechConclusion));
+
+                    if (ReglamentWorksDetailCollection.Count > 0)
+                        DetailFlyoutVisible = true;
+                });
+            });
+        }
+        private RelayCommand _GetDetailFireAlarmInfo;
+        public RelayCommand GetDetailFireAlarmInfo {
+            get => _GetDetailFireAlarmInfo ??= new RelayCommand(async obj => {
+                DetailFlyoutVisible = false;
+                #region данным кодом мы можем получить историю изменений  по галочкам
+                //if (SelectedReglamentWork == null)
+                //    return;
+                ////TODO: Перенести в get
+                //Test = null;
+                //App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //    ReglamentWorksDetailCollection.Clear();
+                //});
+                //NewGuardObjectHistory before = null;
+                //NewGuardObjectHistory after = null;
+                //DateTime start = DateTime.Parse(DateStart.ToShortDateString()).AddHours(-5);
+                //DateTime end = DateTime.Parse(DateEnd.ToShortDateString()).AddHours(-5);
+                //List<NewGuardObjectHistory> history = context.NewGuardObjectHistory.Where(x => x.ModifiedOn >= start && x.ModifiedOn <= end && x.NewGuardObjectId == SelectedReglamentWork.ObjectID).AsNoTracking().ToList();
+                //if (history.Where(x => x.NewRrOnOff != null || x.NewRrOs != null || x.NewRrPs != null || x.NewRrSkud != null || x.NewRrVideo != null).Count() > 0) {
+                //    var r = history.GroupBy(a => new { a.NewGuardObjectId, a.ModifiedBy, a.ModifiedOn.Date }).ToList();
+                //    foreach (var item in r) {
+                //        before = null;
+                //        after = null;
+                //        foreach (var i in item) {
+                //            if (i.HistoryState == "Старый")
+                //                before = i;
+                //            else
+                //                after = i;
+                //            if (before != null && after != null) {
+                //                List<Comparator> comparators = compare.CompareObject(before, after);
+                //                if (comparators.Any(x => x.FieldName.Equals("NewRrOnOff") || x.FieldName.Equals("NewRrOs") || x.FieldName.Equals("NewRrPs") || x.FieldName.Equals("NewRrVideo") || x.FieldName.Equals("NewRrSkud"))) {
+                //                    //var hj = 0;
+                //                    foreach (var compr in comparators) {
+                //                        string FieldChanged = GetRealFieldName(compr.FieldName);
+                //                        if (!string.IsNullOrEmpty(FieldChanged)) {
+                //                            App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                                ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                                    UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == after.ModifiedBy).FullName,
+                //                                    DateChanged = after.ModifiedOn,
+                //                                    //FieldChanged = compr.FieldName,
+                //                                    FieldChanged = FieldChanged,
+                //                                    BeforeChanged = compr.OldValue.ToString(),
+                //                                    AfterChanged = compr.NewValue.ToString()
+                //                                });
+                //                            });
+                //                        }
+                //                    }
+                //                }
+                //                before = null;
+                //                after = null;
+                //            }
+                //        }
+                //    }
+                //    if (ReglamentWorksDetailCollection.Count <= 0) {
+                //        before = null;
+                //        after = null;
+                //        foreach (var item in history.Where(x => x.NewRrOnOff != null || x.NewRrOs != null || x.NewRrPs != null || x.NewRrSkud != null || x.NewRrVideo != null)) {
+                //            if (item.HistoryState == "Старый")
+                //                before = item;
+                //            else
+                //                after = item;
+                //            if (before != null && after != null) {
+                //                List<Comparator> comparators = compare.CompareObject(before, after);
+                //                if (comparators.Any(x => x.FieldName.Equals("NewRrOnOff") || x.FieldName.Equals("NewRrOs") || x.FieldName.Equals("NewRrPs") || x.FieldName.Equals("NewRrVideo") || x.FieldName.Equals("NewRrSkud"))) {
+                //                    //var hj = 0;
+                //                    foreach (var compr in comparators) {
+                //                        string FieldChanged = GetRealFieldName(compr.FieldName);
+                //                        if (!string.IsNullOrEmpty(FieldChanged)) {
+                //                            App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                                ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                                    UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == after.ModifiedBy).FullName,
+                //                                    DateChanged = after.ModifiedOn,
+                //                                    FieldChanged = FieldChanged,
+                //                                    BeforeChanged = compr.OldValue.ToString(),
+                //                                    AfterChanged = compr.NewValue.ToString()
+                //                                });
+                //                            });
+                //                        }
+                //                    }
+                //                }
+                //                before = null;
+                //                after = null;
+                //            }
+                //        }
+                //        if (ReglamentWorksDetailCollection.Count <= 0) {
+                //            NewGuardObjectHistory first = history.FirstOrDefault(x => x.NewRrOnOff != null || x.NewRrOs != null || x.NewRrPs != null || x.NewRrSkud != null || x.NewRrVideo != null);
+                //            if (first == null)
+                //                return;
+                //            if (first.NewRrOnOff != false)
+                //                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                    ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                        UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == first.ModifiedBy).FullName,
+                //                        DateChanged = first.ModifiedOn,
+                //                        FieldChanged = "Ежем. рег. работы",
+                //                        BeforeChanged = (!first.NewRrOnOff.Value).ToString(),
+                //                        AfterChanged = first.NewRrOnOff.Value.ToString()
+                //                    });
+                //                });
+                //            if (first.NewRrOs != false)
+                //                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                    ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                        UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == first.ModifiedBy).FullName,
+                //                        DateChanged = first.ModifiedOn,
+                //                        FieldChanged = "Ежем. рег. работы (ОС)",
+                //                        BeforeChanged = (!first.NewRrOs.Value).ToString(),
+                //                        AfterChanged = first.NewRrOs.Value.ToString()
+                //                    });
+                //                });
+                //            if (first.NewRrPs != false)
+                //                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                    ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                        UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == first.ModifiedBy).FullName,
+                //                        DateChanged = first.ModifiedOn,
+                //                        FieldChanged = "Ежем. рег. работы (ПС)",
+                //                        BeforeChanged = (!first.NewRrPs.Value).ToString(),
+                //                        AfterChanged = first.NewRrPs.Value.ToString()
+                //                    });
+                //                });
+                //            if (first.NewRrSkud != false)
+                //                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                    ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                        UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == first.ModifiedBy).FullName,
+                //                        DateChanged = first.ModifiedOn,
+                //                        FieldChanged = "Ежем. рег. работы (СКУД)",
+                //                        BeforeChanged = (!first.NewRrSkud.Value).ToString(),
+                //                        AfterChanged = first.NewRrSkud.Value.ToString()
+                //                    });
+                //                });
+                //            if (first.NewRrVideo != false)
+                //                App.Current.Dispatcher.Invoke((System.Action)delegate {
+                //                    ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail() {
+                //                        UserChanged = context.SystemUserBase.FirstOrDefault(x => x.SystemUserId == first.ModifiedBy).FullName,
+                //                        DateChanged = first.ModifiedOn,
+                //                        FieldChanged = "Ежем. рег. работы (Видео)",
+                //                        BeforeChanged = (!first.NewRrVideo.Value).ToString(),
+                //                        AfterChanged = first.NewRrVideo.Value.ToString()
+                //                    });
+                //                });
+                //        }
+                //    }
+                //    if (ReglamentWorksDetailCollection.Count > 0)
+                //        DetailFlyoutVisible = true;
+                //}
+                #endregion
+
 
                 Dispatcher.CurrentDispatcher.Invoke((Action)delegate {
                     if (SelectedReglamentWork == null)
@@ -382,14 +561,11 @@ namespace VityazReports.ViewModel {
                                       && (goeb.NewPriostDate == null || goeb.NewObjDeleteDate == null || goeb.NewRemoveDate == null)
                                       && soeb.NewNumber == item.NewObjectNumber
                                       && goeb.NewObjectNumber == item.NewObjectNumber
-                                      //&& soeb.NewDate.Value.Date >= DateStart.Date
-                                      //&& soeb.NewDate.Value.Date <= DateEnd.Date
                                       && a.PhysicalName.Equals("New_category")
                                       && e.Name.Equals("New_serviceorder")
                                       && goeb.NewGuardObjectId == item.NewGuardObjectId
                                       && soeb.NewCategory == 14
                                   select new { soeb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.soeb.NewDate).ToList();
-                        //var so_period = so.Where(x => x.soeb.NewDate.Value.Date >= DateStart.Date && x.soeb.NewDate.Value.Date <= DateEnd.Date).Distinct().OrderByDescending(x => x.soeb.NewDate).ToList();
                         App.Current.Dispatcher.Invoke((System.Action)delegate {
                             ReglamentWorksList.Add(new ReglamentWorksOutputModel() {
                                 ObjectNumber = item.NewObjectNumber,
@@ -402,60 +578,14 @@ namespace VityazReports.ViewModel {
                                 RrSkud = item.NewRrSkud,
                                 ObjectID = item.NewGuardObjectId,
                                 IsOrderExist = so.Where(x => x.soeb.NewDate.Value.Date >= DateStart.Date && x.soeb.NewDate.Value.Date <= DateEnd.Date).Count() > 0,
-                                //DaysAgoReglamentOrder = so.Count <= 0 ? 99999 : (DateTime.Now - so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)).TotalDays
                                 DaysAgoReglamentOrder = so.Count>0 ? 
                                 so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5) < DateTime.Now ?
                                     (-1)*Math.Round((DateTime.Now - so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)).TotalDays,0) :
                                     Math.Round(((so.Where(x=>x.soeb.NewDate>=DateTime.Now).OrderBy(x=>x.soeb.NewDate).FirstOrDefault().soeb.NewDate.Value.AddHours(5)-DateTime.Now).TotalDays),0) :
-                                    //Math.Round((so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)- DateTime.Now).TotalDays, 0) :
-                                    //double.NaN:
                                 double.NaN
                             }); ;
                         });
-                    }
-
-                    //var rr = (from goeb in context.NewGuardObjectExtensionBase
-                    //          join gob in context.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
-                    //          //join soeb in context.NewServiceorderExtensionBase on goeb.NewObjectNumber equals soeb.NewNumber
-                    //          //join sob in context.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
-                    //          where gob.Statecode == 0 && gob.Statuscode == 1 && gob.DeletionStateCode == 0
-                    //             && goeb.NewRemoveDate == null && goeb.NewPriostDate == null && goeb.NewObjDeleteDate == null &&
-                    //             goeb.NewRrOnOff == true
-                    //             //&& sob.DeletionStateCode == 0
-                    //             //     && sob.Statecode == 0
-                    //             //     && sob.Statuscode == 1
-                    //          select new {
-                    //              NewObjectNumber = goeb.NewObjectNumber,
-                    //              NewName = goeb.NewName,
-                    //              NewAddress = goeb.NewAddress,
-                    //              NewRrOnOff = goeb.NewRrOnOff,
-                    //              NewRrOs = goeb.NewRrOs,
-                    //              NewRrPs = goeb.NewRrPs,
-                    //              NewRrVideo = goeb.NewRrVideo,
-                    //              NewRrSkud = goeb.NewRrSkud,
-                    //              NewGuardObjectId = goeb.NewGuardObjectId,
-                    //              //Category = soeb.NewCategory
-                    //          }).AsNoTracking().Distinct().ToList();
-                    //if (rr != null)
-                    //    App.Current.Dispatcher.Invoke((System.Action)delegate {
-                    //        ReglamentWorksList.Clear();
-                    //    });
-                    //foreach (var item in rr) {
-                    //    App.Current.Dispatcher.Invoke((System.Action)delegate {
-                    //        ReglamentWorksList.Add(new ReglamentWorksOutputModel() {
-                    //            ObjectNumber = item.NewObjectNumber,
-                    //            ObjectName = item.NewName,
-                    //            ObjectAddress = item.NewAddress,
-                    //            RrEveryMonth = item.NewRrOnOff,
-                    //            RrOS = item.NewRrOs,
-                    //            RrPS = item.NewRrPs,
-                    //            RrVideo = item.NewRrVideo,
-                    //            RrSkud = item.NewRrSkud,
-                    //            ObjectID = item.NewGuardObjectId
-                    //            //IsOrderExist = item.Category == 11 ? true : false
-                    //        });
-                    //    });
-                    //}
+                    }                    
                 };
                 bw.RunWorkerCompleted += (s, e1) => {
                     Loading = false;

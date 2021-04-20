@@ -124,6 +124,14 @@ namespace VityazReports.ViewModel {
                 var coords = (from soc in context.ServiceOrderCoordinates
                               join soeb in context.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
                               where soeb.NewServicemanServiceorder == SelectedServiceman.NewServicemanId
+                                && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
+                                && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
+                                && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
+                                && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                              //&& !soc.SocIncomeLatitude.Equals("0")
+                              //&& !soc.SocIncomeLongitude.Equals("0")
+                              //&& !soc.SocOutcomeLatitide.Equals("0")
+                              //&& !soc.SocOutcomeLongitude.Equals("0")
                               select new { soc, soeb }
                 ).AsNoTracking().ToList();
                 if (coords.Count() <= 0) {
@@ -148,8 +156,18 @@ namespace VityazReports.ViewModel {
                               join soeb in context.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
                               where soeb.NewServicemanServiceorder == SelectedServiceman.NewServicemanId
                               && soeb.NewDate.Value.Date == SelectedDate.Value.Date
+                                && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
+                                && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
+                                && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
+                                && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                                //&& !soc.SocIncomeLatitude.Equals("0")
+                                //&& !soc.SocIncomeLongitude.Equals("0")
+                                //&& !soc.SocOutcomeLatitide.Equals("0")
+                                //&& !soc.SocOutcomeLongitude.Equals("0")
                               select new { soc, soeb }
                               ).AsNoTracking().ToList();
+                if (coords.Count <= 0)
+                    return;
             }, obj => SelectedDate != null);
         }
     }

@@ -27,10 +27,10 @@
                     <ColumnDefinition Width="3*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Выберите техника" FontSize="16" FontWeight="UltraLight"/>
-                    <ComboBox ItemsSource="{Binding Servicemans}" DisplayMemberPath="NewName" SelectedItem="{Binding SelectedServiceman}"/>
-                    <ComboBox ItemsSource="{Binding ListDates}" ItemStringFormat="dd.MM.yyyy" SelectedItem="{Binding SelectedDate}"/>
+                <StackPanel Grid.Column="0" Margin="5">
+                    <TextBlock Margin="5" Text="Выберите техника" FontSize="16" FontWeight="UltraLight"/>
+                    <ComboBox Margin="5" ItemsSource="{Binding Servicemans}" DisplayMemberPath="NewName" SelectedItem="{Binding SelectedServiceman}"/>
+                    <ComboBox Margin="5" ItemsSource="{Binding ListDates}" ItemStringFormat="dd.MM.yyyy" SelectedItem="{Binding SelectedDate}"/>
                 </StackPanel>
                 <Button Grid.Column="1" Margin="5" Content="Получить" Command="{Binding GetCoordinatesByServicemanCommand}"/>
             </Grid>
