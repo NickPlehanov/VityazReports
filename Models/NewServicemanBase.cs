@@ -12,6 +12,13 @@ namespace VityazReports.Models
     [Table("New_servicemanBase")]
     public partial class NewServicemanBase
     {
+        public NewServicemanBase()
+        {
+            NewTest2ExtensionBaseNewNewServicemanPsNavigation = new HashSet<NewTest2ExtensionBase>();
+            NewTest2ExtensionBaseNewServicemanServiceorderPsNavigation = new HashSet<NewTest2ExtensionBase>();
+            NewTest2ExtensionBaseNewTechniqueEndNavigation = new HashSet<NewTest2ExtensionBase>();
+        }
+
         [Key]
         [Column("New_servicemanId")]
         public Guid NewServicemanId { get; set; }
@@ -34,5 +41,12 @@ namespace VityazReports.Models
         public int? TimeZoneRuleVersionNumber { get; set; }
         [Column("UTCConversionTimeZoneCode")]
         public int? UtcconversionTimeZoneCode { get; set; }
+
+        [InverseProperty(nameof(NewTest2ExtensionBase.NewNewServicemanPsNavigation))]
+        public virtual ICollection<NewTest2ExtensionBase> NewTest2ExtensionBaseNewNewServicemanPsNavigation { get; set; }
+        [InverseProperty(nameof(NewTest2ExtensionBase.NewServicemanServiceorderPsNavigation))]
+        public virtual ICollection<NewTest2ExtensionBase> NewTest2ExtensionBaseNewServicemanServiceorderPsNavigation { get; set; }
+        [InverseProperty(nameof(NewTest2ExtensionBase.NewTechniqueEndNavigation))]
+        public virtual ICollection<NewTest2ExtensionBase> NewTest2ExtensionBaseNewTechniqueEndNavigation { get; set; }
     }
 }

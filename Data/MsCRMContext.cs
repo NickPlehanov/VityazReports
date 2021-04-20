@@ -41,6 +41,8 @@ namespace VityazReports.Data
         public virtual DbSet<NewServicemanExtensionBase> NewServicemanExtensionBase { get; set; }
         public virtual DbSet<NewServiceorderBase> NewServiceorderBase { get; set; }
         public virtual DbSet<NewServiceorderExtensionBase> NewServiceorderExtensionBase { get; set; }
+        public virtual DbSet<NewTest2Base> NewTest2Base { get; set; }
+        public virtual DbSet<NewTest2ExtensionBase> NewTest2ExtensionBase { get; set; }
         public virtual DbSet<ServiceOrderCoordinates> ServiceOrderCoordinates { get; set; }
         public virtual DbSet<SystemUserBase> SystemUserBase { get; set; }
 
@@ -714,6 +716,69 @@ namespace VityazReports.Data
                     .WithMany()
                     .HasForeignKey(d => d.NewTechniqueEnd)
                     .HasConstraintName("new_new_serviceman_new_serviceorder");
+            });
+
+            modelBuilder.Entity<NewTest2Base>(entity =>
+            {
+                entity.HasIndex(e => new { e.CreatedBy, e.CreatedOn, e.ModifiedBy, e.ModifiedOn }, "ndx_Auditing")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.DeletionStateCode, e.Statecode, e.Statuscode }, "ndx_Core")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => new { e.OwningUser, e.OwningBusinessUnit }, "ndx_Security")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.VersionNumber, "ndx_Sync")
+                    .HasFillFactor((byte)80);
+
+                entity.HasIndex(e => e.NewTest2Id, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewTest2Id).ValueGeneratedNever();
+
+                entity.Property(e => e.VersionNumber)
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
+
+                entity.HasOne(d => d.OwningUserNavigation)
+                    .WithMany(p => p.NewTest2Base)
+                    .HasForeignKey(d => d.OwningUser)
+                    .HasConstraintName("user_new_test2");
+            });
+
+            modelBuilder.Entity<NewTest2ExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => new { e.NewOutgone, e.NewName, e.NewIncome }, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.Property(e => e.NewTest2Id).ValueGeneratedNever();
+
+                entity.HasOne(d => d.NewAndromedaServiceorderNavigation)
+                    .WithMany(p => p.NewTest2ExtensionBase)
+                    .HasForeignKey(d => d.NewAndromedaServiceorder)
+                    .HasConstraintName("new_andromeda_serviceorder_ps");
+
+                entity.HasOne(d => d.NewNewServicemanPsNavigation)
+                    .WithMany(p => p.NewTest2ExtensionBaseNewNewServicemanPsNavigation)
+                    .HasForeignKey(d => d.NewNewServicemanPs)
+                    .HasConstraintName("new_new_serviceman_ps");
+
+                entity.HasOne(d => d.NewServicemanServiceorderPsNavigation)
+                    .WithMany(p => p.NewTest2ExtensionBaseNewServicemanServiceorderPsNavigation)
+                    .HasForeignKey(d => d.NewServicemanServiceorderPs)
+                    .HasConstraintName("new_new_serviceman_serveiceorder_ps");
+
+                entity.HasOne(d => d.NewTechniqueEndNavigation)
+                    .WithMany(p => p.NewTest2ExtensionBaseNewTechniqueEndNavigation)
+                    .HasForeignKey(d => d.NewTechniqueEnd)
+                    .HasConstraintName("new_new_serviceman_new_serviceorder_ps");
+
+                entity.HasOne(d => d.NewTest2)
+                    .WithOne(p => p.NewTest2ExtensionBase)
+                    .HasForeignKey<NewTest2ExtensionBase>(d => d.NewTest2Id)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_New_test2ExtensionBase_New_test2Base");
             });
 
             modelBuilder.Entity<ServiceOrderCoordinates>(entity =>

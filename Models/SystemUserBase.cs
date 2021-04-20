@@ -20,6 +20,7 @@ namespace VityazReports.Models
             NewAndromedaBase = new HashSet<NewAndromedaBase>();
             NewGuardObjectBase = new HashSet<NewGuardObjectBase>();
             NewPlacesGbrbase = new HashSet<NewPlacesGbrbase>();
+            NewTest2Base = new HashSet<NewTest2Base>();
         }
 
         [Key]
@@ -128,5 +129,7 @@ namespace VityazReports.Models
         public virtual ICollection<NewGuardObjectBase> NewGuardObjectBase { get; set; }
         [InverseProperty("OwningUserNavigation")]
         public virtual ICollection<NewPlacesGbrbase> NewPlacesGbrbase { get; set; }
+        [InverseProperty("OwningUserNavigation")]
+        public virtual ICollection<NewTest2Base> NewTest2Base { get; set; }
     }
 }

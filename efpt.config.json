@@ -87,6 +87,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[New_test2Base]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[New_test2ExtensionBase]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[ServiceOrderCoordinates]",
          "ObjectType": 0
       },

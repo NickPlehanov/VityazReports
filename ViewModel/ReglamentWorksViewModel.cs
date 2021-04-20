@@ -12,6 +12,7 @@ using VityazReports.Models;
 using System.Windows.Threading;
 using System.IO;
 using System.Diagnostics;
+using Notifications.Wpf;
 
 namespace VityazReports.ViewModel {
     public class ReglamentWorksViewModel : BaseViewModel {
@@ -19,10 +20,13 @@ namespace VityazReports.ViewModel {
         private readonly Compare compare;
         private readonly CommonMethods cm;
 
+        NotificationManager notificationManager = new NotificationManager();
+
         public ReglamentWorksViewModel() {
             context = new MsCRMContext();
             FilterFlyoutVisible = true;
             compare = new Compare();
+            IsTabSecurity = true;
         }
 
         private bool _FilterFlyoutVisible;
@@ -46,7 +50,10 @@ namespace VityazReports.ViewModel {
             get => _SelectedReglamentWork;
             set {
                 _SelectedReglamentWork = value;
-                GetDetailInfo.Execute(null);
+                if (IsTabSecurity)
+                    GetDetailInfo.Execute(null);
+                else
+                    GetDetailFireAlarmInfo.Execute(null);
                 OnPropertyChanged(nameof(SelectedReglamentWork));
             }
         }
@@ -57,6 +64,14 @@ namespace VityazReports.ViewModel {
             set {
                 _ReglamentWorksList = value;
                 OnPropertyChanged(nameof(ReglamentWorksList));
+            }
+        }
+        private ObservableCollection<ReglamentWorksOutputModel> _ReglamentWorksFireAlarmList = new ObservableCollection<ReglamentWorksOutputModel>();
+        public ObservableCollection<ReglamentWorksOutputModel> ReglamentWorksFireAlarmList {
+            get => _ReglamentWorksFireAlarmList;
+            set {
+                _ReglamentWorksList = value;
+                OnPropertyChanged(nameof(ReglamentWorksFireAlarmList));
             }
         }
         private DateTime _DateStart;
@@ -314,6 +329,8 @@ namespace VityazReports.ViewModel {
 
                     if (ReglamentWorksDetailCollection.Count > 0)
                         DetailFlyoutVisible = true;
+                    else
+                        notificationManager.Show(new NotificationContent() { Type = NotificationType.Information, Title = "Информация", Message = "За выбранный период заявок не было" });
                 });
             });
         }
@@ -466,36 +483,50 @@ namespace VityazReports.ViewModel {
                     if (SelectedReglamentWork == null)
                         return;
                     ReglamentWorksDetailCollection.Clear();
-                    var so = (from soeb in context.NewServiceorderExtensionBase
-                              join sob in context.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
-                              join goeb in context.NewGuardObjectExtensionBase on soeb.NewNumber equals goeb.NewObjectNumber
-                              join smeb in context.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
-                              join apv in context.AttributePicklistValue on soeb.NewCategory equals apv.Value
+                    var so = (from teb in context.NewTest2ExtensionBase
+                              join tb in context.NewTest2Base on teb.NewTest2Id equals tb.NewTest2Id
+                              join goeb in context.NewGuardObjectExtensionBase on teb.NewNumber equals goeb.NewObjectNumber
+                              join smeb in context.NewServicemanExtensionBase on teb.NewServicemanServiceorderPs equals smeb.NewServicemanId
+                              join apv in context.AttributePicklistValue on teb.NewCategory equals apv.Value
                               join ll in context.LocalizedLabel on apv.AttributePicklistValueId equals ll.ObjectId
                               join a in context.Attribute on apv.AttributeId equals a.AttributeId
                               join e in context.Entity on a.EntityId equals e.EntityId
-                              where sob.DeletionStateCode == 0
-                                  && sob.Statecode == 0
-                                  && sob.Statuscode == 1
+                              where tb.DeletionStateCode == 0
+                                  && tb.Statecode == 0
+                                  && tb.Statuscode == 1
                                   && (goeb.NewPriostDate == null || goeb.NewObjDeleteDate == null || goeb.NewRemoveDate == null)
-                                  && soeb.NewNumber == SelectedReglamentWork.ObjectNumber
-                                  && goeb.NewObjectNumber == SelectedReglamentWork.ObjectNumber
-                                  && soeb.NewDate.Value.Date >= DateStart.Date
-                                  && soeb.NewDate.Value.Date <= DateEnd.Date
+                                  && teb.NewNumber == SelectedReglamentWork.ObjectNumber
+                                  //&& teb.NewNumber == SelectedReglamentWork.ObjectNumber
+                                  && teb.NewDate.Value.Date >= DateStart.Date
+                                  && teb.NewDate.Value.Date <= DateEnd.Date
                                   && a.PhysicalName.Equals("New_category")
-                                  && e.Name.Equals("New_serviceorder")
-                              select new { soeb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.soeb.NewDate).ToList();
+                                  && e.Name.Equals("New_test2")
+                              select new { teb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.teb.NewDate).ToList();
                     if (so == null)
                         return;
                     if (so.Count <= 0)
                         return;
                     foreach (var item in so)
-                        ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail(item.soeb.NewDate.Value.AddHours(5), item.ll.Label, item.smeb.NewName, item.soeb.NewName, item.soeb.NewTechConclusion));
+                        ReglamentWorksDetailCollection.Add(new ReglamentWorksDetail(item.teb.NewDate.Value.AddHours(5), item.ll.Label, item.smeb.NewName, item.teb.NewName, item.teb.NewTechconclusion));
 
                     if (ReglamentWorksDetailCollection.Count > 0)
                         DetailFlyoutVisible = true;
+                    else
+                        notificationManager.Show(new NotificationContent() { Type = NotificationType.Information, Title = "Информация", Message = "За выбранный период заявок не было" });
                 });
             });
+        }
+        /// <summary>
+        /// true - вкладка охраны
+        /// false - вкладка ПС
+        /// </summary>
+        private bool _IsTabSecurity;
+        public bool IsTabSecurity {
+            get => _IsTabSecurity;
+            set {
+                _IsTabSecurity = value;
+                OnPropertyChanged(nameof(IsTabSecurity));
+            }
         }
 
         private string GetRealFieldName(string field) {
@@ -545,6 +576,7 @@ namespace VityazReports.ViewModel {
                         return;
                     App.Current.Dispatcher.Invoke((System.Action)delegate {
                         ReglamentWorksList.Clear();
+                        ReglamentWorksFireAlarmList.Clear();
                     });
                     foreach (var item in guardObjectsWithReglament) {
                         var so = (from soeb in context.NewServiceorderExtensionBase
@@ -578,14 +610,56 @@ namespace VityazReports.ViewModel {
                                 RrSkud = item.NewRrSkud,
                                 ObjectID = item.NewGuardObjectId,
                                 IsOrderExist = so.Where(x => x.soeb.NewDate.Value.Date >= DateStart.Date && x.soeb.NewDate.Value.Date <= DateEnd.Date).Count() > 0,
-                                DaysAgoReglamentOrder = so.Count>0 ? 
+                                DaysAgoReglamentOrder = so.Count > 0 ?
                                 so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5) < DateTime.Now ?
-                                    (-1)*Math.Round((DateTime.Now - so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)).TotalDays,0) :
-                                    Math.Round(((so.Where(x=>x.soeb.NewDate>=DateTime.Now).OrderBy(x=>x.soeb.NewDate).FirstOrDefault().soeb.NewDate.Value.AddHours(5)-DateTime.Now).TotalDays),0) :
+                                    (-1) * Math.Round((DateTime.Now - so.OrderByDescending(x => x.soeb.NewDate).First().soeb.NewDate.Value.AddHours(5)).TotalDays, 0) :
+                                    Math.Round(((so.Where(x => x.soeb.NewDate >= DateTime.Now).OrderBy(x => x.soeb.NewDate).FirstOrDefault().soeb.NewDate.Value.AddHours(5) - DateTime.Now).TotalDays), 0) :
                                 double.NaN
                             }); ;
                         });
-                    }                    
+
+                        //И сразу для ПС
+                        var fa = (from teb in context.NewTest2ExtensionBase
+                                  join tb in context.NewTest2Base on teb.NewTest2Id equals tb.NewTest2Id
+                                  join goeb in context.NewGuardObjectExtensionBase on teb.NewNumber equals goeb.NewObjectNumber
+                                  join smeb in context.NewServicemanExtensionBase on teb.NewServicemanServiceorderPs equals smeb.NewServicemanId
+                                  join apv in context.AttributePicklistValue on teb.NewCategory equals apv.Value
+                                  join ll in context.LocalizedLabel on apv.AttributePicklistValueId equals ll.ObjectId
+                                  join a in context.Attribute on apv.AttributeId equals a.AttributeId
+                                  join e in context.Entity on a.EntityId equals e.EntityId
+                                  where tb.DeletionStateCode == 0
+                                      && tb.Statecode == 0
+                                      && tb.Statuscode == 1
+                                      && (goeb.NewPriostDate == null || goeb.NewObjDeleteDate == null || goeb.NewRemoveDate == null)
+                                      && teb.NewNumber == item.NewObjectNumber
+                                      && goeb.NewObjectNumber == item.NewObjectNumber
+                                      && a.PhysicalName.Equals("New_category")
+                                      && e.Name.Equals("New_test2")
+                                      && goeb.NewGuardObjectId == item.NewGuardObjectId
+                                      && teb.NewCategory == 1
+                                      && teb.NewDate!=null
+                                  select new { teb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.teb.NewDate).ToList();
+                        App.Current.Dispatcher.Invoke((System.Action)delegate {
+                            ReglamentWorksFireAlarmList.Add(new ReglamentWorksOutputModel() {
+                                ObjectNumber = item.NewObjectNumber,
+                                ObjectName = item.NewName,
+                                ObjectAddress = item.NewAddress,
+                                RrEveryMonth = item.NewRrOnOff,
+                                RrOS = item.NewRrOs,
+                                RrPS = item.NewRrPs,
+                                RrVideo = item.NewRrVideo,
+                                RrSkud = item.NewRrSkud,
+                                ObjectID = item.NewGuardObjectId,
+                                //IsOrderExist = fa.Where(x => x.teb.NewDate.Value.Date >= DateStart.Date && x.teb.NewDate.Value.Date <= DateEnd.Date).Count() > 0,                                
+                                IsOrderExist = fa.Where(x => x.teb.NewDate.Value.Date >= DateStart.Date && x.teb.NewDate.Value.Date <= DateEnd.Date).Count() > 0,
+                                DaysAgoReglamentOrder = fa.Count > 0 ?
+                                fa.OrderByDescending(x => x.teb.NewDate).First().teb.NewDate.Value.AddHours(5) < DateTime.Now ?
+                                    (-1) * Math.Round((DateTime.Now - fa.OrderByDescending(x => x.teb.NewDate).First().teb.NewDate.Value.AddHours(5)).TotalDays, 0) :
+                                    Math.Round(((fa.Where(x => x.teb.NewDate >= DateTime.Now).OrderBy(x => x.teb.NewDate).FirstOrDefault().teb.NewDate.Value.AddHours(5) - DateTime.Now).TotalDays), 0) :
+                                double.NaN
+                            }); ;
+                        });
+                    }
                 };
                 bw.RunWorkerCompleted += (s, e1) => {
                     Loading = false;

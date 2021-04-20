@@ -28,6 +28,11 @@
                     <scm:SortDescription PropertyName="ObjectNumber"/>
                 </CollectionViewSource.SortDescriptions>
             </CollectionViewSource>
+            <CollectionViewSource x:Key="ReglamentWorksFireAlarm" Source="{Binding ReglamentWorksFireAlarmList}" >
+                <CollectionViewSource.SortDescriptions >
+                    <scm:SortDescription PropertyName="ObjectNumber"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
             <CollectionViewSource x:Key="AgreementDetail" Source="{Binding AgreementDetail}" mah:MultiSelectorHelper.SelectedItems="{Binding SelectedReglamentWork}">
                 <CollectionViewSource.SortDescriptions >
                     <scm:SortDescription PropertyName="AgreementDate"/>
@@ -64,9 +69,12 @@
             </DataGrid>
         </mah:Flyout>
         <mah:MetroAnimatedTabControl>
-            <mah:MetroTabItem Header="ОС/ТРС">
+            <mah:MetroTabItem Header="ОС/ТРС" IsSelected="{Binding IsTabSecurity}">
+                <!--<mah:MetroTabItem.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectSecurityTabCommand}"/>
+                </mah:MetroTabItem.InputBindings>-->
                 <DataGrid IsReadOnly="True" SelectedItem="{Binding SelectedReglamentWork}" x:Name="dgReglamentWorks" Panel.ZIndex="0" FontWeight="UltraLight" 
-                      ItemsSource="{Binding Source={StaticResource ReglamentWorks}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
+                      ItemsSource="{Binding Source={StaticResource ReglamentWorksFireAlarm}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
                       CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
@@ -123,8 +131,11 @@
                 </DataGrid>
             </mah:MetroTabItem>
             <mah:MetroTabItem Header="ПС">
+                <!--<mah:MetroTabItem.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectFireAlarmTabCommand}"/>
+                </mah:MetroTabItem.InputBindings>-->
                 <DataGrid IsReadOnly="True" SelectedItem="{Binding SelectedReglamentWork}" Panel.ZIndex="0" FontWeight="UltraLight" 
-                      ItemsSource="{Binding Source={StaticResource ReglamentWorks}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
+                      ItemsSource="{Binding Source={StaticResource ReglamentWorksFireAlarm}}" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" 
                       CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Номер объекта" Binding="{Binding ObjectNumber}"/>
@@ -139,7 +150,7 @@
                         <DataGridTextColumn Header="Дней с последней заявки на регламент" Binding="{Binding DaysAgoReglamentOrder}"/>
                     </DataGrid.Columns>
                     <DataGrid.InputBindings>
-                        <MouseBinding MouseAction="LeftClick" Command="{Binding GetDetailInfo}"/>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding GetDetailFireAlarmInfo}"/>
                     </DataGrid.InputBindings>
                     <!--<DataGrid.RowDetailsTemplate>
                     <DataTemplate>

@@ -15,6 +15,7 @@ namespace VityazReports.Models
         public NewAndromedaBase()
         {
             NewRentDeviceExtensionBase = new HashSet<NewRentDeviceExtensionBase>();
+            NewTest2ExtensionBase = new HashSet<NewTest2ExtensionBase>();
         }
 
         public Guid? CreatedBy { get; set; }
@@ -48,5 +49,7 @@ namespace VityazReports.Models
         public virtual NewAndromedaExtensionBase NewAndromedaExtensionBase { get; set; }
         [InverseProperty("NewAndromedaNavigation")]
         public virtual ICollection<NewRentDeviceExtensionBase> NewRentDeviceExtensionBase { get; set; }
+        [InverseProperty("NewAndromedaServiceorderNavigation")]
+        public virtual ICollection<NewTest2ExtensionBase> NewTest2ExtensionBase { get; set; }
     }
 }
