@@ -35,6 +35,19 @@
                 <Button Grid.Column="1" Margin="5" Content="Получить" Command="{Binding GetCoordinatesByServicemanCommand}"/>
             </Grid>
         </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsOpen="{Binding PointsByServicemanFlyoutVisible}" IsModal="True" Panel.ZIndex="15" Height="150">
+            <DataGrid ItemsSource="{Binding Points}" SelectionMode="Single" SelectedItem="{Binding SelectedPoint}" 
+                          CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" 
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Порядок" Binding="{Binding Order}"/>
+                    <DataGridTextColumn Header="№ объекта" Binding="{Binding ObjectNumber}"/>
+                    <DataGridTextColumn Header="Пришел" Binding="{Binding Income, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}"/>
+                    <DataGridTextColumn Header="Ушел" Binding="{Binding Outcome, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}"/>
+                    <DataGridTextColumn Header="Расстояние между отметками" Binding="{Binding Distance}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}"/>
     </Grid>
 </mah:MetroWindow>
