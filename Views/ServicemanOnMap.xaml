@@ -18,6 +18,7 @@
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding HelpCommand}" ToolTip="Справка">
                 <iconPacks:BootstrapIcons Kind="Question"/>
             </Button>
+            <mah:ToggleSwitch Content="ОС/ПС" IsOn="{Binding SwitchOSPS}" />
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
@@ -30,7 +31,7 @@
                 <StackPanel Grid.Column="0" Margin="5">
                     <TextBlock Margin="5" Text="Выберите техника" FontSize="16" FontWeight="UltraLight"/>
                     <ComboBox Margin="5" ItemsSource="{Binding Servicemans}" DisplayMemberPath="NewName" SelectedItem="{Binding SelectedServiceman}"/>
-                    <ComboBox Margin="5" ItemsSource="{Binding ListDates}" ItemStringFormat="dd.MM.yyyy" SelectedItem="{Binding SelectedDate}"/>
+                    <ComboBox Margin="5" ItemsSource="{Binding ListDates}" IsEnabled="{Binding ListDatesEnabled}" ItemStringFormat="dd.MM.yyyy" SelectedItem="{Binding SelectedDate}"/>
                 </StackPanel>
                 <Button Grid.Column="1" Margin="5" Content="Получить" Command="{Binding GetCoordinatesByServicemanCommand}"/>
             </Grid>
@@ -44,7 +45,9 @@
                     <DataGridTextColumn Header="№ объекта" Binding="{Binding ObjectNumber}"/>
                     <DataGridTextColumn Header="Пришел" Binding="{Binding Income, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}"/>
                     <DataGridTextColumn Header="Ушел" Binding="{Binding Outcome, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}"/>
-                    <DataGridTextColumn Header="Расстояние между отметками" Binding="{Binding Distance}"/>
+                    <DataGridTextColumn Header="Расстояние между отметками" Binding="{Binding Distance, StringFormat=\{0:F\}}"/>
+                    <DataGridTextColumn Header="Расстояние от пришёл" Binding="{Binding DistanceA28ByIncome, StringFormat=\{0:F\}}"/>
+                    <DataGridTextColumn Header="Расстояние от ушёл" Binding="{Binding DistanceA28ByOutcome, StringFormat=\{0:F\}}"/>
                 </DataGrid.Columns>
             </DataGrid>
         </mah:Flyout>
