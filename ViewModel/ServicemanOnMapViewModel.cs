@@ -385,8 +385,6 @@ namespace VityazReports.ViewModel {
                                 a28obj.Address,
                                 c1.GetDistanceTo(c3),
                                 c2.GetDistanceTo(c3)
-                                //GetDistance(Convert.ToDouble(item.soc.SocIncomeLatitude), Convert.ToDouble(item.soc.SocIncomeLongitude), a28obj.Latitude.Value, a28obj.Longitude.Value),
-                                //GetDistance(Convert.ToDouble(item.soc.SocOutcomeLatitide), Convert.ToDouble(item.soc.SocOutcomeLongitude), a28obj.Latitude.Value, a28obj.Longitude.Value)
                                 ));
                             marker = new GMapMarker(new PointLatLng(Convert.ToDouble(a28obj.Latitude), Convert.ToDouble(a28obj.Longitude))) {
                                 Shape = new Ellipse {
