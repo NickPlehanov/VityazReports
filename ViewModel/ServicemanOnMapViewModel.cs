@@ -15,6 +15,8 @@ using VityazReports.Helpers;
 using VityazReports.Models;
 using VityazReports.Models.ServicemanOnMapViewModel;
 using GeoCoordinatePortable;
+using System.Diagnostics;
+using System.IO;
 
 namespace VityazReports.ViewModel {
     public class ServicemanOnMapViewModel : BaseViewModel {
@@ -105,6 +107,7 @@ namespace VityazReports.ViewModel {
             get => _Points;
             set {
                 _Points = value;
+                PointsByServicemanFlyoutVisible = Points.Count > 0;
                 OnPropertyChanged(nameof(Points));
             }
         }
@@ -118,11 +121,27 @@ namespace VityazReports.ViewModel {
             set {
                 ListDates.Clear();
                 Points.Clear();
+                PointsByServicemanFlyoutVisible = Points.Count > 0;
                 _SwitchOSPS = value;
                 OnPropertyChanged(nameof(SwitchOSPS));
+                GetListDatesByServiceman.Execute(null);
             }
         }
 
+        private RelayCommand _OpenFlyoutFilterCommand;
+        public RelayCommand OpenFlyoutFilterCommand {
+            get => _OpenFlyoutFilterCommand ??= new RelayCommand(async obj => {
+                FilterServicemanFlyoutVisible = !FilterServicemanFlyoutVisible;
+            });
+        }
+
+        private RelayCommand _HelpCommand;
+        public RelayCommand HelpCommand {
+            get => _HelpCommand ??= new RelayCommand(async obj => {
+                if (File.Exists(@"\\server-nass\Install\WORKPLACE\Инструкции\Техники на карте.pdf"))
+                    Process.Start(new ProcessStartInfo(@"\\server-nass\Install\WORKPLACE\Инструкции\Техники на карте.pdf") { UseShellExecute = true });
+            });
+        }
         private bool _ListDatesEnabled;
         public bool ListDatesEnabled {
             get => _ListDatesEnabled;
@@ -215,6 +234,7 @@ namespace VityazReports.ViewModel {
                 sm = context.NewServicemanExtensionBase.Where(x => x.NewIswork == true).AsNoTracking().ToList();
                 if (sm.Count <= 0) {
                     notificationManager.Show(new NotificationContent() { Type = NotificationType.Error, Title = "Ошибка", Message = "Ошибка при получении списка техников" });
+                    ListDatesEnabled = false;
                     return;
                 }
                 foreach (var item in sm)
@@ -227,6 +247,9 @@ namespace VityazReports.ViewModel {
             get => _GetListDatesByServiceman ??= new RelayCommand(async obj => {
                 List<DateTime?> l_dates = new List<DateTime?>();
                 ListDates.Clear();
+                Points.Clear();
+                PointsByServicemanFlyoutVisible = Points.Count > 0;
+                gmaps_contol.Markers.Clear();
                 if (SwitchOSPS) {//PS
                     var coords = (from soc in context.ServiceOrderCoordinates
                                       //join soeb in context.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId /*into lj_soeb from soeb in lj_soeb.DefaultIfEmpty()*/
@@ -240,6 +263,7 @@ namespace VityazReports.ViewModel {
 ;
                     if (coords.Count() <= 0) {
                         notificationManager.Show(new NotificationContent() { Type = NotificationType.Error, Title = "Ошибка", Message = "Для выбранного техника не удалось найти координаты" });
+                        ListDatesEnabled = false;
                         return;
                     }
                     l_dates = coords.Select(x => x.soeb.NewDate).OrderBy(x => x.Value.Date).Distinct().ToList();
@@ -259,6 +283,7 @@ namespace VityazReports.ViewModel {
                     ;
                     if (coords.Count() <= 0) {
                         notificationManager.Show(new NotificationContent() { Type = NotificationType.Error, Title = "Ошибка", Message = "Для выбранного техника не удалось найти координаты" });
+                        ListDatesEnabled = false;
                         return;
                     }
                     l_dates = coords.Select(x => x.soeb.NewDate).OrderBy(x => x.Value.Date).Distinct().ToList();
@@ -288,7 +313,7 @@ namespace VityazReports.ViewModel {
                                 && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
-                              select new ServicemanCoords(soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone)
+                              select new ServicemanCoords(soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone,soeb.NewAddress)
                                   ).AsNoTracking().ToList();
                 }
                 else {
@@ -301,7 +326,7 @@ namespace VityazReports.ViewModel {
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
                               //select new { soc, soeb }
-                              select new ServicemanCoords(soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone)
+                              select new ServicemanCoords(soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone, soeb.NewAddress)
                                   ).AsNoTracking().ToList();
                 }
                 if (coords.Count() <= 0)
@@ -347,41 +372,42 @@ namespace VityazReports.ViewModel {
 
                     }
 
-                    if (a28obj == null && a28obj.Latitude.HasValue && a28obj.Longitude.HasValue)
-                        Points.Add(new ServicemansPoints((int)item.Number, (DateTime)item.Income.Value.AddHours(5), (DateTime)item.Outgone.Value.AddHours(5), counter, c1.GetDistanceTo(c2)));
+                    if (a28obj == null)
+                        Points.Add(new ServicemansPoints((int)item.Number, (DateTime)item.Income.Value.AddHours(5), (DateTime)item.Outgone.Value.AddHours(5), counter, c1.GetDistanceTo(c2),item.Address));
                     else {
-                        GeoCoordinate c3 = new GeoCoordinate((double)a28obj.Latitude, (double)a28obj.Longitude);
-                        Points.Add(new ServicemansPoints((int)item.Number,
-                            (DateTime)item.Income.Value.AddHours(5),
-                            (DateTime)item.Outgone.Value.AddHours(5),
-                            counter,
-                            c1.GetDistanceTo(c2),
-                            c1.GetDistanceTo(c3),
-                            c2.GetDistanceTo(c3)
-                            //GetDistance(Convert.ToDouble(item.soc.SocIncomeLatitude), Convert.ToDouble(item.soc.SocIncomeLongitude), a28obj.Latitude.Value, a28obj.Longitude.Value),
-                            //GetDistance(Convert.ToDouble(item.soc.SocOutcomeLatitide), Convert.ToDouble(item.soc.SocOutcomeLongitude), a28obj.Latitude.Value, a28obj.Longitude.Value)
-                            ));
-                        marker = new GMapMarker(new PointLatLng(Convert.ToDouble(a28obj.Latitude), Convert.ToDouble(a28obj.Longitude))) {
-                            Shape = new Ellipse {
-                                Width = 20,
-                                Height = 20,
-                                Stroke = Brushes.Purple,
-                                StrokeThickness = 7.5,
-                                ToolTip = string.Format("{0} - {1} ({2})", item.Number, a28obj.Name, a28obj.Address),
-                                AllowDrop = false
-                            }
-                        };
-                        marker.Tag = counter;
-                        gmaps_contol.Markers.Add(marker);
+                        if (a28obj.Latitude.HasValue && a28obj.Longitude.HasValue) {
+                            GeoCoordinate c3 = new GeoCoordinate((double)a28obj.Latitude, (double)a28obj.Longitude);
+                            Points.Add(new ServicemansPoints((int)item.Number,
+                                (DateTime)item.Income.Value.AddHours(5),
+                                (DateTime)item.Outgone.Value.AddHours(5),
+                                counter,
+                                c1.GetDistanceTo(c2),
+                                a28obj.Address,
+                                c1.GetDistanceTo(c3),
+                                c2.GetDistanceTo(c3)
+                                //GetDistance(Convert.ToDouble(item.soc.SocIncomeLatitude), Convert.ToDouble(item.soc.SocIncomeLongitude), a28obj.Latitude.Value, a28obj.Longitude.Value),
+                                //GetDistance(Convert.ToDouble(item.soc.SocOutcomeLatitide), Convert.ToDouble(item.soc.SocOutcomeLongitude), a28obj.Latitude.Value, a28obj.Longitude.Value)
+                                ));
+                            marker = new GMapMarker(new PointLatLng(Convert.ToDouble(a28obj.Latitude), Convert.ToDouble(a28obj.Longitude))) {
+                                Shape = new Ellipse {
+                                    Width = 20,
+                                    Height = 20,
+                                    Stroke = Brushes.Purple,
+                                    StrokeThickness = 7.5,
+                                    ToolTip = string.Format("{0} - {1} ({2})", item.Number, a28obj.Name, a28obj.Address),
+                                    AllowDrop = false
+                                }
+                            };
+                            marker.Tag = counter;
+                            gmaps_contol.Markers.Add(marker);
+                        }
+                        else
+                            Points.Add(new ServicemansPoints((int)item.Number, (DateTime)item.Income.Value.AddHours(5), (DateTime)item.Outgone.Value.AddHours(5), counter, c1.GetDistanceTo(c2), item.Address));
                     }
                     counter++;
                 }
                 PointsByServicemanFlyoutVisible = Points.Count > 0;
             }, obj => SelectedDate != null);
-        }
-        private double GetDistance(double lat1, double lon1, double lat2, double lon2) {
-            //return Math.Sqrt(Math.Pow(lat1 - lat2, 2) + Math.Pow(lon1 - lon2, 2));
-            return Math.Sqrt((Math.Pow(lat2 - lat1, 2)) + (Math.Pow(lon2 - lon1, 2)));
         }
     }
 }

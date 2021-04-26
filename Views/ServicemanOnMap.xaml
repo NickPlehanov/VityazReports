@@ -43,6 +43,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Порядок" Binding="{Binding Order}"/>
                     <DataGridTextColumn Header="№ объекта" Binding="{Binding ObjectNumber}"/>
+                    <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
                     <DataGridTextColumn Header="Пришел" Binding="{Binding Income, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}"/>
                     <DataGridTextColumn Header="Ушел" Binding="{Binding Outcome, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}"/>
                     <DataGridTextColumn Header="Расстояние между отметками" Binding="{Binding Distance, StringFormat=\{0:F\}}"/>
