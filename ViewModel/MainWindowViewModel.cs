@@ -112,6 +112,10 @@ namespace VityazReports.ViewModel {
                         ServicemanOnMap som = new ServicemanOnMap();
                         som.Show();
                         break;
+                    case "DD73D03F-CC93-49E5-AF8B-F49464B5EABA": //анализ техников
+                        AnalyzeServicemans asm = new AnalyzeServicemans();
+                        asm.Show();
+                        break;
                 }
             }, obj => obj != null);
         }

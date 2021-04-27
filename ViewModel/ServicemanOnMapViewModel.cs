@@ -250,6 +250,8 @@ namespace VityazReports.ViewModel {
                 Points.Clear();
                 PointsByServicemanFlyoutVisible = Points.Count > 0;
                 gmaps_contol.Markers.Clear();
+                if (SelectedServiceman == null)
+                    return;
                 if (SwitchOSPS) {//PS
                     var coords = (from soc in context.ServiceOrderCoordinates
                                       //join soeb in context.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId /*into lj_soeb from soeb in lj_soeb.DefaultIfEmpty()*/
