@@ -218,5 +218,7 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
         public DateTime? PaymentDate { get; set; }
         [Column("IsSecureATM")]
         public bool? IsSecureAtm { get; set; }
+        [NotMapped]
+        public string ObjTypeName { get; set; }
     }
 }

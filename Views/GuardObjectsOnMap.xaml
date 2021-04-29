@@ -24,8 +24,11 @@
     </mah:MetroWindow.Resources>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
-            <Button Command="{Binding ShowGroups}" ToolTip="Показать экипажи">
+            <Button Command="{Binding ShowGroups}" ToolTip="Показать список экипажей">
                 <iconPacks:BoxIcons Kind="SolidShow"/>
+            </Button>
+            <Button Command="{Binding ShowPlacesGBR}" ToolTip="Показать экипажи">
+                <iconPacks:BoxIcons Kind="SolidAlarmExclamation"/>
             </Button>
             <Button Command="{Binding CalculateCommand}" ToolTip="Рассчитать маршруты">
                 <iconPacks:BoxIcons Kind="SolidPieChart"/>

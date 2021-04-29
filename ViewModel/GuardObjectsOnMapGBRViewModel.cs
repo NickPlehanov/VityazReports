@@ -44,10 +44,13 @@ namespace VityazReports.ViewModel {
             FlyoutShowGroupsVisibleState = true;
 
             InitializeMapControl.Execute(null);
+            AllObjects = new ObservableCollection<Models.GuardObjectsOnMapGBR.Object>();
+
+            GetAllObjects.Execute(null);
 
             GetObjTypes.Execute(null);
 
-            InitializeColorList.Execute(null);
+            //InitializeColorList.Execute(null);
 
             CalculateCommandContent = "Рассчитать прибытие";
 
@@ -61,14 +64,75 @@ namespace VityazReports.ViewModel {
             SwitchPrivateObjects = true;
         }
         /// <summary>
+        /// Отслеживаемая коллекция для хранения всех объектов
+        /// </summary>
+        private ObservableCollection<Models.GuardObjectsOnMapGBR.Object> _AllObjects;
+        public ObservableCollection<Models.GuardObjectsOnMapGBR.Object> AllObjects {
+            get => _AllObjects;
+            set {
+                _AllObjects = value;
+                OnPropertyChanged(nameof(AllObjects));
+            }
+        }
+        /// <summary>
+        /// Отслеживаемая коллекция для хранения всех объектов
+        /// </summary>
+        //private ObservableCollection<Models.GuardObjectsOnMapGBR.ObjType> _AllObjTypes;
+        //public ObservableCollection<Models.GuardObjectsOnMapGBR.ObjType> AllObjTypes {
+        //    get => _AllObjTypes;
+        //    set {
+        //        _AllObjTypes = value;
+        //        OnPropertyChanged(nameof(AllObjTypes));
+        //    }
+        //}
+        /// <summary>
         /// Получаем все объекты андромеды
         /// </summary>
         private RelayCommand _GetAllObjects;
         public RelayCommand GetAllObjects {
             get => _GetAllObjects ??= new RelayCommand(async obj => {
-
+                var ObjectsList = (from o in context.Object
+                                   join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                   //where ot.ObjTypeName.Contains(number.ToString())
+                                   where o.RecordDeleted == false
+                                   && ot.RecordDeleted == false
+                                   //select new {o,ot.ObjTypeName}).AsNoTracking().ToList();
+                                   select o).AsNoTracking().ToList();
+                if (ObjectsList == null)
+                    return;
+                if (ObjectsList.Count <= 0)
+                    return;
+                var types = (from ot in context.ObjType
+                             where ot.RecordDeleted == false
+                             select ot).AsNoTracking().ToList();
+                if (types == null)
+                    return;
+                if (types.Count <= 0)
+                    return;
+                foreach (var item in ObjectsList) {
+                    item.ObjTypeName = types.FirstOrDefault(x => x.ObjTypeId == item.ObjTypeId).ObjTypeName;
+                    AllObjects.Add(item);
+                }
             });
         }
+
+        //private RelayCommand _GetAllObjTypes;
+        //public RelayCommand GetAllObjTypes {
+        //    get => _GetAllObjTypes ??= new RelayCommand(async obj => {
+        //        var ObjTypesList = (from o in context.Object
+        //                            join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+        //                            //where ot.ObjTypeName.Contains(number.ToString())
+        //                            where o.RecordDeleted == false
+        //                            && ot.RecordDeleted == false
+        //                            select ot).AsNoTracking().ToList();
+        //        if (ObjTypesList == null)
+        //            return;
+        //        if (ObjTypesList.Count <= 0)
+        //            return;
+        //        foreach (var item in ObjTypesList)
+        //            AllObjTypes.Add(item);
+        //    });
+        //}
         /// <summary>
         /// Команда. Открывает PDF инструкцию по указанному пути
         /// </summary>
@@ -105,32 +169,32 @@ namespace VityazReports.ViewModel {
         /// <summary>
         /// Команда инициализации коллекции цветов для ГБР
         /// </summary>
-        private RelayCommand _InitializeColorList;
-        public RelayCommand InitializeColorList {
-            get => _InitializeColorList ??= new RelayCommand(async obj => {
-                ColorList.Add(new ColorModel(Brushes.Red));//красный
-                ColorList.Add(new ColorModel(Brushes.DarkBlue));//синий
-                ColorList.Add(new ColorModel(Brushes.Green));//зеленый
-                ColorList.Add(new ColorModel(Brushes.Black));//черный
-                ColorList.Add(new ColorModel(Brushes.Purple));//фиолетовый
-                ColorList.Add(new ColorModel(Brushes.Orange));//оранжевый
-                ColorList.Add(new ColorModel(Brushes.DodgerBlue));//защитный голубой
-                ColorList.Add(new ColorModel(Brushes.Aquamarine));//аквамарин
-                ColorList.Add(new ColorModel(Brushes.BurlyWood));
-                ColorList.Add(new ColorModel(Brushes.Crimson));
-                ColorList.Add(new ColorModel(Brushes.Lime));
-                ColorList.Add(new ColorModel(Brushes.Pink));
-                ColorList.Add(new ColorModel(Brushes.Khaki));
-                ColorList.Add(new ColorModel(Brushes.Magenta));
-                ColorList.Add(new ColorModel(Brushes.Indigo));
-                ColorList.Add(new ColorModel(Brushes.LightSeaGreen));
-                ColorList.Add(new ColorModel(Brushes.Blue));
-                ColorList.Add(new ColorModel(Brushes.DarkOrange));
-                ColorList.Add(new ColorModel(Brushes.Olive));
-                ColorList.Add(new ColorModel(Brushes.HotPink));
-                ColorList.Add(new ColorModel(Brushes.MediumTurquoise));
-            });
-        }
+        //private RelayCommand _InitializeColorList;
+        //public RelayCommand InitializeColorList {
+        //    get => _InitializeColorList ??= new RelayCommand(async obj => {
+        //        ColorList.Add(new ColorModel(Brushes.Red));//красный
+        //        ColorList.Add(new ColorModel(Brushes.DarkBlue));//синий
+        //        ColorList.Add(new ColorModel(Brushes.Green));//зеленый
+        //        ColorList.Add(new ColorModel(Brushes.Black));//черный
+        //        ColorList.Add(new ColorModel(Brushes.Purple));//фиолетовый
+        //        ColorList.Add(new ColorModel(Brushes.Orange));//оранжевый
+        //        ColorList.Add(new ColorModel(Brushes.DodgerBlue));//защитный голубой
+        //        ColorList.Add(new ColorModel(Brushes.Aquamarine));//аквамарин
+        //        ColorList.Add(new ColorModel(Brushes.BurlyWood));
+        //        ColorList.Add(new ColorModel(Brushes.Crimson));
+        //        ColorList.Add(new ColorModel(Brushes.Lime));
+        //        ColorList.Add(new ColorModel(Brushes.Pink));
+        //        ColorList.Add(new ColorModel(Brushes.Khaki));
+        //        ColorList.Add(new ColorModel(Brushes.Magenta));
+        //        ColorList.Add(new ColorModel(Brushes.Indigo));
+        //        ColorList.Add(new ColorModel(Brushes.LightSeaGreen));
+        //        ColorList.Add(new ColorModel(Brushes.Blue));
+        //        ColorList.Add(new ColorModel(Brushes.DarkOrange));
+        //        ColorList.Add(new ColorModel(Brushes.Olive));
+        //        ColorList.Add(new ColorModel(Brushes.HotPink));
+        //        ColorList.Add(new ColorModel(Brushes.MediumTurquoise));
+        //    });
+        //}
         /// <summary>
         /// Контрол карты
         /// </summary>
@@ -308,12 +372,24 @@ namespace VityazReports.ViewModel {
                 int number = commonMethods.ParseDigit(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true).ObjTypeName);
                 if (number == 0)
                     return;
-                List<Models.GuardObjectsOnMapGBR.Object> ObjectsList = (from o in context.Object
-                                                                        join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                                                        where ot.ObjTypeName.Contains(number.ToString())
-                                                                        && o.RecordDeleted == false
-                                                                        && ot.RecordDeleted == false
-                                                                        select o).AsNoTracking().ToList();
+                List<Models.GuardObjectsOnMapGBR.Object> ObjectsList = new List<Models.GuardObjectsOnMapGBR.Object>();
+                //List<Models.GuardObjectsOnMapGBR.Object> ObjectsList = (from o in context.Object
+                //                                                        join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                //                                                        where ot.ObjTypeName.Contains(number.ToString())
+                //                                                        && o.RecordDeleted == false
+                //                                                        && ot.RecordDeleted == false
+                //                                                        select o).AsNoTracking().ToList();
+                if (AllObjects.Count > 0)
+                    ObjectsList = AllObjects.Where(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains(number.ToString())).ToList();
+                else
+                    ObjectsList = (from o in context.Object
+                                   join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                   where ot.ObjTypeName.Contains(number.ToString())
+                                   && o.RecordDeleted == false
+                                   && ot.RecordDeleted == false
+                                   && o.Latitude != null
+                                   && o.Longitude != null
+                                   select o).AsNoTracking().ToList();
                 if (!ObjectsList.Any())
                     return;
                 List<Task> Tasks = new List<Task>();
@@ -403,22 +479,30 @@ namespace VityazReports.ViewModel {
                     int number = commonMethods.ParseDigit(item.ObjTypeName);
                     if (number == 0)
                         continue;
-                    int? _obj_count_com = (from o in context.Object
-                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                           where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("маршрут")
-                                           && o.RecordDeleted == false
-                                           && ot.RecordDeleted == false
-                                           && o.Latitude != null
-                                           && o.Longitude != null
-                                           select o).AsNoTracking().ToList().Count;
-                    int? _obj_count_prv = (from o in context.Object
-                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                           where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("квартира")
-                                           && o.RecordDeleted == false
-                                           && ot.RecordDeleted == false
-                                           && o.Latitude != null
-                                           && o.Longitude != null
-                                           select o).AsNoTracking().ToList().Count;
+                    int? _obj_count_com = -1;
+                    int? _obj_count_prv = -1;
+                    if (AllObjects.Count() > 0) {
+                        _obj_count_com = AllObjects.Count(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains("маршрут") && x.ObjTypeName.Contains(number.ToString()));
+                        _obj_count_prv = AllObjects.Count(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains("квартира") && x.ObjTypeName.Contains(number.ToString()));
+                    }
+                    else {
+                        _obj_count_com = (from o in context.Object
+                                          join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                          where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("маршрут")
+                                          && o.RecordDeleted == false
+                                          && ot.RecordDeleted == false
+                                          && o.Latitude != null
+                                          && o.Longitude != null
+                                          select o).AsNoTracking().ToList().Count;
+                        _obj_count_prv = (from o in context.Object
+                                          join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                          where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("квартира")
+                                          && o.RecordDeleted == false
+                                          && ot.RecordDeleted == false
+                                          && o.Latitude != null
+                                          && o.Longitude != null
+                                          select o).AsNoTracking().ToList().Count;
+                    }
                     //ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, item.ObjTypeName, item.Description, item.RecordDeleted, false, item.ObjTypeName, _obj_count));
                     NewPlacesGbrextensionBase plc = CrmContext.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewName.Contains(number.ToString()));
                     ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, number.ToString(), item.Description, item.RecordDeleted, false, number.ToString(), _obj_count_prv, _obj_count_com,
@@ -503,24 +587,29 @@ namespace VityazReports.ViewModel {
                         continue;
                     int? _obj_count_prv = -1;
                     int? _obj_count_com = -1;
-                    _obj_count_com = (from o in context.Object
-                                      join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                      where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("маршрут")
-                                      && o.RecordDeleted == false
-                                      && ot.RecordDeleted == false
-                                      && o.Latitude != null
-                                      && o.Longitude != null
-                                      select o).AsNoTracking().ToList().Count;
-                    if (SwitchPrivateObjects)
-                        _obj_count_prv = (from o in context.Object
+                    if (AllObjects.Count() > 0) {
+                        _obj_count_com = AllObjects.Count(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains("маршрут") && x.ObjTypeName.Contains(number.ToString()));
+                        _obj_count_prv = AllObjects.Count(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains("квартира") && x.ObjTypeName.Contains(number.ToString()));
+                    }
+                    else {
+                        _obj_count_com = (from o in context.Object
                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                          where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("квартира")
+                                          where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("маршрут")
                                           && o.RecordDeleted == false
                                           && ot.RecordDeleted == false
                                           && o.Latitude != null
                                           && o.Longitude != null
                                           select o).AsNoTracking().ToList().Count;
-
+                        if (SwitchPrivateObjects)
+                            _obj_count_prv = (from o in context.Object
+                                              join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                              where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("квартира")
+                                              && o.RecordDeleted == false
+                                              && ot.RecordDeleted == false
+                                              && o.Latitude != null
+                                              && o.Longitude != null
+                                              select o).AsNoTracking().ToList().Count;
+                    }
                     item.ObjTypeName = item.ObjTypeName;
                     item.Name = item.ObjTypeName;
                     item.CountObjectCom = _obj_count_com;
@@ -650,6 +739,10 @@ namespace VityazReports.ViewModel {
                     return;
                 App.Current.Dispatcher.Invoke((System.Action)delegate {
                     Loading = true;
+                    var r= gmaps_contol.Markers.Where(x => x.Tag == null).ToList();
+                    if (r.Count()>0)
+                        foreach (var item in r) 
+                            gmaps_contol.Markers.Remove(item);
                     //требуется проверить что такой маршрут уже есть/нет на карте
                     var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == ObjId.ToString()).ToList();
                     if (markers.Count > 0)
@@ -668,24 +761,38 @@ namespace VityazReports.ViewModel {
 
                     if (markers.Count <= 0) {
                         //а теперь можно добавлять на карту
-                        string name = context.ObjType.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
+                        string name = null;
+                        if (AllObjects.Count() > 0)
+                            name = AllObjects.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
+                        else
+                            name = context.ObjType.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
                         if (string.IsNullOrEmpty(name))
                             return;
                         int number = commonMethods.ParseDigit(name);
                         if (number == 0)
                             return;
+                        if (AllObjects.Count() > 0)
+                            if (!AllObjects.Any(x => x.RecordDeleted == false && x.ObjTypeName.Contains(number.ToString())))
+                                return;
+                            else
                         if (!context.ObjType.Any(x => x.RecordDeleted == false && x.ObjTypeName.Contains(number.ToString())))
-                            return;
-                        List<Models.GuardObjectsOnMapGBR.Object> ObjectsList;                        
-                        if (SwitchPrivateObjects) 
-                            ObjectsList = (from o in context.Object
-                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                           where ot.ObjTypeName.Contains(number.ToString())
-                                           && o.RecordDeleted == false
-                                           && ot.RecordDeleted == false
-                                           && o.Latitude != null
-                                           && o.Longitude != null
-                                           select o).AsNoTracking().ToList();
+                                return;
+                        List<Models.GuardObjectsOnMapGBR.Object> ObjectsList;
+                        if (SwitchPrivateObjects)
+                            if (AllObjects.Count > 0)
+                                ObjectsList = AllObjects.Where(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains(number.ToString())).ToList();
+                            else
+                                ObjectsList = (from o in context.Object
+                                               join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                               where ot.ObjTypeName.Contains(number.ToString())
+                                               && o.RecordDeleted == false
+                                               && ot.RecordDeleted == false
+                                               && o.Latitude != null
+                                               && o.Longitude != null
+                                               select o).AsNoTracking().ToList();
+                        else
+                            if (AllObjects.Count > 0)
+                            ObjectsList = AllObjects.Where(x => x.RecordDeleted == false && x.Latitude != null && x.Longitude != null && x.ObjTypeName.Contains(string.Format("маршрут {0}", number.ToString()))).ToList();
                         else
                             ObjectsList = (from o in context.Object
                                            join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
@@ -718,7 +825,8 @@ namespace VityazReports.ViewModel {
                                     Stroke = _ot != null ? (Brush)converter.ConvertFromString(_ot.RouteColor.Value.ToString()) : Brushes.Red,
                                     StrokeThickness = 7.5,
                                     ToolTip = Convert.ToString(item.ObjectNumber, 16) + Environment.NewLine + item.Name + Environment.NewLine + item.Address,
-                                    AllowDrop = true
+                                    AllowDrop = true,
+                                    Tag=item.ObjTypeName
                                 }
                             };
                             marker.ZIndex = (int)ObjId;
@@ -747,6 +855,19 @@ namespace VityazReports.ViewModel {
         private RelayCommand _ShowPlacesGBR;
         public RelayCommand ShowPlacesGBR {
             get => _ShowPlacesGBR ??= new RelayCommand(async obj => {
+                //var otl = ObjectTypeList.Where(x => x.IsShowOnMap == true).ToList();
+                //if (otl.Count() != 0) {
+                    var m = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР")).ToList();
+                    if (m.Count() > 0) {
+                        foreach (var item in m) {
+                            gmaps_contol.Markers.Remove(item);
+                        }
+                    ChartObjectsList.Clear();
+                    ChartSeries = null;
+                    SeriesCollectionList.Clear();
+                    return;
+                    //}
+                }
                 List<NewPlacesGbrextensionBase> places = new List<NewPlacesGbrextensionBase>();
                 places = CrmContext.NewPlacesGbrextensionBase.Where(x => !string.IsNullOrEmpty(x.NewLatitude) && !string.IsNullOrEmpty(x.NewLongitude)).AsNoTracking().ToList();
                 if (places == null) {
@@ -774,7 +895,8 @@ namespace VityazReports.ViewModel {
                         }
                     };
                     marker.ZIndex = 1000;
-                    marker.Tag = "ГБР";
+                    //marker.Tag = "ГБР";
+                    marker.Tag = string.Format("ГБР ({0})", commonMethods.ParseDigit(item.NewName));
                     gmaps_contol.Markers.Add(marker);
                 }
             });
@@ -790,7 +912,7 @@ namespace VityazReports.ViewModel {
             if (marker == null)
                 return;
             GMapMarker gbr = null;
-            gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000");
+            gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР") && x.Tag.ToString().Contains(commonMethods.ParseDigit(img.Tag.ToString()).ToString()));
             if (gbr == null) {
                 notificationManager.Show(new NotificationContent {
                     Title = "Ошибка",
@@ -899,14 +1021,6 @@ namespace VityazReports.ViewModel {
                     if (gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000") == 0) {
                         Point point = u.TranslatePoint(new Point(), gmaps_contol);
                         GMapMarker marker = new GMapMarker(new PointLatLng()) {
-                            //Shape = new Ellipse {
-                            //    Width = 20,
-                            //    Height = 20,
-                            //    Stroke = Brushes.Chocolate,
-                            //    StrokeThickness = 7.5,
-                            //    ToolTip = "ГБР",
-                            //    AllowDrop = true
-                            //}
                             Shape = new System.Windows.Controls.Image() {
                                 Source = Conv.ToImageSource(Properties.Resources.Icon),
                                 Stretch = Stretch.UniformToFill,
@@ -915,7 +1029,9 @@ namespace VityazReports.ViewModel {
                         };
                         marker.Position = gmaps_contol.FromLocalToLatLng((int)point.X, (int)point.Y);
                         marker.ZIndex = 1000;
-                        marker.Tag = "ГБР";
+                        //marker.Tag = "ГБР";
+                        var otl = ObjectTypeList.Where(x => x.IsShowOnMap == true).ToList();
+                        marker.Tag = string.Format("ГБР ({0})", commonMethods.ParseDigit(otl[0].ObjTypeName));
                         marker.Offset = new Point(-35, -15);
                         gmaps_contol.Markers.Add(marker);
                         ChartSeries = null;
@@ -938,7 +1054,7 @@ namespace VityazReports.ViewModel {
                     FlyoutShowGroupsVisibleState = true;
                 }
                 ContextMenuIsOpen = false;
-            });
+            },obj => ObjectTypeList.Count(x => x.IsShowOnMap == true)==1);
         }
         /// <summary>
         /// Убираем с карты метку ГБР
@@ -956,7 +1072,7 @@ namespace VityazReports.ViewModel {
                 foreach (var item in route_markers)
                     gmaps_contol.Markers.Remove(item);
 
-                //ChartObjectsList.Clear();
+                ChartObjectsList.Clear();
             }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000" || x.Tag == null) != 0);
         }
 
@@ -974,7 +1090,10 @@ namespace VityazReports.ViewModel {
                     Ellipse _ellipse = _m.Shape as Ellipse;
                     _ellipse.StrokeThickness = 12;
                     _ellipse.Stroke = Brushes.BlueViolet;
-                    ObjAddress = context.Object.First(x => x.ObjectId == value.Id).Address;
+                    if (AllObjects.Count() > 0)
+                        ObjAddress = AllObjects.First(x => x.ObjectId == value.Id).Address;
+                    else
+                        ObjAddress = context.Object.First(x => x.ObjectId == value.Id).Address;
                 }
                 if (_SelectedObject != null) {
                     if (_SelectedObject != value) {
@@ -988,7 +1107,10 @@ namespace VityazReports.ViewModel {
                             Ellipse ellipse = m.Shape as Ellipse;
                             ellipse.StrokeThickness = 7.5;
                             ellipse.Stroke = Brushes.Red;
-                            ObjAddress = context.Object.First(x => x.ObjectId == _SelectedObject.Id).Address;
+                            if (AllObjects.Count() > 0)
+                                ObjAddress = AllObjects.First(x => x.ObjectId == _SelectedObject.Id).Address;
+                            else
+                                ObjAddress = context.Object.First(x => x.ObjectId == _SelectedObject.Id).Address;
 
                             var _y = gmaps_contol.Markers.First(x => x.Tag.ToString() == value.Id.ToString());
                             if (_y == null)
@@ -999,7 +1121,10 @@ namespace VityazReports.ViewModel {
                             Ellipse _ellipse = _m.Shape as Ellipse;
                             _ellipse.StrokeThickness = 12;
                             _ellipse.Stroke = Brushes.BlueViolet;
-                            ObjAddress = context.Object.First(x => x.ObjectId == value.Id).Address;
+                            if (AllObjects.Count() > 0)
+                                ObjAddress = AllObjects.First(x => x.ObjectId == value.Id).Address;
+                            else
+                                ObjAddress = context.Object.First(x => x.ObjectId == value.Id).Address;
                         }
                     }
                     SelectedObjectCommand.Execute(_SelectedObject);
@@ -1099,8 +1224,17 @@ namespace VityazReports.ViewModel {
                     ChartVisible = false;
                     Loading = true;
                     GMapMarker gbr = null;
-                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000");
-                    var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "1000").ToList();
+                    var otl = ObjectTypeList.Where(x => x.IsShowOnMap == true).ToList();
+                    if (otl.Count() != 1) {
+                        notificationManager.Show(new NotificationContent {
+                            Title = "Ошибка",
+                            Message = "Расчёт времени прибытия невозможен, так как должен быть выбран только один маршрут",
+                            Type = NotificationType.Error
+                        });
+                        return;
+                    }
+                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР") && x.Tag.ToString().Contains(commonMethods.ParseDigit(otl[0].ObjTypeName).ToString()));
+                    var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "1000" && !x.Tag.ToString().Contains("ГБР")).ToList();
                     ChartObjectsList.Clear();
 
                     if (gbr != null && objects != null) {
@@ -1187,7 +1321,8 @@ namespace VityazReports.ViewModel {
                     Loading = false;
                     PrivateID = null;
                 });
-            }, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000") == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
+            });
+            //}, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР")) == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }
 
         private SeriesCustomCollection _SelectedSeriesCollection;
@@ -1215,16 +1350,21 @@ namespace VityazReports.ViewModel {
             get => _ChangeSeriesCommand ??= new RelayCommand(async obj => {
                 await Dispatcher.CurrentDispatcher.Invoke(async () => {
                     Loading = true;
-                    if (SeriesCollectionList == null)
+                    if (SeriesCollectionList == null) {
+                        Loading = false;
                         return;
-                    if (SeriesCollectionList.Count <= 0)
+                    }
+                    if (SeriesCollectionList.Count <= 0) {
+                        Loading = false;
                         return;
+                    }
                     SeriesCustomCollection _id = obj as SeriesCustomCollection;
                     if (_id == null)
                         return;
                     if (PrivateID != null)
                         if (PrivateID.Equals(_id.Id)) {
                             ChartVisible = !ChartVisible;
+                            Loading = false;
                             return;
                         }
 
