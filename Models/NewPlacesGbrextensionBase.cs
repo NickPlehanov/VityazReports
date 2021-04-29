@@ -27,6 +27,9 @@ namespace VityazReports.Models
         [Column("New_longitude")]
         [StringLength(100)]
         public string NewLongitude { get; set; }
+        [Column("New_color")]
+        [StringLength(100)]
+        public string NewColor { get; set; }
 
         [ForeignKey(nameof(NewPlacesGbrid))]
         [InverseProperty(nameof(NewPlacesGbrbase.NewPlacesGbrextensionBase))]

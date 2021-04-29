@@ -4,7 +4,7 @@ using System.Text;
 
 namespace VityazReports.Models.AnalyzeServicemans {
     public class ServiceorderInfo {
-        public ServiceorderInfo(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, int? category, int? categoryName, string objectName, string name, string conclusion, int result, string resultName, DateTime? income, DateTime? outgone, string address) {
+        public ServiceorderInfo(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, int? category, string categoryName, string objectName, string name, string conclusion, int? result, string resultName, DateTime? income, DateTime? outgone, string address, int? whoInit, string whoInitString,string time) {
             IncomeLatitude = incomeLatitude;
             IncomeLongitude = incomeLongitude;
             OutgoneLatitude = outgoneLatitude;
@@ -20,6 +20,9 @@ namespace VityazReports.Models.AnalyzeServicemans {
             Income = income;
             Outgone = outgone;
             Address = address;
+            WhoInit = whoInit;
+            WhoInitString = whoInitString;
+            Time = time;
         }
 
         /// <summary>
@@ -49,7 +52,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// <summary>
         /// Наименование категории заявки технику
         /// </summary>
-        public int? CategoryName { get; set; }
+        public string CategoryName { get; set; }
         /// <summary>
         /// Наименование объекта
         /// </summary>
@@ -65,7 +68,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// <summary>
         /// Результат заявки технику
         /// </summary>
-        public int Result { get; set; }
+        public int? Result { get; set; }
         /// <summary>
         /// результат заявки технику
         /// </summary>
@@ -82,5 +85,17 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// Адрес охраняемого объекта
         /// </summary>
         public string Address { get; set; }
+        /// <summary>
+        /// Кто дал заявку
+        /// </summary>
+        public int? WhoInit { get; set; }
+        /// <summary>
+        /// Кто дал заявку
+        /// </summary>
+        public string WhoInitString { get; set; }
+        /// <summary>
+        /// Время заявки
+        /// </summary>
+        public string Time { get; set; }
     }
 }

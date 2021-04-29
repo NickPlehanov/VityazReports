@@ -27,6 +27,7 @@ using Notifications.Wpf;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using VityazReports.Models;
+using Xceed.Wpf.Toolkit;
 
 namespace VityazReports.ViewModel {
     public class GuardObjectsOnMapGBRViewModel : BaseViewModel {
@@ -56,6 +57,17 @@ namespace VityazReports.ViewModel {
                 Type = NotificationType.Information
             });
             flag = false;
+            ShowPlacesGBR.Execute(null);
+            SwitchPrivateObjects = true;
+        }
+        /// <summary>
+        /// Получаем все объекты андромеды
+        /// </summary>
+        private RelayCommand _GetAllObjects;
+        public RelayCommand GetAllObjects {
+            get => _GetAllObjects ??= new RelayCommand(async obj => {
+
+            });
         }
         /// <summary>
         /// Команда. Открывает PDF инструкцию по указанному пути
@@ -135,7 +147,6 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(ObjectTypeList));
             }
         }
-
         /// <summary>
         /// Определяет видимость правой плавающей панели со списком типов объектов(маршрутов)
         /// </summary>
@@ -236,6 +247,18 @@ namespace VityazReports.ViewModel {
             set {
                 _AnalyzeVisible = value;
                 OnPropertyChanged(nameof(AnalyzeVisible));
+            }
+        }
+        /// <summary>
+        /// Определяем участие в расчетах квартир
+        /// </summary>
+        private bool _SwitchPrivateObjects;
+        public bool SwitchPrivateObjects {
+            get => _SwitchPrivateObjects;
+            set {
+                _SwitchPrivateObjects = value;
+                OnPropertyChanged(nameof(SwitchPrivateObjects));
+                UpdateMarkers.Execute(null);
             }
         }
         /// <summary>
@@ -380,16 +403,75 @@ namespace VityazReports.ViewModel {
                     int number = commonMethods.ParseDigit(item.ObjTypeName);
                     if (number == 0)
                         continue;
-                    int? _obj_count = (from o in context.Object
-                                       join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                       where ot.ObjTypeName.Contains(number.ToString())
-                                       && o.RecordDeleted == false
-                                       && ot.RecordDeleted == false
-                                       && o.Latitude != null
-                                       && o.Longitude != null
-                                       select o).AsNoTracking().ToList().Count;
-                    ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, item.ObjTypeName, item.Description, item.RecordDeleted, false, item.ObjTypeName, _obj_count));
+                    int? _obj_count_com = (from o in context.Object
+                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                           where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("маршрут")
+                                           && o.RecordDeleted == false
+                                           && ot.RecordDeleted == false
+                                           && o.Latitude != null
+                                           && o.Longitude != null
+                                           select o).AsNoTracking().ToList().Count;
+                    int? _obj_count_prv = (from o in context.Object
+                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                           where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("квартира")
+                                           && o.RecordDeleted == false
+                                           && ot.RecordDeleted == false
+                                           && o.Latitude != null
+                                           && o.Longitude != null
+                                           select o).AsNoTracking().ToList().Count;
+                    //ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, item.ObjTypeName, item.Description, item.RecordDeleted, false, item.ObjTypeName, _obj_count));
+                    NewPlacesGbrextensionBase plc = CrmContext.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewName.Contains(number.ToString()));
+                    ObjectTypeList.Add(new ObjType(item.ObjTypeId, item.OrderNumber, number.ToString(), item.Description, item.RecordDeleted, false, number.ToString(), _obj_count_prv, _obj_count_com,
+                        plc != null ? !string.IsNullOrEmpty(plc.NewColor) ?
+                        (Color)System.Windows.Media.ColorConverter.ConvertFromString(plc.NewColor) : Color.FromRgb(255, 0, 0) : Color.FromRgb(255, 0, 0)));
                 }
+            });
+        }
+
+        private RelayCommand _SelectedColorChangedCommand;
+        public RelayCommand SelectedColorChangedCommand {
+            get => _SelectedColorChangedCommand ??= new RelayCommand(async obj => {
+                Loading = true;
+                if (obj == null) {
+                    Loading = false;
+                    return;
+                }
+                System.Windows.RoutedEventArgs cp = obj as System.Windows.RoutedEventArgs;
+                if (cp == null) {
+                    Loading = false;
+                    return;
+                }
+                ColorPicker colorPicker = cp.Source as ColorPicker;
+                if (colorPicker == null) {
+                    Loading = false;
+                    return;
+                }
+                if (colorPicker.Tag == null) {
+                    Loading = false;
+                    return;
+                }
+                ObjType ot = ObjectTypeList.FirstOrDefault(x => x.ObjTypeId.ToString() == colorPicker.Tag.ToString());
+                if (ot == null) {
+                    Loading = false;
+                    return;
+                }
+                ot.RouteColor = colorPicker.SelectedColor;
+                UpdateMarkers.Execute(null);
+                //Запись в базу если такая запись есть
+                NewPlacesGbrextensionBase plc = CrmContext.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewName.Contains(ot.ObjTypeName));
+                if (plc == null) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Чтобы сохранить выбранный цвет для экипажа, предварительно укажите расположение экипажа в модуле: \"Экипажи на карте\"",
+                        Type = NotificationType.Error
+                    });
+                    Loading = false;
+                    return;
+                }
+                plc.NewColor = ot.RouteColor.Value.ToString();
+                await CrmContext.SaveChangesAsync();
+
+                Loading = false;
             });
         }
         /// <summary>
@@ -401,7 +483,9 @@ namespace VityazReports.ViewModel {
                 notificationManager = null;
             });
         }
-
+        /// <summary>
+        /// Получаем типы объектов и количество объектов на них
+        /// </summary>
         private RelayCommand _UpdateObjTypes;
         public RelayCommand UpdateObjTypes {
             get => _UpdateObjTypes ??= new RelayCommand(async obj => {
@@ -417,17 +501,30 @@ namespace VityazReports.ViewModel {
                     int number = commonMethods.ParseDigit(item.ObjTypeName);
                     if (number == 0)
                         continue;
-                    int? _obj_count = (from o in context.Object
-                                       join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                       where ot.ObjTypeName.Contains(number.ToString())
-                                       && o.RecordDeleted == false
-                                       && ot.RecordDeleted == false
-                                       && o.Latitude != null
-                                       && o.Longitude != null
-                                       select o).AsNoTracking().ToList().Count;
+                    int? _obj_count_prv = -1;
+                    int? _obj_count_com = -1;
+                    _obj_count_com = (from o in context.Object
+                                      join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                      where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("маршрут")
+                                      && o.RecordDeleted == false
+                                      && ot.RecordDeleted == false
+                                      && o.Latitude != null
+                                      && o.Longitude != null
+                                      select o).AsNoTracking().ToList().Count;
+                    if (SwitchPrivateObjects)
+                        _obj_count_prv = (from o in context.Object
+                                          join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                          where ot.ObjTypeName.Contains(number.ToString()) && ot.ObjTypeName.Contains("квартира")
+                                          && o.RecordDeleted == false
+                                          && ot.RecordDeleted == false
+                                          && o.Latitude != null
+                                          && o.Longitude != null
+                                          select o).AsNoTracking().ToList().Count;
+
                     item.ObjTypeName = item.ObjTypeName;
                     item.Name = item.ObjTypeName;
-                    item.CountObjects = _obj_count;
+                    item.CountObjectCom = _obj_count_com;
+                    item.CountObjectPrivate = _obj_count_prv;
                 }
             });
         }
@@ -471,16 +568,25 @@ namespace VityazReports.ViewModel {
                 await Dispatcher.CurrentDispatcher.Invoke(async () => {
                     Loading = true;
                     UpdateObjTypes.Execute(null);
-                    SelectedRoute = ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true).TgBtn;
-                    SelectGroupCommand.Execute(SelectedRoute);
-                    SelectGroupCommand.Execute(SelectedRoute);
-                    ContextMenuIsOpen = false;
+                    var tl = ObjectTypeList.Where(x => x.IsShowOnMap == true);
+                    if (tl == null) {
+                        Loading = false;
+                        return;
+                    }
+                    foreach (var t in tl) {
+                        //SelectedRoute = ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true).TgBtn;
+                        SelectedRoute = t.TgBtn;
+                        SelectGroupCommand.Execute(SelectedRoute);
+                        SelectGroupCommand.Execute(SelectedRoute);
+                        ContextMenuIsOpen = false;
+                        Loading = false;
+                        notificationManager.Show(new NotificationContent {
+                            Title = "Успех",
+                            Message = "Обновление данных завершено",
+                            Type = NotificationType.Success
+                        });
+                    }
                     Loading = false;
-                    notificationManager.Show(new NotificationContent {
-                        Title = "Успех",
-                        Message = "Обновление данных завершено",
-                        Type = NotificationType.Success
-                    });
                 });
             }, obj => ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }
@@ -542,38 +648,23 @@ namespace VityazReports.ViewModel {
                 int? ObjId = int.Parse(toggleButton.Tag.ToString());
                 if (!ObjId.HasValue)
                     return;
-                List<ColorModel> cm = ColorList.Where(x => x.Isfree == true).ToList();
                 App.Current.Dispatcher.Invoke((System.Action)delegate {
                     Loading = true;
                     //требуется проверить что такой маршрут уже есть/нет на карте
                     var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == ObjId.ToString()).ToList();
-                    if (markers.Count > 0) {
-                        //ChartSeries = null;
-                        //ChartVisible = false;
-                        ClearGroup.Execute(null);
+                    if (markers.Count > 0)
                         SeriesCollectionList.Clear();
-                    }
 
                     foreach (GMapMarker m in markers)
                         gmaps_contol.Markers.Remove(m);
-                    //ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).IsShowOnMap = false;
-                    if (ColorList.Any(x => x.ObjTypeId == ObjId.ToString())) {
-                        ColorList.First(x => x.ObjTypeId == ObjId.ToString()).Isfree = true;
-                        toggleButton.IsChecked = false;
-                        toggleButton.Background = null;
-                        cm = ColorList.Where(x => x.Isfree == true).ToList();
-                    }
-                    if (cm.Count <= 0) {
-                        notificationManager.Show(new NotificationContent {
-                            Title = "Ошибка",
-                            Message = "Достигнуто ограничение по количеству одновременно отображаемых экипажей",
-                            Type = NotificationType.Error
-                        });
-                        toggleButton.IsChecked = false;
-                        toggleButton.Background = null;
-                        Loading = false;
-                        return;
-                    }
+                    ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).IsShowOnMap = false;
+                    toggleButton.IsChecked = false;
+                    toggleButton.Background = null;
+                    //if (ColorList.Any(x => x.ObjTypeId == ObjId.ToString())) {
+                    //    ColorList.First(x => x.ObjTypeId == ObjId.ToString()).Isfree = true;
+                    //    toggleButton.IsChecked = false;
+                    //    toggleButton.Background = null;
+                    //}
 
                     if (markers.Count <= 0) {
                         //а теперь можно добавлять на карту
@@ -585,14 +676,25 @@ namespace VityazReports.ViewModel {
                             return;
                         if (!context.ObjType.Any(x => x.RecordDeleted == false && x.ObjTypeName.Contains(number.ToString())))
                             return;
-                        List<Models.GuardObjectsOnMapGBR.Object> ObjectsList = (from o in context.Object
-                                                                                join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
-                                                                                where ot.ObjTypeName.Contains(number.ToString())
-                                                                                && o.RecordDeleted == false
-                                                                                && ot.RecordDeleted == false
-                                                                                && o.Latitude != null
-                                                                                && o.Longitude != null
-                                                                                select o).AsNoTracking().ToList();
+                        List<Models.GuardObjectsOnMapGBR.Object> ObjectsList;                        
+                        if (SwitchPrivateObjects) 
+                            ObjectsList = (from o in context.Object
+                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                           where ot.ObjTypeName.Contains(number.ToString())
+                                           && o.RecordDeleted == false
+                                           && ot.RecordDeleted == false
+                                           && o.Latitude != null
+                                           && o.Longitude != null
+                                           select o).AsNoTracking().ToList();
+                        else
+                            ObjectsList = (from o in context.Object
+                                           join ot in context.ObjType on o.ObjTypeId equals ot.ObjTypeId
+                                           where ot.ObjTypeName.Contains(string.Format("маршрут {0}", number.ToString()))
+                                           && o.RecordDeleted == false
+                                           && ot.RecordDeleted == false
+                                           && o.Latitude != null
+                                           && o.Longitude != null
+                                           select o).AsNoTracking().ToList();
                         if (ObjectsList.Count <= 0) {
                             notificationManager.Show(new NotificationContent {
                                 Title = "Ошибка",
@@ -602,44 +704,18 @@ namespace VityazReports.ViewModel {
                             Loading = false;
                             return;
                         }
-                        //Добавляем метку ГБР из базы данных (CRM - расположение экипажей)
-                        NewPlacesGbrextensionBase gbr_place = CrmContext.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewName.Contains(number.ToString()));
-                        if (gbr_place == null) {
-                            notificationManager.Show(new NotificationContent {
-                                Title = "Ошибка",
-                                Message = "Не найдено сохраненное расположение экипажа на карте",
-                                Type = NotificationType.Error
-                            });
-                        }
-                        else {
-                            if (!string.IsNullOrEmpty(gbr_place.NewLatitude) && !string.IsNullOrEmpty(gbr_place.NewLongitude)) {
-                                GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(gbr_place.NewLatitude), Convert.ToDouble(gbr_place.NewLongitude))) {
-                                    //Shape = new Ellipse {
-                                    //    Width = 20,
-                                    //    Height = 20,
-                                    //    Stroke = Brushes.Chocolate,
-                                    //    StrokeThickness = 7.5,
-                                    //    ToolTip = "ГБР",
-                                    //    AllowDrop = true
-                                    //}
-                                    Shape = new System.Windows.Controls.Image() {
-                                        Source = Conv.ToImageSource(Properties.Resources.Icon),
-                                        Stretch = Stretch.UniformToFill,
-                                        ToolTip = gbr_place.NewName
-                                    }
-                                };
-                                marker.ZIndex = 1000;
-                                marker.Tag = "ГБР";
-                                gmaps_contol.Markers.Add(marker);
-                            }
-                        }
+                        ObjType _ot = ObjectTypeList.FirstOrDefault(x => x.ObjTypeId.ToString() == ObjId.Value.ToString());
+                        var converter = new System.Windows.Media.BrushConverter();
+                        //NewPlacesGbrextensionBase plc = CrmContext.NewPlacesGbrextensionBase.FirstOrDefault(x => x.NewName.Contains(number.ToString()));
                         foreach (Models.GuardObjectsOnMapGBR.Object item in ObjectsList) {
                             PointLatLng point = new PointLatLng((double)item.Latitude, (double)item.Longitude);
                             GMapMarker marker = new GMapMarker(point) {
                                 Shape = new Ellipse {
                                     Width = 12,
                                     Height = 12,
-                                    Stroke = cm.First().Color,
+                                    //Stroke = cm.First().Color,
+                                    //Stroke = plc!=null ? (Brush)converter.ConvertFromString(plc.NewColor): _ot!=null? (Brush)converter.ConvertFromString(_ot.RouteColor.Value.ToString()): Brushes.Red,
+                                    Stroke = _ot != null ? (Brush)converter.ConvertFromString(_ot.RouteColor.Value.ToString()) : Brushes.Red,
                                     StrokeThickness = 7.5,
                                     ToolTip = Convert.ToString(item.ObjectNumber, 16) + Environment.NewLine + item.Name + Environment.NewLine + item.Address,
                                     AllowDrop = true
@@ -651,9 +727,11 @@ namespace VityazReports.ViewModel {
                             gmaps_contol.Markers.Add(marker);
                         }
 
-                        toggleButton.Background = cm.First().Color;
-                        ColorList.First(x => x.Color == cm.First().Color).Isfree = false;
-                        ColorList.First(x => x.Color == cm.First().Color).ObjTypeId = ObjId.ToString();
+                        //toggleButton.Background = cm.First().Color;
+                        //toggleButton.Background = plc != null ? (Brush)converter.ConvertFromString(plc.NewColor) : _ot != null ? (Brush)converter.ConvertFromString(_ot.RouteColor.Value.ToString()) : Brushes.Red;
+                        toggleButton.Background = _ot != null ? (Brush)converter.ConvertFromString(_ot.RouteColor.Value.ToString()) : Brushes.Red;
+                        //ColorList.First(x => x.Color == cm.First().Color).Isfree = false;
+                        //ColorList.First(x => x.Color == cm.First().Color).ObjTypeId = ObjId.ToString();
                         ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).IsShowOnMap = true;
                         ObjectTypeList.First(x => x.ObjTypeId == Int16.Parse(ObjId.ToString())).TgBtn = toggleButton;
                         toggleButton.IsChecked = true;
@@ -661,6 +739,44 @@ namespace VityazReports.ViewModel {
                     }
                     Loading = false;
                 });
+            });
+        }
+        /// <summary>
+        /// Команда получения расположений экипажей из CRM
+        /// </summary>
+        private RelayCommand _ShowPlacesGBR;
+        public RelayCommand ShowPlacesGBR {
+            get => _ShowPlacesGBR ??= new RelayCommand(async obj => {
+                List<NewPlacesGbrextensionBase> places = new List<NewPlacesGbrextensionBase>();
+                places = CrmContext.NewPlacesGbrextensionBase.Where(x => !string.IsNullOrEmpty(x.NewLatitude) && !string.IsNullOrEmpty(x.NewLongitude)).AsNoTracking().ToList();
+                if (places == null) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "При получения расположения экипажей возникла ошибка",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                if (places.Count <= 0) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Не найдены сохранения расположений экипажей",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                foreach (NewPlacesGbrextensionBase item in places) {
+                    GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(item.NewLatitude), Convert.ToDouble(item.NewLongitude))) {
+                        Shape = new System.Windows.Controls.Image() {
+                            Source = Conv.ToImageSource(Properties.Resources.Icon),
+                            Stretch = Stretch.UniformToFill,
+                            ToolTip = item.NewName
+                        }
+                    };
+                    marker.ZIndex = 1000;
+                    marker.Tag = "ГБР";
+                    gmaps_contol.Markers.Add(marker);
+                }
             });
         }
 
@@ -1147,7 +1263,7 @@ namespace VityazReports.ViewModel {
                             Shape = new System.Windows.Controls.Image() {
                                 Source = Conv.ToImageSource(Properties.Resources.Icon),
                                 Stretch = Stretch.UniformToFill,
-                                ToolTip= name
+                                ToolTip = name
                             }
                         };
                         marker.ZIndex = 1000;

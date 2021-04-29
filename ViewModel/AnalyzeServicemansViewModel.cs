@@ -168,11 +168,29 @@ namespace VityazReports.ViewModel {
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
-                                                 select new ServiceorderInfo(
-                                                     soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone, soeb.NewAddress)
+                                                 select new ServiceorderInfo(soc.SocIncomeLatitude,
+                                                 soc.SocIncomeLongitude,
+                                                 soc.SocOutcomeLatitide,
+                                                 soc.SocOutcomeLongitude,
+                                                 soeb.NewNumber,
+                                                 soeb.NewCategory,
+                                                 "наименование категории",
+                                                 soeb.NewObjName,
+                                                 soeb.NewName,
+                                                 soeb.NewTechConclusion,
+                                                 soeb.NewResult,
+                                                 "результат работы по заявке",
+                                                 soeb.NewIncome,
+                                                 soeb.NewOutgone,
+                                                 soeb.NewAddress,
+                                                 soeb.NewOrderFrom,
+                                                 soeb.NewWhoInit,
+                                                 soeb.NewTime
+                                                     )
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0)
                     return;
+                //теперь необходимо заявки разобрать по типу того кто дал заявку и времени
 
             });
         }

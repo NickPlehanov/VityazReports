@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using VityazReports.Data;
 
@@ -13,7 +14,7 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
 {
     public partial class ObjType
     {
-        public ObjType(int objTypeId, int orderNumber, string objTypeName, string description, bool recordDeleted, bool isShowOnMap, string name, int? countObjects) {
+        public ObjType(int objTypeId, int orderNumber, string objTypeName, string description, bool recordDeleted, bool isShowOnMap, string name, int? co_priv, int? co_com,Color color) {
             ObjTypeId = objTypeId;
             OrderNumber = orderNumber;
             ObjTypeName = objTypeName;
@@ -21,7 +22,9 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
             RecordDeleted = recordDeleted;
             IsShowOnMap = isShowOnMap;
             Name = name;
-            CountObjects = countObjects;
+            CountObjectPrivate = co_priv;
+            CountObjectCom = co_com;
+            RouteColor = color;
         }
 
         public ObjType(int objTypeId, int orderNumber, string objTypeName, string description, bool recordDeleted) {
@@ -49,23 +52,29 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
         [NotMapped]
         public string Name { 
             get {
-                if (string.IsNullOrEmpty(_Name) && !CountObjects.HasValue)
+                if (string.IsNullOrEmpty(_Name) && !CountObjectPrivate.HasValue && !CountObjectCom.HasValue)
                     return "";
-                if (!string.IsNullOrEmpty(_Name) && !CountObjects.HasValue)
+                if (!string.IsNullOrEmpty(_Name) && !CountObjectPrivate.HasValue && !CountObjectCom.HasValue)
                     return _Name;
-                if (string.IsNullOrEmpty(_Name) && CountObjects.HasValue)
+                if (string.IsNullOrEmpty(_Name) && CountObjectPrivate.HasValue && !CountObjectCom.HasValue)
                     return "";
-                return _Name+" ("+CountObjects.Value.ToString()+")";
+                //return _Name+" ("+ (CountObjectPrivate.Value+CountObjectCom.Value).ToString()+":"+ CountObjectCom.Value.ToString() + "/"+ CountObjectPrivate.Value.ToString() + ")";
+                return string.Format("{0} ({1}:{2}/{3})",_Name, CountObjectPrivate.Value + CountObjectCom.Value, CountObjectCom.Value, CountObjectPrivate.Value);
             }
             set {
                 _Name = value;
-
             }
         }
         [NotMapped]
-        public int? CountObjects { get; set; }
+        public int? CountObjectPrivate { get; set; }
+        [NotMapped]
+        public int? CountObjectCom { get; set; }
+        //[NotMapped]
+        //public int? CountObjects { get; set; }
 
         [NotMapped]
         public ToggleButton TgBtn { get; set; } = null;
+        [NotMapped]
+        public Color? RouteColor { get; set; }
     }
 }
