@@ -59,7 +59,7 @@ namespace VityazReports.Models.GuardObjectsOnMapGBR
                 if (string.IsNullOrEmpty(_Name) && CountObjectPrivate.HasValue && !CountObjectCom.HasValue)
                     return "";
                 //return _Name+" ("+ (CountObjectPrivate.Value+CountObjectCom.Value).ToString()+":"+ CountObjectCom.Value.ToString() + "/"+ CountObjectPrivate.Value.ToString() + ")";
-                return string.Format("{0} ({1}:{2}/{3})",_Name, CountObjectPrivate.Value + CountObjectCom.Value, CountObjectCom.Value, CountObjectPrivate.Value);
+                return string.Format("{0} ({1}  {2}/{3})",_Name, CountObjectPrivate.Value + CountObjectCom.Value, CountObjectCom.Value, CountObjectPrivate.Value);
             }
             set {
                 _Name = value;
