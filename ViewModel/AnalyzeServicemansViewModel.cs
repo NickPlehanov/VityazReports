@@ -1,12 +1,17 @@
 ﻿using GMap.NET;
 using GMap.NET.WindowsPresentation;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Windows.Threading;
 using VityazReports.Data;
 using VityazReports.Helpers;
 using VityazReports.Models;
@@ -22,6 +27,14 @@ namespace VityazReports.ViewModel {
             GetServicemans.Execute(null);
             _gmaps_contol = new GMapControl();
             InitializeMapControl.Execute(null);
+            //SqlDependency.Start("Data Source=sql-service;Initial Catalog=vityaz_MSCRM;Persist Security Info=True;User ID=admin;Password=111111");
+            //SqlCommand command = new SqlCommand("Select soc_ID, soc_ServiceOrderID, soc_IncomeLatitude, soc_IncomeLongitude, soc_OutcomeLatitide, soc_OutcomeLongitude From ServiceOrderCoordinates");
+            //SqlDependency dependency = new SqlDependency(command);
+            //dependency.OnChange += Dependency_OnChange;
+            //GetServiceordersOnDate.Execute(null);
+            DateOrder = DateTime.Now;
+            InitTimer.Execute(null);
+            GetServiceordersOnDate.Execute(DateOrder);
         }
         private A28Context GetA28Context() {
             if (a28Context == null)
@@ -29,6 +42,10 @@ namespace VityazReports.ViewModel {
             else
                 return a28Context;
         }
+        /// <summary>
+        /// Получем контекст данных ЦРМ
+        /// </summary>
+        /// <returns>Контекст данных</returns>
         private MsCRMContext GetMsCRMContext() {
             if (msCRMContext == null)
                 return new MsCRMContext();
@@ -44,6 +61,14 @@ namespace VityazReports.ViewModel {
             set {
                 _gmaps_contol = value;
                 OnPropertyChanged(nameof(gmaps_contol));
+            }
+        }
+        private DispatcherTimer _Timer;
+        public DispatcherTimer Timer {
+            get => _Timer;
+            set {
+                _Timer = value;
+                OnPropertyChanged(nameof(Timer));
             }
         }
         /// <summary>
@@ -162,8 +187,9 @@ namespace VityazReports.ViewModel {
                     return;
                 List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
                                                  join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                                                 join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
                                                  where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
-                                                 && soeb.NewDate.Value.Date == DateOrder.AddHours(-5).Date
+                                                 && soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
@@ -185,7 +211,8 @@ namespace VityazReports.ViewModel {
                                                  soeb.NewAddress,
                                                  soeb.NewOrderFrom,
                                                  soeb.NewWhoInit,
-                                                 soeb.NewTime
+                                                 soeb.NewTime,
+                                                 smeb.NewName
                                                      )
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0)
@@ -193,6 +220,80 @@ namespace VityazReports.ViewModel {
                 //теперь необходимо заявки разобрать по типу того кто дал заявку и времени
 
             });
+        }
+
+        private RelayCommand _GetServiceordersOnDate;
+        public RelayCommand GetServiceordersOnDate {
+            get => _GetServiceordersOnDate ??= new RelayCommand(async obj => {
+                //TODO: проверять на пустоту DateOrder
+                Timer.Stop();
+                gmaps_contol.Markers.Clear();
+                msCRMContext = GetMsCRMContext();
+                if (msCRMContext == null)
+                    return;
+                List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
+                                                 join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                                                 join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                                                 join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
+                                                 where soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
+                                                   && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
+                                                   && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
+                                                   && string.IsNullOrEmpty(soc.SocOutcomeLatitide)
+                                                   && string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                                                   && soeb.NewOutgone == null
+                                                 select new ServiceorderInfo(soc.SocIncomeLatitude,
+                                                 soc.SocIncomeLongitude,
+                                                 soc.SocOutcomeLatitide,
+                                                 soc.SocOutcomeLongitude,
+                                                 soeb.NewNumber,
+                                                 soeb.NewCategory,
+                                                 "наименование категории",
+                                                 soeb.NewObjName,
+                                                 soeb.NewName,
+                                                 soeb.NewTechConclusion,
+                                                 soeb.NewResult,
+                                                 "результат работы по заявке",
+                                                 soeb.NewIncome,
+                                                 soeb.NewOutgone,
+                                                 soeb.NewAddress,
+                                                 soeb.NewOrderFrom,
+                                                 soeb.NewWhoInit,
+                                                 soeb.NewTime,
+                                                 smeb.NewName
+                                                     )
+                                  ).AsNoTracking().ToList();
+                if (coords.Count() <= 0) {
+                    //TODO: добавить сообщение, что данных нет
+                    return;
+                }
+                foreach (ServiceorderInfo item in coords) {
+                    var d = (DateTime.Now.AddHours(-5) - item.Income).Value.Duration();
+                    GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(item.IncomeLatitude), Convert.ToDouble(item.IncomeLongitude))) {
+                        Shape = new Ellipse {
+                            Width = 20,
+                            Height = 20,
+                            Stroke = Brushes.Purple,
+                            StrokeThickness = 7.5,
+                            //ToolTip = string.Format("{0} - {1} ({2})", item.Number, item.Name, item.Address),
+                            ToolTip = string.Format("{0} ({1})"+Environment.NewLine+"{2} {3}"+Environment.NewLine+"{4}",item.TechName,string.Format("на объекте: {0}ч. {1}мин. {2}сек.",d.Hours,d.Minutes,d.Seconds), item.Number, item.Address, item.Name),
+                            AllowDrop = false
+                        }
+                    };
+                    gmaps_contol.Markers.Add(marker);
+                }
+                Timer.Start();
+            });
+        }
+        private RelayCommand _InitTimer;
+        public RelayCommand InitTimer {
+            get => _InitTimer ??= new RelayCommand(async obj => {
+                Timer = new DispatcherTimer();
+                Timer.Tick += new EventHandler(timer_Tick);
+                Timer.Interval = new TimeSpan(0, 1, 0);
+            });
+        }
+        private void timer_Tick(object sender, EventArgs e) {
+            GetServiceordersOnDate.Execute(DateOrder);
         }
     }
 }

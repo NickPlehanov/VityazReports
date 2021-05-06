@@ -4,7 +4,7 @@ using System.Text;
 
 namespace VityazReports.Models.AnalyzeServicemans {
     public class ServiceorderInfo {
-        public ServiceorderInfo(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, int? category, string categoryName, string objectName, string name, string conclusion, int? result, string resultName, DateTime? income, DateTime? outgone, string address, int? whoInit, string whoInitString,string time) {
+        public ServiceorderInfo(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, int? category, string categoryName, string objectName, string name, string conclusion, int? result, string resultName, DateTime? income, DateTime? outgone, string address, int? whoInit, string whoInitString,string time, string techName) {
             IncomeLatitude = incomeLatitude;
             IncomeLongitude = incomeLongitude;
             OutgoneLatitude = outgoneLatitude;
@@ -23,6 +23,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
             WhoInit = whoInit;
             WhoInitString = whoInitString;
             Time = time;
+            TechName = techName;
         }
 
         /// <summary>
@@ -97,5 +98,10 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// Время заявки
         /// </summary>
         public string Time { get; set; }
+        /// <summary>
+        /// Техник
+        /// </summary>
+        public string TechName { get; set; }
+        
     }
 }

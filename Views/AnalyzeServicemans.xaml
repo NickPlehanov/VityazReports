@@ -26,6 +26,7 @@
         <mah:Flyout Position="Right" IsModal="True" Panel.ZIndex="2" AnimateOpacity="True" IsOpen="{Binding ServicemansListVisible}">
             <StackPanel>
                 <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding DateOrder, StringFormat=\{0:dd.MM.yyyy\}}" Margin="5"/>
+                <!--<Button Content="Запрос" Command="{Binding GetServiceordersOnDate}"/>-->
                 <ScrollViewer>
                     <StackPanel>
                         <ListBox ItemsSource="{Binding ServicemansList}">
