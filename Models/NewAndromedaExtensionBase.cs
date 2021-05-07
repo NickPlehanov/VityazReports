@@ -65,6 +65,12 @@ namespace VityazReports.Models
         public int? NewRoute { get; set; }
         [Column("New_termination")]
         public bool? NewTermination { get; set; }
+        [Column("New_lonitude")]
+        [StringLength(100)]
+        public string NewLonitude { get; set; }
+        [Column("New_latitude")]
+        [StringLength(100)]
+        public string NewLatitude { get; set; }
 
         [ForeignKey(nameof(NewAndromedaId))]
         [InverseProperty(nameof(NewAndromedaBase.NewAndromedaExtensionBase))]

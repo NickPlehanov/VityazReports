@@ -1,4 +1,5 @@
-﻿using GMap.NET;
+﻿using GeoCoordinatePortable;
+using GMap.NET;
 using GMap.NET.WindowsPresentation;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,8 @@ namespace VityazReports.ViewModel {
             GetServicemans.Execute(null);
             _gmaps_contol = new GMapControl();
             InitializeMapControl.Execute(null);
+            LatesOrders = new ObservableCollection<ServiceorderInfo>();
+            Intervals = new ObservableCollection<IntervalsModel>();
             //SqlDependency.Start("Data Source=sql-service;Initial Catalog=vityaz_MSCRM;Persist Security Info=True;User ID=admin;Password=111111");
             //SqlCommand command = new SqlCommand("Select soc_ID, soc_ServiceOrderID, soc_IncomeLatitude, soc_IncomeLongitude, soc_OutcomeLatitide, soc_OutcomeLongitude From ServiceOrderCoordinates");
             //SqlDependency dependency = new SqlDependency(command);
@@ -115,6 +118,76 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(DateOrder));
             }
         }
+
+        private ObservableCollection<ServiceorderInfo> _LatesOrders;
+        public ObservableCollection<ServiceorderInfo> LatesOrders {
+            get => _LatesOrders;
+            set {
+                _LatesOrders = value;
+                OnPropertyChanged(nameof(LatesOrders));
+            }
+        }
+
+        private ObservableCollection<IntervalsModel> _Intervals;
+        public ObservableCollection<IntervalsModel> Intervals {
+            get => _Intervals;
+            set {
+                _Intervals = value;
+                OnPropertyChanged(nameof(Intervals));
+            }
+        }
+
+        private RelayCommand _FillIntervals;
+        public RelayCommand FillIntervals {
+            get => _FillIntervals ??= new RelayCommand(async obj => {
+                if (SelectedServicemans == null || DateOrder == null)
+                    return;
+                LatesOrders.Clear();
+                var coords = (from soc in msCRMContext.ServiceOrderCoordinates
+                              join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                              join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                              join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
+                              where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
+                              && soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
+                                && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
+                                && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
+                                && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
+                                && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                              select new { soeb.NewIncome, soeb.NewOutgone }
+                                  ).AsNoTracking().ToList();
+                if (coords.Count() <= 0)
+                    return;
+                for (int i = 0; i < coords.Count-1; i++) {
+                    var d = (coords[i + 1].NewIncome - coords[i].NewOutgone).Value.Duration();
+                    //Intervals.Add(string.Format("({0}) {1}-{2}", d.Minutes, coords[i].NewOutgone.Value.ToShortTimeString(), coords[i + 1].NewIncome.Value.ToShortTimeString()));
+                    Intervals.Add(new IntervalsModel(coords[i].NewOutgone.Value.ToShortTimeString()+" - "+ coords[i + 1].NewIncome.Value.ToShortTimeString(),d.Hours.ToString()+" "+d.Minutes.ToString()));
+                }
+            });
+        }
+
+        private RelayCommand _FillLatesOrders;
+        public RelayCommand FillLatesOrders {
+            get => _FillLatesOrders ??= new RelayCommand(async obj => {
+                if (SelectedServicemans == null || DateOrder == null)
+                    return;
+                LatesOrders.Clear();
+                List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
+                                                 join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                                                 join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                                                 join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
+                                                 where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
+                                                 && soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
+                                                   && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
+                                                   && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
+                                                   && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
+                                                   && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                                                 select new ServiceorderInfo(soeb.NewNumber, soeb.NewAddress, soeb.NewObjName, soeb.NewName, soeb.NewTime, (DateTime)soeb.NewIncome, (DateTime)soeb.NewOutgone, soeb.NewTechConclusion)
+                                  ).AsNoTracking().ToList();
+                if (coords.Count() <= 0)
+                    return;
+                //каким образом парсить столбец времени
+            });
+        }
         /// <summary>
         /// Определяем свойства и настройки для контрола карты
         /// </summary>
@@ -170,6 +243,7 @@ namespace VityazReports.ViewModel {
                 if (ID == null)
                     return;
                 SelectedServicemans = ServicemansList.FirstOrDefault(x => x.ServicemanID == ID.Value);
+                FillIntervals.Execute(null);
             });
         }
         /// <summary>
@@ -188,6 +262,7 @@ namespace VityazReports.ViewModel {
                 List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
                                                  join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
                                                  join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                                                 join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
                                                  where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
                                                  && soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
@@ -212,7 +287,9 @@ namespace VityazReports.ViewModel {
                                                  soeb.NewOrderFrom,
                                                  soeb.NewWhoInit,
                                                  soeb.NewTime,
-                                                 smeb.NewName
+                                                 smeb.NewName,
+                                                 andr.NewLatitude,
+                                                 andr.NewLonitude
                                                      )
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0)
@@ -235,7 +312,8 @@ namespace VityazReports.ViewModel {
                                                  join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
                                                  join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
                                                  join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
-                                                 where soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
+                                                 //where soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
+                                                 where soeb.NewDate.Value.Date == DateTime.Now.AddDays(-1).Date
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                                    && string.IsNullOrEmpty(soc.SocOutcomeLatitide)
@@ -259,7 +337,9 @@ namespace VityazReports.ViewModel {
                                                  soeb.NewOrderFrom,
                                                  soeb.NewWhoInit,
                                                  soeb.NewTime,
-                                                 smeb.NewName
+                                                 smeb.NewName,
+                                                 andr.NewLatitude,
+                                                 andr.NewLonitude
                                                      )
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0) {
@@ -268,14 +348,24 @@ namespace VityazReports.ViewModel {
                 }
                 foreach (ServiceorderInfo item in coords) {
                     var d = (DateTime.Now.AddHours(-5) - item.Income).Value.Duration();
+                    GeoCoordinate c1 = new GeoCoordinate(Convert.ToDouble(item.IncomeLatitude), Convert.ToDouble(item.IncomeLongitude));
+                    GeoCoordinate c2 = new GeoCoordinate(Convert.ToDouble(item.Andr_lat), Convert.ToDouble(item.Andr_lon));
                     GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(item.IncomeLatitude), Convert.ToDouble(item.IncomeLongitude))) {
                         Shape = new Ellipse {
                             Width = 20,
                             Height = 20,
-                            Stroke = Brushes.Purple,
+                            //Stroke = Brushes.Purple,
+                            Stroke = c1.GetDistanceTo(c2) > 150.0 ? Brushes.Red : Brushes.Purple,
                             StrokeThickness = 7.5,
                             //ToolTip = string.Format("{0} - {1} ({2})", item.Number, item.Name, item.Address),
-                            ToolTip = string.Format("{0} ({1})"+Environment.NewLine+"{2} {3}"+Environment.NewLine+"{4}",item.TechName,string.Format("на объекте: {0}ч. {1}мин. {2}сек.",d.Hours,d.Minutes,d.Seconds), item.Number, item.Address, item.Name),
+                            ToolTip = string.Format("{0} ({1})" + Environment.NewLine + "{2} {3}" + Environment.NewLine + "{4} {5}",
+                            item.TechName,
+                            string.Format("на объекте: {0}ч. {1}мин. {2}сек.", d.Hours, d.Minutes, d.Seconds),
+                            item.Number,
+                            item.ObjectName + " " + item.Address,
+                            item.Name,
+                            c1.GetDistanceTo(c2) > 150.0 ? Environment.NewLine + string.Format("расстояние от объекта: {0}", c1.GetDistanceTo(c2).ToString()) : null
+                            ),
                             AllowDrop = false
                         }
                     };

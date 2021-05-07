@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <Folder Include="Data1\" />
+    <Folder Include="Models1\" />
   </ItemGroup>
 
 </Project>

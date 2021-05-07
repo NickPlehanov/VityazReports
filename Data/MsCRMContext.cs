@@ -20,6 +20,7 @@ namespace VityazReports.Data
         }
 
         public virtual DbSet<AccountBase> AccountBase { get; set; }
+        public virtual DbSet<AccountExtensionBase> AccountExtensionBase { get; set; }
         public virtual DbSet<Models.Attribute> Attribute { get; set; }
         public virtual DbSet<AttributePicklistValue> AttributePicklistValue { get; set; }
         public virtual DbSet<Entity> Entity { get; set; }
@@ -167,6 +168,20 @@ namespace VityazReports.Data
                     .WithMany(p => p.AccountBasePreferredSystemUser)
                     .HasForeignKey(d => d.PreferredSystemUserId)
                     .HasConstraintName("system_user_accounts");
+            });
+
+            modelBuilder.Entity<AccountExtensionBase>(entity =>
+            {
+                entity.HasIndex(e => e.NewReqInn, "AccountInnIndex")
+                    .IsClustered();
+
+                entity.HasIndex(e => new { e.NewSmallname, e.NewReqInn }, "ndx_SystemManaged")
+                    .HasFillFactor((byte)80);
+
+                entity.HasOne(d => d.NewDebitorOwnerNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.NewDebitorOwner)
+                    .HasConstraintName("new_debitor_systemuser_account");
             });
 
             modelBuilder.Entity<Models.Attribute>(entity =>

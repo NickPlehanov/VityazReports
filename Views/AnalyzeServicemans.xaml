@@ -41,6 +41,47 @@
                 </ScrollViewer>
             </StackPanel>
         </mah:Flyout>
+        <mah:Flyout Position="Bottom" IsModal="True" Panel.ZIndex="2" AnimateOpacity="True" IsOpen="True">
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="{Binding ServicemanName}" Grid.Row="0" Grid.Column="0" FontWeight="UltraLight" FontSize="16"/>
+                <Label Content="{Binding DateOrder, StringFormat=\{0:dd.MM.yyyy\}}" Grid.Row="0" Grid.Column="1" FontWeight="UltraLight" FontSize="16"/>
+                <Label Content="{Binding ClientOrders}" Grid.Row="1" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
+                <Label Content="{Binding TimeOrders}" Grid.Row="2" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
+                <Label Content="Опоздания" Grid.Row="3" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
+                <DataGrid Grid.Row="4" Grid.ColumnSpan="2" ItemsSource="{Binding LatesOrders}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="№ объекта" Binding="{Binding NumberObject}"/>
+                        <DataGridTextColumn Header="Адрес объекта" Binding="{Binding AddressObject}"/>
+                        <DataGridTextColumn Header="Наименование объекта" Binding="{Binding NameObject}"/>
+                        <DataGridTextColumn Header="Причина" Binding="{Binding Reasons}"/>
+                        <DataGridTextColumn Header="Время заявки" Binding="{Binding TimeOrder}"/>
+                        <DataGridTextColumn Header="Пришел" Binding="{Binding Income}"/>
+                        <DataGridTextColumn Header="Ушел" Binding="{Binding Outgone}"/>
+                        <DataGridTextColumn Header="Заключение" Binding="{Binding Conclusion}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Label Content="Интервалы между заявками(>40)" Grid.Row="5" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
+                <DataGrid Grid.Row="6" Grid.ColumnSpan="2" ItemsSource="{Binding Intervals}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Диапазон" Binding="{Binding Range}"/>
+                        <DataGridTextColumn Header="Продолжительность" Binding="{Binding Duration}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}"/>
     </Grid>
 </mah:MetroWindow>

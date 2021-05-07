@@ -1,0 +1,60 @@
+﻿<mah:MetroWindow  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" x:Class="VityazReports.Views.CorpClients"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:VityazReports.Views" xmlns:vm="clr-namespace:VityazReports.ViewModel" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                  mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="CorpClients">
+    <mah:MetroWindow.DataContext>
+        <vm:CorpClientsViewModel/>
+    </mah:MetroWindow.DataContext>
+    <Grid>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="GuardObjectByAccounts" Source="{Binding GuardObjectsByAccountsList}">
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="ParentAccountName"/>
+                    <PropertyGroupDescription PropertyName="AccountName"/>
+                </CollectionViewSource.GroupDescriptions>
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="GuardObjectPay"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
+        <DataGrid ItemsSource="{Binding Source={StaticResource GuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5">
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Margin" Value="5"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <Expander IsExpanded="False" BorderThickness="1">
+                                            <Expander.Header>
+                                                <WrapPanel>
+                                                    <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="5"/>
+                                                    <TextBlock FontWeight="Bold" Text="{Binding Path=Pay}" Margin="5"/>
+                                                    <!--<TextBlock FontWeight="Bold" Text="{Binding ItemCount}" Margin="5"/>-->
+                                                </WrapPanel>
+                                            </Expander.Header>
+                                            <Expander.Content>
+                                                <ItemsPresenter/>
+                                            </Expander.Content>
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Бизнес-партнер" Binding="{Binding AccountName}"/>
+                <DataGridTextColumn Header="Охраняемый объект" Binding="{Binding GuardObjectName}"/>
+                <DataGridTextColumn Header="Аб. плата" Binding="{Binding Pay}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</mah:MetroWindow>

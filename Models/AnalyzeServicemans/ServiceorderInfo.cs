@@ -4,7 +4,9 @@ using System.Text;
 
 namespace VityazReports.Models.AnalyzeServicemans {
     public class ServiceorderInfo {
-        public ServiceorderInfo(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, int? category, string categoryName, string objectName, string name, string conclusion, int? result, string resultName, DateTime? income, DateTime? outgone, string address, int? whoInit, string whoInitString,string time, string techName) {
+        public ServiceorderInfo(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, int? category, string categoryName, 
+            string objectName, string name, string conclusion, int? result, string resultName, DateTime? income, DateTime? outgone, string address, int? whoInit, string whoInitString,string time, string techName
+            ,string andrlat, string andrlon) {
             IncomeLatitude = incomeLatitude;
             IncomeLongitude = incomeLongitude;
             OutgoneLatitude = outgoneLatitude;
@@ -24,6 +26,18 @@ namespace VityazReports.Models.AnalyzeServicemans {
             WhoInitString = whoInitString;
             Time = time;
             TechName = techName;
+            Andr_lat = andrlat;
+            Andr_lon = andrlon;
+        }
+        public ServiceorderInfo(int? numberObject, string addressObject, string nameObject, string reason, string time, DateTime income, DateTime outgone, string conclusion) {
+            Number = numberObject;
+            Address = addressObject;
+            Name = nameObject;
+            Name = reason;
+            Time = time;
+            Income = income;
+            Outgone = outgone;
+            Conclusion = conclusion;
         }
 
         /// <summary>
@@ -102,6 +116,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// Техник
         /// </summary>
         public string TechName { get; set; }
-        
+        public string Andr_lat { get; set; }
+        public string Andr_lon { get; set; }
     }
 }

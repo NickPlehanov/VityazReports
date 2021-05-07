@@ -19,6 +19,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[AccountExtensionBase]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[New_alarmBase]",
          "ObjectType": 0
       },

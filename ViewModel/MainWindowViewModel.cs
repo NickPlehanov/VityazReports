@@ -116,6 +116,10 @@ namespace VityazReports.ViewModel {
                         AnalyzeServicemans asm = new AnalyzeServicemans();
                         asm.Show();
                         break;
+                    case "E56507EA-3FB3-49CF-9528-2634A4C0E21F": //корпоротивные клиенты
+                        CorpClients cc = new CorpClients();
+                        cc.Show();
+                        break;
                 }
             }, obj => obj != null);
         }
