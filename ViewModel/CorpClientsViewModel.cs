@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using Notifications.Wpf;
 using LiveCharts;
 using LiveCharts.Wpf;
+using LiveCharts.Defaults;
 
 namespace VityazReports.ViewModel {
     public class CorpClientsViewModel : BaseViewModel {
@@ -410,8 +411,8 @@ namespace VityazReports.ViewModel {
             }
         }
 
-        private ChartValues<double> _ChartAnalytics = new ChartValues<double>();
-        public ChartValues<double> ChartAnalytics  {
+        private SeriesCollection _ChartAnalytics ;
+        public SeriesCollection ChartAnalytics  {
             get => _ChartAnalytics;
             set {
                 _ChartAnalytics = value;
@@ -421,10 +422,11 @@ namespace VityazReports.ViewModel {
         private RelayCommand _AnalyzeCommand;
         public RelayCommand AnalyzeCommand {
             get => _AnalyzeCommand ??= new RelayCommand(async obj => {
+                int order = 1;
                 //сортируем список охраняемых объектов по дате расторжения от ранней к старшей
                 //считаем сумму абонентских плат от даты из п.1.
                 Analyze.Clear();
-                ChartAnalytics.Clear();
+                ChartAnalytics = new SeriesCollection();
                 if (GuardObjectsByAccountsList.Count() <= 0)
                     return;
                 var sorted = GuardObjectsByAccountsList.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
@@ -437,14 +439,18 @@ namespace VityazReports.ViewModel {
                         
                     }
                     //var sum = GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove==null).Sum(x => x.Pay);
-                    //ChartAnalytics.Add(double.Parse(sum.ToString()));
-                    Analyze.Add(new AnalyzeModel(s.Value, sum));
+                    //ChartAnalytics.Add(new LineSeries(new ObservableValue(double.Parse(sum.ToString()))));
+                    ChartAnalytics.Add(new LineSeries(new ChartValues<int>(Analyze.Select(x=>x.MonthlyPay).ToList())));
+                    Analyze.Add(new AnalyzeModel(s.Value, sum,order));
+                    order++;
                 }
-                ChartAnalytics = new SeriesCollection() {
-                    new LineSeries {
-                        Values=new ChartValues<double>(1.0)
-                    }
-                };
+                //ChartAnalytics = new SeriesCollection() {
+                //    new LineSeries {
+                //        Title = "1",
+                //        //new ChartValues<ObservableValue>{new ObservableValue(ChartObjectsList.Count(x => x.Duration > 900)) },
+                //        Values=new ChartValues<ObservableValue>{new ObservableValue(1)}
+                //    }
+                //};
                 ChartFlyoutVisible = true;
             });
         }
