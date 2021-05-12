@@ -45,4 +45,13 @@
     <Folder Include="Models1\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Telerik.Windows.Controls">
+      <HintPath>..\..\..\Desktop\Telerik\Telerik.Windows.Controls.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls.Input">
+      <HintPath>..\..\..\Desktop\Telerik\Telerik.Windows.Controls.Input.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

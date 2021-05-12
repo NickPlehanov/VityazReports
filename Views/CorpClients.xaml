@@ -3,58 +3,127 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:VityazReports.Views" xmlns:vm="clr-namespace:VityazReports.ViewModel" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                  xmlns:wpf="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
+      xmlns:local="clr-namespace:VityazReports.Views" 
+                  xmlns:vm="clr-namespace:VityazReports.ViewModel" 
+                  xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="CorpClients">
+      Title="Корпортивные клиенты">
     <mah:MetroWindow.DataContext>
         <vm:CorpClientsViewModel/>
     </mah:MetroWindow.DataContext>
-    <Grid>
+    <mah:MetroWindow.LeftWindowCommands>
+        <mah:WindowCommands>
+            <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
+                <iconPacks:BootstrapIcons Kind="Filter"/>
+            </Button>
+            <Button Content="Analyze" Command="{Binding AnalyzeCommand}"/>
+        </mah:WindowCommands>
+    </mah:MetroWindow.LeftWindowCommands>
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <TextBlock Text="{Binding SelectedHeadOrganization.AccountName}" Margin="5"/>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+    <Grid>        
         <Grid.Resources>
-            <CollectionViewSource x:Key="GuardObjectByAccounts" Source="{Binding GuardObjectsByAccountsList}">
-                <CollectionViewSource.GroupDescriptions>
-                    <PropertyGroupDescription PropertyName="ParentAccountName"/>
-                    <PropertyGroupDescription PropertyName="AccountName"/>
+            <CollectionViewSource x:Key="GuardObjectByAccounts" Source="{Binding SelectedGuardObjects}">
+                <CollectionViewSource.GroupDescriptions>                    
+                    <!--<PropertyGroupDescription PropertyName="ParentAccountName"/>-->        
+                    <PropertyGroupDescription PropertyName="AccountName"/>             
                 </CollectionViewSource.GroupDescriptions>
                 <CollectionViewSource.SortDescriptions>
                     <scm:SortDescription PropertyName="GuardObjectPay"/>
                 </CollectionViewSource.SortDescriptions>
             </CollectionViewSource>
         </Grid.Resources>
-        <DataGrid ItemsSource="{Binding Source={StaticResource GuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5">
-            <DataGrid.GroupStyle>
-                <GroupStyle>
-                    <GroupStyle.ContainerStyle>
-                        <Style TargetType="{x:Type GroupItem}">
-                            <Setter Property="Margin" Value="5"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type GroupItem}">
-                                        <Expander IsExpanded="False" BorderThickness="1">
-                                            <Expander.Header>
-                                                <WrapPanel>
-                                                    <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="5"/>
-                                                    <TextBlock FontWeight="Bold" Text="{Binding Path=Pay}" Margin="5"/>
-                                                    <!--<TextBlock FontWeight="Bold" Text="{Binding ItemCount}" Margin="5"/>-->
-                                                </WrapPanel>
-                                            </Expander.Header>
-                                            <Expander.Content>
-                                                <ItemsPresenter/>
-                                            </Expander.Content>
-                                        </Expander>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </GroupStyle.ContainerStyle>
-                </GroupStyle>
-            </DataGrid.GroupStyle>
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Бизнес-партнер" Binding="{Binding AccountName}"/>
-                <DataGridTextColumn Header="Охраняемый объект" Binding="{Binding GuardObjectName}"/>
-                <DataGridTextColumn Header="Аб. плата" Binding="{Binding Pay}"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <mah:Flyout Position="Top" Panel.ZIndex="25" Height="120" IsModal="True" AreAnimationsEnabled="True" IsOpen="{Binding FilterFlyoutVisible}">
+            <StackPanel >
+                <Label Content="Укажите в поле ниже часть наименования бизнес-партнера"/>
+                <TextBox Text="{Binding SearchText}" Margin="5"/>
+                <Button Margin="5" Content="Показать" Command="{Binding ShowAllCommand}"/>
+            </StackPanel>
+        </mah:Flyout>
+        <mah:Flyout Position="Bottom" Panel.ZIndex="25" Height="250" IsModal="True" AreAnimationsEnabled="True" IsOpen="{Binding ChartFlyoutVisible}">
+            <wpf:CartesianChart Margin="5" Series="{Binding ChartAnalytics}"/>
+
+        </mah:Flyout>
+        <mah:MetroAnimatedSingleRowTabControl>
+            <mah:MetroTabItem Header="Главное окно" x:Name="MainZone">
+                <mah:MetroAnimatedSingleRowTabControl>
+                    <mah:MetroTabItem Header="Головные орг.">
+                        <DataGrid ItemsSource="{Binding HeadOrganizationList}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" SelectedItem="{Binding SelectedHeadOrganization}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
+                                <DataGridTextColumn Header="Кол-во доч. орг" Binding="{Binding CountSubOrg}"/>
+                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}"/>
+                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}"/>
+                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </mah:MetroTabItem>
+                    <mah:MetroTabItem Header="Дочерние орг." IsSelected="{Binding SubOrgMetroTabItemSelected}" IsEnabled="{Binding SelectedOrgVisible}">
+                        <DataGrid ItemsSource="{Binding SelectedSubOrganization}" AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
+                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding AccountEndDate, StringFormat=\{0:dd.MM.yyyy\}}"/>
+                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}"/>
+                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}"/>
+                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </mah:MetroTabItem>
+                    <mah:MetroTabItem Header="Охр. объекты"  IsEnabled="{Binding SelectedOrgVisible}">
+                        <DataGrid ItemsSource="{Binding Source={StaticResource GuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5">
+                            <DataGrid.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.ContainerStyle>
+                                        <Style TargetType="{x:Type GroupItem}">
+                                            <Setter Property="Margin" Value="5"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                        <Expander IsExpanded="False" BorderThickness="1">
+                                                            <Expander.Header>
+                                                                <WrapPanel>
+                                                                    <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="5"/>
+                                                                </WrapPanel>
+                                                            </Expander.Header>
+                                                            <Expander.Content>
+                                                                <ItemsPresenter/>
+                                                            </Expander.Content>
+                                                        </Expander>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </GroupStyle.ContainerStyle>
+                                </GroupStyle>
+                            </DataGrid.GroupStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding GuardObjectName}"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding GuardObjectAddress}"/>
+                                <DataGridTextColumn Header="Аб. плата" Binding="{Binding GuardObjectPay}"/>
+                                <DataGridTextColumn Header="Дата приостановления" Binding="{Binding DatePriost, StringFormat=\{0:dd.MM.yyyy\}}"/>
+                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding DateRemove, StringFormat=\{0:dd.MM.yyyy\}}"/>
+                            </DataGrid.Columns>
+                        </DataGrid >
+                    </mah:MetroTabItem>
+                </mah:MetroAnimatedSingleRowTabControl>
+            </mah:MetroTabItem>
+            <mah:MetroTabItem Header="Аналитика">
+                <mah:MetroTabItem Header="Аналитика">
+                    
+                </mah:MetroTabItem>
+            </mah:MetroTabItem>
+        </mah:MetroAnimatedSingleRowTabControl>
+
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="25" Width="{Binding ActualWidth, ElementName=ChangeCostWindow}" Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=ChangeCostWindow}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

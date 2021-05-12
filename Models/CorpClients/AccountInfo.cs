@@ -1,19 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using VityazReports.Helpers;
 
 namespace VityazReports.Models.CorpClients {
     public class AccountInfo {
         private readonly CommonMethods cm = new CommonMethods();
-        public AccountInfo(Guid accountID, Guid? parentAccountID, string accountName, string parentAccountName, Guid guardObjectID, string guardObjectName, string guardObjectPay) {
+        public AccountInfo(Guid accountID, Guid? parentAccountID, string accountName, string parentAccountName, Guid guardObjectID, string guardObjectName,string guardObjectAddress, string guardObjectPay, DateTime? datePriost, DateTime? dateRemove) {
             AccountID = accountID;
             ParentAccountID = parentAccountID;
             AccountName = accountName;
             ParentAccountName = parentAccountName;
             GuardObjectID = guardObjectID;
             GuardObjectName = guardObjectName;
+            GuardObjectAddress = guardObjectAddress;
             GuardObjectPay = guardObjectPay;
+            DatePriost = datePriost;
+            DateRemove = dateRemove;
         }
 
         /// <summary>
@@ -41,6 +42,10 @@ namespace VityazReports.Models.CorpClients {
         /// </summary>
         public string GuardObjectName { get; set; }
         /// <summary>
+        /// Адрес охраняемого объекта
+        /// </summary>
+        public string GuardObjectAddress { get; set; }
+        /// <summary>
         /// Абонентская плата охраняемого объекта
         /// </summary>
         public string GuardObjectPay { get; set; }
@@ -60,5 +65,7 @@ namespace VityazReports.Models.CorpClients {
                     _Pay = cm.ParseDigit(GuardObjectPay);
             }
         }
+        public DateTime? DatePriost { get; set; }
+        public DateTime? DateRemove { get; set; }
     }
 }

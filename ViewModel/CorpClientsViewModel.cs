@@ -7,20 +7,37 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using VityazReports.Models.CorpClients;
 using System.Collections.ObjectModel;
+using Notifications.Wpf;
+using LiveCharts;
+using LiveCharts.Wpf;
 
 namespace VityazReports.ViewModel {
     public class CorpClientsViewModel : BaseViewModel {
+        NotificationManager notificationManager;
         /// <summary>
         /// Конструктор ViewModel-и
         /// </summary>
         public CorpClientsViewModel() {
+            Loading = true;
             HeadOrganizationList = new ObservableCollection<AccountModel>();
             SubOrganizationList = new ObservableCollection<AccountModel>();
             GuardObjectsByAccountsList = new ObservableCollection<AccountInfo>();
+            SelectedSubOrganization = new ObservableCollection<AccountModel>();
+            SelectedGuardObjects = new ObservableCollection<AccountInfo>();
+            Analyze = new ObservableCollection<AnalyzeModel>();
+            notificationManager = new NotificationManager();
+            FilterFlyoutVisible = true;
 
-            GetAllHeadOrganization.Execute(null);
-            GetAllSubOrganization.Execute(null);
-            GetGuardObjectByAccount.Execute(null);
+            Loading = false;
+        }
+
+        private bool _SubOrgMetroTabItemSelected;
+        public bool SubOrgMetroTabItemSelected {
+            get => _SubOrgMetroTabItemSelected;
+            set {
+                _SubOrgMetroTabItemSelected = value;
+                OnPropertyChanged(nameof(SubOrgMetroTabItemSelected));
+            }
         }
         /// <summary>
         /// Свойство хранения контекста Црм
@@ -75,6 +92,154 @@ namespace VityazReports.ViewModel {
                 return MsCrmContext;
         }
         /// <summary>
+        /// Выбранный элемент типа Головная организация в сетке на форме
+        /// </summary>
+        private AccountModel _SelectedHeadOrganization;
+        public AccountModel SelectedHeadOrganization {
+            get => _SelectedHeadOrganization;
+            set {
+                _SelectedHeadOrganization = value;
+                if (_SelectedHeadOrganization != null) {
+                    GetSelectedSubOrganization.Execute(null);
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Информация",
+                        Message = string.Format("Выбрана орг., информация доступна на вкладках: Дочерние организации и Охр. объекты"),
+                        Type = NotificationType.Information
+                    });
+                    SubOrgMetroTabItemSelected = true;
+                }
+                OnPropertyChanged(nameof(SelectedHeadOrganization));
+            }
+        }
+        /// <summary>
+        /// Храним список подчиненных организаций, относительно выбранной головной организации
+        /// </summary>
+        private ObservableCollection<AccountModel> _SelectedSubOrganization;
+        public ObservableCollection<AccountModel> SelectedSubOrganization {
+            get => _SelectedSubOrganization;
+            set {
+                _SelectedSubOrganization = value;
+                OnPropertyChanged(nameof(SelectedSubOrganization));
+            }
+        }
+        /// <summary>
+        /// Храним список охраняемых объектов по головной и подиченным организациям
+        /// </summary>
+        private ObservableCollection<AccountInfo> _SelectedGuardObjects;
+        public ObservableCollection<AccountInfo> SelectedGuardObjects {
+            get => _SelectedGuardObjects;
+            set {
+                _SelectedGuardObjects = value;
+                OnPropertyChanged(nameof(SelectedGuardObjects));
+            }
+        }
+        /// <summary>
+        /// Видимость индикиатора загрузки
+        /// </summary>
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
+            }
+        }
+        /// <summary>
+        /// Поле показа/закрытия окна фильтра
+        /// </summary>
+        private bool _FilterFlyoutVisible;
+        public bool FilterFlyoutVisible {
+            get => _FilterFlyoutVisible;
+            set {
+                _FilterFlyoutVisible = value;
+                OnPropertyChanged(nameof(FilterFlyoutVisible));
+            }
+        }
+        /// <summary>
+        /// Поисковая строка в поле фильтра
+        /// </summary>
+        private string _SearchText;
+        public string SearchText {
+            get => _SearchText;
+            set {
+                _SearchText = value;
+                OnPropertyChanged(nameof(SearchText));
+            }
+        }
+
+        private bool _ChartFlyoutVisible;
+        public bool ChartFlyoutVisible {
+            get => _ChartFlyoutVisible;
+            set {
+                _ChartFlyoutVisible = value;
+                OnPropertyChanged(nameof(ChartFlyoutVisible));
+            }
+        }
+        private bool _SelectedOrgVisible;
+        public bool SelectedOrgVisible {
+            get => _SelectedOrgVisible;
+            set {
+                _SelectedOrgVisible = value;
+                OnPropertyChanged(nameof(SelectedOrgVisible));
+            }
+        }
+        private RelayCommand _OpenFlyoutFilterCommand;
+        public RelayCommand OpenFlyoutFilterCommand {
+            get => _OpenFlyoutFilterCommand ??= new RelayCommand(async obj => {
+                FilterFlyoutVisible = !FilterFlyoutVisible;
+            });
+        }
+        private RelayCommand _ShowAllCommand;
+        public RelayCommand ShowAllCommand {
+            get => _ShowAllCommand ??= new RelayCommand(async obj => {
+                Loading = true;
+                FilterFlyoutVisible = false;
+
+                HeadOrganizationList.Clear();
+                SubOrganizationList.Clear();
+                GuardObjectsByAccountsList.Clear();
+                SelectedGuardObjects.Clear();
+                SelectedHeadOrganization = null;
+                SelectedSubOrganization.Clear();
+
+                GetAllHeadOrganization.Execute(null);
+                GetAllSubOrganization.Execute(null);
+                GetGuardObjectByAccount.Execute(null);
+
+                Loading = false;
+                return;
+            });
+        }
+        private RelayCommand _GetSelectedSubOrganization;
+        public RelayCommand GetSelectedSubOrganization {
+            get => _GetSelectedSubOrganization ??= new RelayCommand(async obj => {
+                if (SelectedHeadOrganization == null)
+                    return;
+                SelectedGuardObjects.Clear();
+                SelectedSubOrganization.Clear();
+                SelectedOrgVisible = true;
+                var s_sub = SubOrganizationList.Where(x => x.ParentAccountId == SelectedHeadOrganization.AccountId).ToList();
+                if (s_sub == null)
+                    return;
+                foreach (var s_item in s_sub) {
+                    SelectedSubOrganization.Add(s_item);
+                    var s_go = GuardObjectsByAccountsList.Where(x => x.AccountID == s_item.AccountId).ToList();
+                    if (s_go == null)
+                        continue;
+                    foreach (var s_go_item in s_go)
+                        SelectedGuardObjects.Add(s_go_item);
+
+                }
+                var s_h_go = GuardObjectsByAccountsList.Where(x => x.AccountID == SelectedHeadOrganization.AccountId).ToList();
+                if (s_h_go == null)
+                    return;
+                foreach (var s_h_go_item in s_h_go)
+                    SelectedGuardObjects.Add(s_h_go_item);
+
+                //var s_go = GuardObjectsByAccountsList.Where(x => x.AccountID);
+            });
+        }
+        /// <summary>
         /// Получаем из Црм, все организации, которые являются головными
         /// Пока что не учитываем, расторжена или нет. В последующем следует учитывать, является ли организация расторженой, а у неё есть организация без расторжения или охраняемый объект без расторжения
         /// TODO
@@ -83,15 +248,30 @@ namespace VityazReports.ViewModel {
         public RelayCommand GetAllHeadOrganization {
             get => _GetAllHeadOrganization ??= new RelayCommand(async obj => {
                 MsCrmContext = GetMsCRMContext();
-                List<AccountModel> head_org_list = (from ab1 in MsCrmContext.AccountBase
-                                                    join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
-                                                    where ab1.ParentAccountId == null
-                                                        && aeb1.NewEndDate == null
-                                                        && ab1.DeletionStateCode == 0
-                                                        && ab1.StateCode == 0
-                                                        && ab1.StatusCode == 1
-                                                    select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate)
-                                         ).AsNoTracking().Distinct().ToList();
+                List<AccountModel> head_org_list = new List<AccountModel>();
+                if (string.IsNullOrEmpty(SearchText) || string.IsNullOrWhiteSpace(SearchText))
+                    head_org_list = (from ab1 in MsCrmContext.AccountBase
+                                     join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
+                                     join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                                     where ab1.ParentAccountId == null
+                                         //&& aeb1.NewEndDate == null
+                                         && ab1.DeletionStateCode == 0
+                                         && ab1.StateCode == 0
+                                         && ab1.StatusCode == 1
+                                     select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), null, null, aeb1.NewFactAddrKladr, 0, sub.FullName)
+                                             ).AsNoTracking().Distinct().ToList();
+                else
+                    head_org_list = (from ab1 in MsCrmContext.AccountBase
+                                     join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
+                                     join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                                     where ab1.ParentAccountId == null
+                                         //&& aeb1.NewEndDate == null
+                                         && ab1.DeletionStateCode == 0
+                                         && ab1.StateCode == 0
+                                         && ab1.StatusCode == 1
+                                         && ab1.Name.ToLower().Contains(SearchText.ToLower())
+                                     select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
+                                                 ).AsNoTracking().Distinct().ToList();
                 if (head_org_list.Count() <= 0)
                     //TODO: сообщение пользователю
                     return;
@@ -113,17 +293,20 @@ namespace VityazReports.ViewModel {
                 foreach (AccountModel item in HeadOrganizationList) {
                     var el = (from ab1 in MsCrmContext.AccountBase
                               join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
-                              where ab1.ParentAccountId != null
-                                  && aeb1.NewEndDate == null
-                                  && ab1.DeletionStateCode == 0
+                              join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                              where
+                              //aeb1.NewEndDate == null && 
+                              ab1.DeletionStateCode == 0
                                   && ab1.StateCode == 0
                                   && ab1.StatusCode == 1
                                   && ab1.ParentAccountId == item.AccountId
-                              select new AccountModel(ab1.AccountId, item.AccountId, ab1.Name, item.AccountName, aeb1.NewEndDate)
+                              //&& aeb1.NewEndDate == null
+                              select new AccountModel(ab1.AccountId, item.AccountId, ab1.Name, item.AccountName, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
                                          ).AsNoTracking().Distinct().ToList();
                     if (el.Count() <= 0)
                         continue;
                     sub_org_list.AddRange(el);
+                    //SubOrganizationList.Add(new AccountModel(item.AccountId, null, item.AccountName, null, null, null, null, item.Address));
                 }
                 if (sub_org_list.Count() <= 0)
                     //TODO:сообщение пользователю
@@ -149,14 +332,17 @@ namespace VityazReports.ViewModel {
                                   && gob.Statecode == 0
                                   && gob.Statuscode == 1
                                   && goeb.NewAccount == item.AccountId
-                                  && goeb.NewRemoveDate==null
-                                  && goeb.NewPriostDate==null
+                                  && goeb.NewRemoveDate == null
+                                  && goeb.NewPriostDate == null
                                 select (goeb)
                                 );
                     if (orgs.Count() <= 0)
                         continue;
-                    foreach (var _org in orgs)
-                        GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.ParentAccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, _org.NewMonthlypay));
+                    foreach (var _org in orgs) {
+                        //if (item.ParentAccountId == null)
+                        //    continue;
+                        GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, _org.NewAddress, _org.NewMonthlypay, _org.NewPriostDate, _org.NewObjDeleteDate));
+                    }
                 }
                 //получаем охраняемые объекты у дочерних бизнес-партнеров
                 foreach (AccountModel item in SubOrganizationList) {
@@ -166,12 +352,14 @@ namespace VityazReports.ViewModel {
                                   && gob.Statecode == 0
                                   && gob.Statuscode == 1
                                   && goeb.NewAccount == item.AccountId
+                                  && goeb.NewRemoveDate == null
+                                  && goeb.NewPriostDate == null
                                 select (goeb)
                                 );
                     if (orgs.Count() <= 0)
                         continue;
                     foreach (var _org in orgs)
-                        GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.ParentAccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, _org.NewMonthlypay));
+                        GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.ParentAccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, _org.NewAddress, _org.NewMonthlypay, _org.NewPriostDate, _org.NewObjDeleteDate));
                 }
                 CalculateTotals.Execute(null);
             });
@@ -183,16 +371,81 @@ namespace VityazReports.ViewModel {
                 if (GuardObjectsByAccountsList.Count() <= 0)
                     //TODO: Уведомление пользователя
                     return;
-                var groupped = GuardObjectsByAccountsList.GroupBy(x => x.ParentAccountID).ToList();
+                var groupped = GuardObjectsByAccountsList.Where(y => y.DatePriost == null && y.DateRemove == null).GroupBy(x => x.ParentAccountID).ToList();
                 foreach (var item in groupped) {
                     if (item.Key == null)
                         continue;
-                    var g = GuardObjectsByAccountsList.Where(x => x.ParentAccountID == item.Key);
-                    var g1 = GuardObjectsByAccountsList.FirstOrDefault(x => x.AccountID == item.Key);
-                    if (g1 == null)
-                        continue;
-                    g1.Pay = g.Sum(x => x.Pay);
+                    var g2 = SubOrganizationList.Where(x => x.ParentAccountId == item.Key && x.AccountEndDate == null).ToList();
+                    foreach (var it in g2) {
+                        var g = GuardObjectsByAccountsList.Where(x => x.ParentAccountID == item.Key && x.DatePriost == null && x.DateRemove == null && x.AccountID == it.AccountId);
+                        var g1 = HeadOrganizationList.FirstOrDefault(x => x.ParentAccountId == null && x.AccountId == item.Key && x.AccountEndDate == null);
+                        //var g11 = SubOrganizationList.Where(x => x.ParentAccountId == item.Key);
+
+                        if (g1 == null)
+                            continue;
+                        g1.PaySumObjects += g.Sum(x => x.Pay);
+                        g1.CountObjects += g.Count();
+                        g1.CountSubOrg = SubOrganizationList.Count(x => x.ParentAccountId == item.Key);
+
+                        //var g2 = SubOrganizationList.Where(x => x.ParentAccountId == item.Key && x.AccountEndDate == null).ToList();
+                        //foreach (var it in g2) {
+                        //var _g2 = GuardObjectsByAccountsList.Where(x => x.AccountID == item.Key && x.DatePriost == null && x.DateRemove == null).ToList();
+                        var _g22 = GuardObjectsByAccountsList.Where(x => x.AccountID == it.AccountId && x.DatePriost == null && x.DateRemove == null).ToList();
+                        if (it == null)
+                            continue;
+                        it.PaySumObjects = _g22.Sum(x => x.Pay);
+                        it.CountObjects = _g22.Count();
+                        //}
+                    }
                 }
+            });
+        }
+
+        private ObservableCollection<AnalyzeModel> _Analyze;
+        public ObservableCollection<AnalyzeModel> Analyze {
+            get => _Analyze;
+            set {
+                _Analyze = value;
+                OnPropertyChanged(nameof(Analyze));
+            }
+        }
+
+        private ChartValues<double> _ChartAnalytics = new ChartValues<double>();
+        public ChartValues<double> ChartAnalytics  {
+            get => _ChartAnalytics;
+            set {
+                _ChartAnalytics = value;
+                OnPropertyChanged(nameof(ChartAnalytics));
+            }
+        }
+        private RelayCommand _AnalyzeCommand;
+        public RelayCommand AnalyzeCommand {
+            get => _AnalyzeCommand ??= new RelayCommand(async obj => {
+                //сортируем список охраняемых объектов по дате расторжения от ранней к старшей
+                //считаем сумму абонентских плат от даты из п.1.
+                Analyze.Clear();
+                ChartAnalytics.Clear();
+                if (GuardObjectsByAccountsList.Count() <= 0)
+                    return;
+                var sorted = GuardObjectsByAccountsList.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
+                foreach (var s in sorted) {
+                    //var t = GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove == null).ToList();
+                    int sum = 0;
+                    var subs = SubOrganizationList.Where(x => x.AccountEndDate == null);
+                    foreach (var item in subs) {
+                        sum += GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID==item.AccountId).Sum(x => x.Pay);
+                        
+                    }
+                    //var sum = GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove==null).Sum(x => x.Pay);
+                    //ChartAnalytics.Add(double.Parse(sum.ToString()));
+                    Analyze.Add(new AnalyzeModel(s.Value, sum));
+                }
+                ChartAnalytics = new SeriesCollection() {
+                    new LineSeries {
+                        Values=new ChartValues<double>(1.0)
+                    }
+                };
+                ChartFlyoutVisible = true;
             });
         }
     }
