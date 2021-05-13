@@ -4,7 +4,7 @@ using VityazReports.Helpers;
 namespace VityazReports.Models.CorpClients {
     public class AccountInfo {
         private readonly CommonMethods cm = new CommonMethods();
-        public AccountInfo(Guid accountID, Guid? parentAccountID, string accountName, string parentAccountName, Guid guardObjectID, string guardObjectName,string guardObjectAddress, string guardObjectPay, DateTime? datePriost, DateTime? dateRemove) {
+        public AccountInfo(Guid accountID, Guid? parentAccountID, string accountName, string parentAccountName, Guid guardObjectID, string guardObjectName,string guardObjectAddress, string guardObjectPay, DateTime? datePriost, DateTime? dateRemove,string owner) {
             AccountID = accountID;
             ParentAccountID = parentAccountID;
             AccountName = accountName;
@@ -15,6 +15,7 @@ namespace VityazReports.Models.CorpClients {
             GuardObjectPay = guardObjectPay;
             DatePriost = datePriost;
             DateRemove = dateRemove;
+            Owner = owner;
         }
 
         /// <summary>
@@ -67,5 +68,6 @@ namespace VityazReports.Models.CorpClients {
         }
         public DateTime? DatePriost { get; set; }
         public DateTime? DateRemove { get; set; }
+        public string Owner { get; set; }
     }
 }
