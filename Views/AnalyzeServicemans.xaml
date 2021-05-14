@@ -24,24 +24,26 @@
     </mah:MetroWindow.LeftWindowCommands>
     <Grid>
         <mah:Flyout Position="Right" IsModal="True" Panel.ZIndex="2" AnimateOpacity="True" IsOpen="{Binding ServicemansListVisible}">
-            <StackPanel>
-                <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding DateOrder, StringFormat=\{0:dd.MM.yyyy\}}" Margin="5"/>
-                <!--<Button Content="Запрос" Command="{Binding GetServiceordersOnDate}"/>-->
-                <ScrollViewer>
-                    <StackPanel>
-                        <ListBox ItemsSource="{Binding ServicemansList}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <ToggleButton Margin="5" Content="{Binding Name}" Tag="{Binding ServicemanID}"
-                                              Command="{Binding DataContext.SelectServicemanCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding ServicemanID}"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </StackPanel>
-                </ScrollViewer>
-            </StackPanel>
+            <ScrollViewer>
+                <StackPanel>
+                    <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding DateOrder, StringFormat=\{0:dd.MM.yyyy\}}" Margin="5"/>
+                    <!--<Button Content="Запрос" Command="{Binding GetServiceordersOnDate}"/>-->
+                    <!--<ScrollViewer>-->
+                        <StackPanel CanVerticallyScroll="True">
+                            <ListBox ItemsSource="{Binding ServicemansList}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <ToggleButton Margin="5" Content="{Binding Name}" Tag="{Binding ServicemanID}"
+                                                  Command="{Binding DataContext.SelectServicemanCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    <!--</ScrollViewer>-->
+                </StackPanel>
+            </ScrollViewer>
         </mah:Flyout>
-        <mah:Flyout Position="Bottom" IsModal="True" Panel.ZIndex="2" AnimateOpacity="True" IsOpen="True">
+        <mah:Flyout Position="Bottom" IsModal="True" Panel.ZIndex="2" AnimateOpacity="True" IsOpen="{Binding AnalyzeSelectedServicemanVisibleFlyout}">
             <Grid Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -56,12 +58,12 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Label Content="{Binding ServicemanName}" Grid.Row="0" Grid.Column="0" FontWeight="UltraLight" FontSize="16"/>
+                <!--<Label Content="{Binding ServicemanName}" Grid.Row="0" Grid.Column="0" FontWeight="UltraLight" FontSize="16"/>
                 <Label Content="{Binding DateOrder, StringFormat=\{0:dd.MM.yyyy\}}" Grid.Row="0" Grid.Column="1" FontWeight="UltraLight" FontSize="16"/>
                 <Label Content="{Binding ClientOrders}" Grid.Row="1" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
-                <Label Content="{Binding TimeOrders}" Grid.Row="2" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
-                <Label Content="Опоздания" Grid.Row="3" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
-                <DataGrid Grid.Row="4" Grid.ColumnSpan="2" ItemsSource="{Binding LatesOrders}">
+                <Label Content="{Binding TimeOrders}" Grid.Row="2" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>-->
+                <Label Content="Опоздания" Grid.Row="0" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
+                <DataGrid Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding LatesOrders}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="№ объекта" Binding="{Binding NumberObject}"/>
                         <DataGridTextColumn Header="Адрес объекта" Binding="{Binding AddressObject}"/>
@@ -73,13 +75,44 @@
                         <DataGridTextColumn Header="Заключение" Binding="{Binding Conclusion}"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <Label Content="Интервалы между заявками(>40)" Grid.Row="5" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
-                <DataGrid Grid.Row="6" Grid.ColumnSpan="2" ItemsSource="{Binding Intervals}">
+                <Label Content="Интервалы между заявками(>40)" Grid.Row="2" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
+                <DataGrid Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding Intervals}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Диапазон" Binding="{Binding Range}"/>
                         <DataGridTextColumn Header="Продолжительность" Binding="{Binding Duration}"/>
                     </DataGrid.Columns>
                 </DataGrid>
+                <Grid Grid.Row="4" Grid.ColumnSpan="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" FontWeight="UltraLight" FontSize="16" Content="Всего"/>
+                    <Label Grid.Row="0" Grid.Column="1" FontWeight="UltraLight" FontSize="16" Content="{Binding AllCountOrders}"/>
+                    <Label Grid.Row="0" Grid.Column="2" FontWeight="UltraLight" FontSize="16" Content="Выполнено"/>
+                    <Label Grid.Row="0" Grid.Column="3" FontWeight="UltraLight" FontSize="16" Content="{Binding AllCountComplete}"/>
+                    <Label Grid.Row="0" Grid.Column="4" FontWeight="UltraLight" FontSize="16" Content="Перенос"/>
+                    <Label Grid.Row="0" Grid.Column="5" FontWeight="UltraLight" FontSize="16" Content="{Binding AllCountTransfer}"/>
+                    <Label Grid.Row="0" Grid.Column="6" FontWeight="UltraLight" FontSize="16" Content="Отмена"/>
+                    <Label Grid.Row="0" Grid.Column="7" FontWeight="UltraLight" FontSize="16" Content="{Binding AllCountCancel}"/>
+
+                    <Label Content="Клиентские заявки (перенос/отмена)" Grid.Row="2" Grid.ColumnSpan="8" FontWeight="UltraLight" FontSize="16"/>
+                    <DataGrid Grid.Row="3" Grid.ColumnSpan="8" AutoGenerateColumns="False">
+                        
+                    </DataGrid>
+                </Grid>
             </Grid>
         </mah:Flyout>
         <UserControl Content="{Binding gmaps_contol}"/>

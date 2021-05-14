@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -118,6 +119,17 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(DateOrder));
             }
         }
+        /// <summary>
+        /// Определяет видимость плавающей области с анализом техников за выбранный день
+        /// </summary>
+        private bool _AnalyzeSelectedServicemanVisibleFlyout;
+        public bool AnalyzeSelectedServicemanVisibleFlyout {
+            get => _AnalyzeSelectedServicemanVisibleFlyout;
+            set {
+                _AnalyzeSelectedServicemanVisibleFlyout = value;
+                OnPropertyChanged(nameof(AnalyzeSelectedServicemanVisibleFlyout));
+            }
+        }
 
         private ObservableCollection<ServiceorderInfo> _LatesOrders;
         public ObservableCollection<ServiceorderInfo> LatesOrders {
@@ -137,14 +149,53 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private int _AllCountOrders;
+        public int AllCountOrders {
+            get => _AllCountOrders;
+            set {
+                _AllCountOrders = value;
+                OnPropertyChanged(nameof(AllCountOrders));
+            }
+        }
+
+        private int _AllCountComplete;
+        public int AllCountComplete {
+            get => _AllCountComplete;
+            set {
+                _AllCountComplete = value;
+                OnPropertyChanged(nameof(AllCountComplete));
+            }
+        }
+
+        private int _AllCountTransfer;
+        public int AllCountTransfer {
+            get => _AllCountTransfer;
+            set {
+                _AllCountTransfer = value;
+                OnPropertyChanged(nameof(AllCountTransfer));
+            }
+        }
+
+        private int _AllCountCancel;
+        public int AllCountCancel {
+            get => _AllCountCancel;
+            set {
+                _AllCountCancel = value;
+                OnPropertyChanged(nameof(AllCountCancel));
+            }
+        }
+
         private RelayCommand _FillIntervals;
         public RelayCommand FillIntervals {
             get => _FillIntervals ??= new RelayCommand(async obj => {
+                LatesOrders.Clear();
+                Intervals.Clear();
+                AnalyzeSelectedServicemanVisibleFlyout = Intervals.Count > 0 || LatesOrders.Count > 0;
                 if (SelectedServicemans == null || DateOrder == null)
                     return;
-                LatesOrders.Clear();
                 var coords = (from soc in msCRMContext.ServiceOrderCoordinates
                               join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                              join sob in msCRMContext.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
                               join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
                               join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
                               where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
@@ -153,14 +204,65 @@ namespace VityazReports.ViewModel {
                                 && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                                && sob.DeletionStateCode == 0
+                                && sob.Statecode == 0
+                                && sob.Statuscode == 1
                               select new { soeb.NewIncome, soeb.NewOutgone }
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0)
                     return;
-                for (int i = 0; i < coords.Count-1; i++) {
+                coords = coords.OrderBy(x => x.NewIncome).ToList();
+                for (int i = 0; i < coords.Count - 1; i++) {
                     var d = (coords[i + 1].NewIncome - coords[i].NewOutgone).Value.Duration();
                     //Intervals.Add(string.Format("({0}) {1}-{2}", d.Minutes, coords[i].NewOutgone.Value.ToShortTimeString(), coords[i + 1].NewIncome.Value.ToShortTimeString()));
-                    Intervals.Add(new IntervalsModel(coords[i].NewOutgone.Value.ToShortTimeString()+" - "+ coords[i + 1].NewIncome.Value.ToShortTimeString(),d.Hours.ToString()+" "+d.Minutes.ToString()));
+                    if (coords[i + 1].NewIncome.Value >= coords[i].NewOutgone.Value)
+                        if (d.TotalMinutes >= 40)
+                            Intervals.Add(new IntervalsModel(coords[i].NewOutgone.Value.ToShortTimeString() + " - " + coords[i + 1].NewIncome.Value.ToShortTimeString(), d.Hours.ToString() + ":" + d.Minutes.ToString()));
+                }
+                AnalyzeSelectedServicemanVisibleFlyout = Intervals.Count > 0 || LatesOrders.Count > 0;
+            });
+        }
+
+        private RelayCommand _GetInfoByServiceman;
+        public RelayCommand GetInfoByServiceman {
+            get => _GetInfoByServiceman ??= new RelayCommand(async obj => {
+                if (SelectedServicemans == null || DateOrder == null)
+                    return;
+                //Требуется получить количество заявок , сколько выполнено, перенесено, отменено
+                //Сколько клиентских заявок всего - сделано/перенесено и отменено
+                msCRMContext = GetMsCRMContext();
+                List<NewServiceorderExtensionBase> soebs = new List<NewServiceorderExtensionBase>();
+                soebs=msCRMContext.NewServiceorderExtensionBase.Where(x => x.NewDate.Value.AddHours(-5).Date == DateOrder.Date && x.NewServicemanServiceorder == SelectedServicemans.ServicemanID).AsNoTracking().ToList();
+                if (soebs.Count <= 0)
+                    return;
+                AllCountOrders = soebs.Count;
+                AllCountComplete = soebs.Count(x => x.NewResult == 1);
+
+                List<NewServiceorderExtensionBase> soebs_transfer = new List<NewServiceorderExtensionBase>();
+                soebs_transfer = soebs.Where(x => x.NewResult == 2).ToList();
+                AllCountTransfer = soebs_transfer.Count;
+
+                List<NewServiceorderExtensionBase> soebs_cancel = new List<NewServiceorderExtensionBase>();
+                soebs_cancel = soebs.Where(x => x.NewResult == 3).ToList();
+                AllCountCancel = soebs_cancel.Count;
+
+                List<NewServiceorderExtensionBase> soebs_clients = new List<NewServiceorderExtensionBase>();
+                soebs_clients = soebs.Where(x => x.NewOrderFrom != 3).ToList();                
+
+                List<NewServiceorderExtensionBase> soebs_clients_transfer = new List<NewServiceorderExtensionBase>();
+                soebs_clients_transfer = soebs_clients.Where(x => x.NewResult == 2).ToList();
+                int ClientCountTransfer = soebs_clients_transfer.Count();
+
+                List<NewServiceorderExtensionBase> soebs_clients_cancel = new List<NewServiceorderExtensionBase>();
+                soebs_clients_cancel = soebs_clients.Where(x => x.NewResult == 3).ToList();
+                int ClientCountCancel = soebs_clients_cancel.Count();
+
+                //получаем всю информацию по заявкам, которые были с результатом отмена/перенос
+                foreach (var st in soebs_transfer) {
+                    var t = from soeb in msCRMContext.NewServiceorderExtensionBase
+                            join sob in msCRMContext.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
+                            join soc in msCRMContext.ServiceOrderCoordinates on sob.NewServiceorderId equals soc.SocServiceOrderId
+                            select soeb;
                 }
             });
         }
@@ -186,6 +288,7 @@ namespace VityazReports.ViewModel {
                 if (coords.Count() <= 0)
                     return;
                 //каким образом парсить столбец времени
+                AnalyzeSelectedServicemanVisibleFlyout = true;
             });
         }
         /// <summary>
@@ -239,11 +342,14 @@ namespace VityazReports.ViewModel {
             get => _SelectServicemanCommand ??= new RelayCommand(async obj => {
                 if (obj == null)
                     return;
-                Guid? ID = obj as Guid?;
-                if (ID == null)
+                if (!(obj is ToggleButton tb))
                     return;
-                SelectedServicemans = ServicemansList.FirstOrDefault(x => x.ServicemanID == ID.Value);
+                Guid? ServicemanID = Guid.Parse(tb.Tag.ToString());
+                if (!ServicemanID.HasValue)
+                    return;
+                SelectedServicemans = tb.IsChecked == true ? ServicemansList.FirstOrDefault(x => x.ServicemanID == ServicemanID.Value) : null;
                 FillIntervals.Execute(null);
+                GetInfoByServiceman.Execute(null);
             });
         }
         /// <summary>
@@ -261,6 +367,7 @@ namespace VityazReports.ViewModel {
                     return;
                 List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
                                                  join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                                                 join sob in msCRMContext.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
                                                  join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
                                                  join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
                                                  where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
@@ -269,6 +376,9 @@ namespace VityazReports.ViewModel {
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                                                   && sob.DeletionStateCode == 0
+                                                   && sob.Statecode == 0
+                                                   && sob.Statuscode == 1
                                                  select new ServiceorderInfo(soc.SocIncomeLatitude,
                                                  soc.SocIncomeLongitude,
                                                  soc.SocOutcomeLatitide,
@@ -310,6 +420,7 @@ namespace VityazReports.ViewModel {
                     return;
                 List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
                                                  join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
+                                                 join sob in msCRMContext.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
                                                  join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
                                                  join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
                                                  //where soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
@@ -319,6 +430,9 @@ namespace VityazReports.ViewModel {
                                                    && string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                                    && string.IsNullOrEmpty(soc.SocOutcomeLongitude)
                                                    && soeb.NewOutgone == null
+                                                   && sob.DeletionStateCode == 0
+                                                   && sob.Statecode == 0
+                                                   && sob.Statuscode == 1
                                                  select new ServiceorderInfo(soc.SocIncomeLatitude,
                                                  soc.SocIncomeLongitude,
                                                  soc.SocOutcomeLatitide,
