@@ -4,9 +4,10 @@ using System.Text;
 
 namespace VityazReports.Models.AnalyzeServicemans {
     public class ClientsOrdersNotCompleted {
-        public ClientsOrdersNotCompleted(int? objectNumber, string objectName, string objectAddress, int orderType, string orderTypeString, string reasonOrder, DateTime? income, DateTime? outgone, 
-            double latitudeObject, double longitudeObject, double distanceIncome, 
-            int result, string resultString, int reasonResult, string reasonResultString, string reasonComment, string conclusion) {
+        public ClientsOrdersNotCompleted(int? objectNumber, string objectName, string objectAddress, int? orderType, string orderTypeString, string reasonOrder, DateTime? income, DateTime? outgone, 
+            string latitudeObject, string longitudeObject, double? distanceIncome, double? distanceOutgone,
+            int? result, string resultString, int? reasonResult, string reasonResultString, string reasonComment, string conclusion
+            ,string incomeLatitude,string incomeLongitude, string outgoneLatitude, string outgoneLongitude) {
             ObjectNumber = objectNumber;
             ObjectName = objectName;
             ObjectAddress = objectAddress;
@@ -18,12 +19,17 @@ namespace VityazReports.Models.AnalyzeServicemans {
             LatitudeObject = latitudeObject;
             LongitudeObject = longitudeObject;
             DistanceIncome = distanceIncome;
+            DistanceOutgone = distanceOutgone;
             Result = result;
             ResultString = resultString;
             ReasonResult = reasonResult;
             ReasonResultString = reasonResultString;
             ReasonComment = reasonComment;
             Conclusion = conclusion;
+            IncomeLatitude = incomeLatitude;
+            IncomeLongitude = incomeLongitude;
+            OutgoneLatitude = outgoneLatitude;
+            OutgoneLongitude = outgoneLongitude;
         }
 
         /// <summary>
@@ -44,7 +50,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// Клиент - 2
         /// Сотрудник Витязя - 3
         /// </summary>
-        public int OrderType { get; set; }
+        public int? OrderType { get; set; }
         /// <summary>
         /// Текстовое описание типа заявки
         /// </summary>
@@ -64,22 +70,23 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// <summary>
         /// Широта адреса объекта
         /// </summary>
-        public double LatitudeObject { get; set; }
+        public string LatitudeObject { get; set; }
         /// <summary>
         /// Долгота адреса объекта
         /// </summary>
-        public double LongitudeObject { get; set; }
+        public string LongitudeObject { get; set; }
         /// <summary>
         /// Расстояние между объектом и координатами отметки "пришёл"
         /// </summary>
-        public double DistanceIncome { get; set; }
+        public double? DistanceIncome { get; set; }
+        public double? DistanceOutgone { get; set; }
         /// <summary>
         /// Код результата выполнения заявки
         /// 1-выполнено
         /// 2-перенос
         /// 3-отмена
         /// </summary>
-        public int Result { get; set; }
+        public int? Result { get; set; }
         /// <summary>
         /// Текстовое описание результата заявки
         /// </summary>
@@ -87,7 +94,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// <summary>
         /// Код причины отмены/переноса
         /// </summary>
-        public int ReasonResult { get; set; }
+        public int? ReasonResult { get; set; }
         /// <summary>
         /// Текстовое описание причины отмены/переноса
         /// </summary>
@@ -100,5 +107,21 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// Заключение техника по заявке
         /// </summary>
         public string Conclusion { get; set; }
+        /// <summary>
+        /// Широта(пришёл)
+        /// </summary>
+        public string IncomeLatitude { get; set; }
+        /// <summary>
+        /// Долгота(пришёл)
+        /// </summary>
+        public string IncomeLongitude { get; set; }
+        /// <summary>
+        /// Широта(ушёл)
+        /// </summary>
+        public string OutgoneLatitude { get; set; }
+        /// <summary>
+        /// Долгота(ушёл)
+        /// </summary>
+        public string OutgoneLongitude { get; set; }
     }
 }

@@ -108,9 +108,23 @@
                     <Label Grid.Row="0" Grid.Column="6" FontWeight="UltraLight" FontSize="16" Content="Отмена"/>
                     <Label Grid.Row="0" Grid.Column="7" FontWeight="UltraLight" FontSize="16" Content="{Binding AllCountCancel}"/>
 
-                    <Label Content="Клиентские заявки (перенос/отмена)" Grid.Row="2" Grid.ColumnSpan="8" FontWeight="UltraLight" FontSize="16"/>
-                    <DataGrid Grid.Row="3" Grid.ColumnSpan="8" AutoGenerateColumns="False">
-                        
+                    <Label Content="Заявки (перенос/отмена)" Grid.Row="2" Grid.ColumnSpan="8" FontWeight="UltraLight" FontSize="16"/>
+                    <DataGrid Grid.Row="3" Grid.ColumnSpan="8" AutoGenerateColumns="False" ItemsSource="{Binding NotCompletedOrdersList}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="№ объекта" Binding="{Binding ObjectNumber}"/>
+                            <DataGridTextColumn Header="Наим. объекта" Binding="{Binding ObjectName}"/>
+                            <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
+                            <DataGridTextColumn Header="Тип заявки" Binding="{Binding OrderTypeString}"/>
+                            <DataGridTextColumn Header="Причина посещения" Binding="{Binding ReasonOrder}"/>
+                            <DataGridTextColumn Header="Результат" Binding="{Binding ResultString}"/>
+                            <DataGridTextColumn Header="Причина результата" Binding="{Binding ReasonResultString}"/>
+                            <DataGridTextColumn Header="Комментарий к причине результата" Binding="{Binding ReasonComment}"/>
+                            <DataGridTextColumn Header="Заключение" Binding="{Binding Conclusion}"/>
+                            <DataGridTextColumn Header="Пришел" Binding="{Binding Income, StringFormat=\{0:HH:mm:ss\}}"/>
+                            <DataGridTextColumn Header="Ушел" Binding="{Binding Outgone, StringFormat=\{0:HH:mm:ss\}}"/>
+                            <DataGridTextColumn Header="Расстояние(пришел)" Binding="{Binding DistanceIncome, StringFormat=\{0:F\}}"/>
+                            <DataGridTextColumn Header="Расстояние(ушел)" Binding="{Binding DistanceOutgone, StringFormat=\{0:F\}}"/>
+                        </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Grid>
