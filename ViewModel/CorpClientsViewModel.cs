@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using VityazReports.Data;
 using VityazReports.Helpers;
 using System.Linq;
@@ -10,7 +9,10 @@ using System.Collections.ObjectModel;
 using Notifications.Wpf;
 using LiveCharts;
 using LiveCharts.Wpf;
-using LiveCharts.Defaults;
+using System.IO;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace VityazReports.ViewModel {
     public class CorpClientsViewModel : BaseViewModel {
@@ -25,6 +27,7 @@ namespace VityazReports.ViewModel {
             GuardObjectsByAccountsList = new ObservableCollection<AccountInfo>();
             SelectedSubOrganization = new ObservableCollection<AccountModel>();
             SelectedGuardObjects = new ObservableCollection<AccountInfo>();
+            Reports = new ObservableCollection<ReportCorpClients>();
             Analyze = new ObservableCollection<AnalyzeModel>();
             notificationManager = new NotificationManager();
             FilterFlyoutVisible = true;
@@ -184,22 +187,28 @@ namespace VityazReports.ViewModel {
         private RelayCommand _ShowAllCommand;
         public RelayCommand ShowAllCommand {
             get => _ShowAllCommand ??= new RelayCommand(async obj => {
-                Loading = true;
-                FilterFlyoutVisible = false;
+            //BackgroundWorker bw = new BackgroundWorker();
+            //bw.DoWork += (s, e) => {
+            //    Loading = true;
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    FilterFlyoutVisible = false;
+                    HeadOrganizationList.Clear();
+                    SubOrganizationList.Clear();
+                    GuardObjectsByAccountsList.Clear();
+                    SelectedGuardObjects.Clear();
+                    SelectedHeadOrganization = null;
+                    SelectedSubOrganization.Clear();
 
-                HeadOrganizationList.Clear();
-                SubOrganizationList.Clear();
-                GuardObjectsByAccountsList.Clear();
-                SelectedGuardObjects.Clear();
-                SelectedHeadOrganization = null;
-                SelectedSubOrganization.Clear();
-
-                GetAllHeadOrganization.Execute(null);
-                GetAllSubOrganization.Execute(null);
-                GetGuardObjectByAccount.Execute(null);
-                AnalyzeCommand.Execute(null);
-                Loading = false;
-                return;
+                    GetAllHeadOrganization.Execute(null);
+                    GetAllSubOrganization.Execute(null);
+                    GetGuardObjectByAccount.Execute(null);
+                    AnalyzeCommand.Execute(null);
+                });
+            //};
+            //    bw.RunWorkerCompleted += (s, e) => {
+            //        Loading = false;
+            //    };
+            //    bw.RunWorkerAsync();
             });
         }
         private RelayCommand _GetSelectedSubOrganization;
@@ -239,43 +248,53 @@ namespace VityazReports.ViewModel {
         private RelayCommand _GetAllHeadOrganization;
         public RelayCommand GetAllHeadOrganization {
             get => _GetAllHeadOrganization ??= new RelayCommand(async obj => {
-                MsCrmContext = GetMsCRMContext();
-                List<AccountModel> head_org_list = new List<AccountModel>();
-                if (string.IsNullOrEmpty(SearchText) || string.IsNullOrWhiteSpace(SearchText))
-                    head_org_list = (from ab1 in MsCrmContext.AccountBase
-                                     join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
-                                     join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
-                                     where ab1.ParentAccountId == null
-                                         //&& aeb1.NewEndDate == null
-                                         && ab1.DeletionStateCode == 0
-                                         && ab1.StateCode == 0
-                                         && ab1.StatusCode == 1
-                                     select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), null, null, aeb1.NewFactAddrKladr, 0, sub.FullName)
-                                             ).AsNoTracking().Distinct().ToList();
-                else
-                    head_org_list = (from ab1 in MsCrmContext.AccountBase
-                                     join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
-                                     join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
-                                     where ab1.ParentAccountId == null
-                                         //&& aeb1.NewEndDate == null
-                                         && ab1.DeletionStateCode == 0
-                                         && ab1.StateCode == 0
-                                         && ab1.StatusCode == 1
-                                         && ab1.Name.ToLower().Contains(SearchText.ToLower())
-                                     select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
-                                                 ).AsNoTracking().Distinct().ToList();
-                if (head_org_list.Count() <= 0) {
-                    //TODO: сообщение пользователю
-                    notificationManager.Show(new NotificationContent {
-                        Title = "Ошибка",
-                        Message = string.Format("Головных бизнес-партнеров не найдено"),
-                        Type = NotificationType.Error
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += (s, e) => {
+                    Loading = true;
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        MsCrmContext = GetMsCRMContext();
+                        List<AccountModel> head_org_list = new List<AccountModel>();
+                        if (string.IsNullOrEmpty(SearchText) || string.IsNullOrWhiteSpace(SearchText))
+                            head_org_list = (from ab1 in MsCrmContext.AccountBase
+                                             join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
+                                             join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                                             where ab1.ParentAccountId == null
+                                                 //&& aeb1.NewEndDate == null
+                                                 && ab1.DeletionStateCode == 0
+                                                 && ab1.StateCode == 0
+                                                 && ab1.StatusCode == 1
+                                             select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
+                                                     ).AsNoTracking().Distinct().ToList();
+                        else
+                            head_org_list = (from ab1 in MsCrmContext.AccountBase
+                                             join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
+                                             join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                                             where ab1.ParentAccountId == null
+                                                 //&& aeb1.NewEndDate == null
+                                                 && ab1.DeletionStateCode == 0
+                                                 && ab1.StateCode == 0
+                                                 && ab1.StatusCode == 1
+                                                 && ab1.Name.ToLower().Contains(SearchText.ToLower())
+                                             select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
+                                                         ).AsNoTracking().Distinct().ToList();
+                        if (head_org_list.Count() <= 0) {
+                            //TODO: сообщение пользователю
+                            notificationManager.Show(new NotificationContent {
+                                Title = "Ошибка",
+                                Message = string.Format("Головных бизнес-партнеров не найдено"),
+                                Type = NotificationType.Error
+                            });
+                            //Loading = false;
+                            //return;
+                        }
+                        foreach (AccountModel item in head_org_list)
+                            HeadOrganizationList.Add(item);
                     });
+                };
+                bw.RunWorkerCompleted += (s, e) => {
                     Loading = false;
-                    return;
-                }
-                foreach (AccountModel item in head_org_list)
-                    HeadOrganizationList.Add(item);
+                };
+                bw.RunWorkerAsync();
             });
         }
         /// <summary>
@@ -284,49 +303,59 @@ namespace VityazReports.ViewModel {
         private RelayCommand _GetAllSubOrganization;
         public RelayCommand GetAllSubOrganization {
             get => _GetAllSubOrganization ??= new RelayCommand(async obj => {
-                if (HeadOrganizationList.Count() <= 0) {
-                    //TODO: сообщение пользователю
-                    notificationManager.Show(new NotificationContent {
-                        Title = "Ошибка",
-                        Message = string.Format("Головных бизнес-партнеров не найдено"),
-                        Type = NotificationType.Error
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += (s, e) => {
+                    Loading = true;
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        if (HeadOrganizationList.Count() <= 0) {
+                            //TODO: сообщение пользователю
+                            notificationManager.Show(new NotificationContent {
+                                Title = "Ошибка",
+                                Message = string.Format("Головных бизнес-партнеров не найдено"),
+                                Type = NotificationType.Error
+                            });
+                            Loading = false;
+                            return;
+                        }
+                        MsCrmContext = GetMsCRMContext();
+                        List<AccountModel> sub_org_list = new List<AccountModel>();
+                        foreach (AccountModel item in HeadOrganizationList) {
+                            var el = (from ab1 in MsCrmContext.AccountBase
+                                      join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
+                                      join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                                      where
+                                      //aeb1.NewEndDate == null && 
+                                      ab1.DeletionStateCode == 0
+                                          && ab1.StateCode == 0
+                                          && ab1.StatusCode == 1
+                                          && ab1.ParentAccountId == item.AccountId
+                                      //&& aeb1.NewEndDate == null
+                                      select new AccountModel(ab1.AccountId, item.AccountId, ab1.Name, item.AccountName, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
+                                                 ).AsNoTracking().Distinct().ToList();
+                            if (el.Count() <= 0)
+                                continue;
+                            sub_org_list.AddRange(el);
+                            //SubOrganizationList.Add(new AccountModel(item.AccountId, null, item.AccountName, null, null, null, null, item.Address));
+                        }
+                        if (sub_org_list.Count() <= 0) {
+                            //TODO: сообщение пользователю
+                            notificationManager.Show(new NotificationContent {
+                                Title = "Ошибка",
+                                Message = string.Format("Дочерних бизнес-партнеров не найдено"),
+                                Type = NotificationType.Error
+                            });
+                            Loading = false;
+                            return;
+                        }
+                        foreach (AccountModel item in sub_org_list) {
+                            SubOrganizationList.Add(item);
+                        }
                     });
+                };
+                bw.RunWorkerCompleted += (s, e) => {
                     Loading = false;
-                    return;
-                }
-                MsCrmContext = GetMsCRMContext();
-                List<AccountModel> sub_org_list = new List<AccountModel>();
-                foreach (AccountModel item in HeadOrganizationList) {
-                    var el = (from ab1 in MsCrmContext.AccountBase
-                              join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
-                              join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
-                              where
-                              //aeb1.NewEndDate == null && 
-                              ab1.DeletionStateCode == 0
-                                  && ab1.StateCode == 0
-                                  && ab1.StatusCode == 1
-                                  && ab1.ParentAccountId == item.AccountId
-                              //&& aeb1.NewEndDate == null
-                              select new AccountModel(ab1.AccountId, item.AccountId, ab1.Name, item.AccountName, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
-                                         ).AsNoTracking().Distinct().ToList();
-                    if (el.Count() <= 0)
-                        continue;
-                    sub_org_list.AddRange(el);
-                    //SubOrganizationList.Add(new AccountModel(item.AccountId, null, item.AccountName, null, null, null, null, item.Address));
-                }
-                if (sub_org_list.Count() <= 0) {
-                    //TODO: сообщение пользователю
-                    notificationManager.Show(new NotificationContent {
-                        Title = "Ошибка",
-                        Message = string.Format("Дочерних бизнес-партнеров не найдено"),
-                        Type = NotificationType.Error
-                    });
-                    Loading = false;
-                    return;
-                }
-                foreach (AccountModel item in sub_org_list) {
-                    SubOrganizationList.Add(item);
-                }
+                };
+                bw.RunWorkerAsync();
             });
         }
         /// <summary>
@@ -336,56 +365,109 @@ namespace VityazReports.ViewModel {
         private RelayCommand _GetGuardObjectByAccount;
         public RelayCommand GetGuardObjectByAccount {
             get => _GetGuardObjectByAccount ??= new RelayCommand(async obj => {
-                MsCrmContext = GetMsCRMContext();
-                //для начала получим охраняемые объекты у головных бизнес-партнеров
-                foreach (AccountModel item in HeadOrganizationList) {
-                    var orgs = (from goeb in MsCrmContext.NewGuardObjectExtensionBase
-                                join gob in MsCrmContext.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
-                                join sub in MsCrmContext.SystemUserBase on gob.OwningUser equals sub.SystemUserId
-                                where gob.DeletionStateCode == 0
-                                  && gob.Statecode == 0
-                                  && gob.Statuscode == 1
-                                  && goeb.NewAccount == item.AccountId
-                                  && goeb.NewRemoveDate == null
-                                  && goeb.NewPriostDate == null
-                                //select (goeb)
-                                select new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName,
-                                goeb.NewGuardObjectId, goeb.NewName, goeb.NewAddress, goeb.NewMonthlypay, goeb.NewPriostDate, goeb.NewObjDeleteDate, sub.FullName)
-                                ).AsNoTracking().Distinct().ToList();
-                    //if (orgs.Count() <= 0)
-                    //    continue;
-                    //foreach (var _org in orgs) {
-                    //    //if (item.ParentAccountId == null)
-                    //    //    continue;
-                    //    GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, _org.NewAddress, _org.NewMonthlypay, _org.NewPriostDate, _org.NewObjDeleteDate,_org.full));
-                    //}
-                    foreach (var o in orgs)
-                        GuardObjectsByAccountsList.Add(o);
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += (s, e) => {
+                    Loading = true;
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        MsCrmContext = GetMsCRMContext();
+                        //для начала получим охраняемые объекты у головных бизнес-партнеров
+                        foreach (AccountModel item in HeadOrganizationList) {
+                            var orgs = (from goeb in MsCrmContext.NewGuardObjectExtensionBase
+                                        join gob in MsCrmContext.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
+                                        join sub in MsCrmContext.SystemUserBase on gob.OwningUser equals sub.SystemUserId
+                                        where gob.DeletionStateCode == 0
+                                          && gob.Statecode == 0
+                                          && gob.Statuscode == 1
+                                          && goeb.NewAccount == item.AccountId
+                                          && goeb.NewRemoveDate == null
+                                          && goeb.NewPriostDate == null
+                                        //select (goeb)
+                                        select new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName,
+                                        goeb.NewGuardObjectId, goeb.NewName, goeb.NewAddress, goeb.NewMonthlypay, goeb.NewPriostDate, goeb.NewObjDeleteDate, sub.FullName)
+                                        ).AsNoTracking().Distinct().ToList();
+                            //if (orgs.Count() <= 0)
+                            //    continue;
+                            //foreach (var _org in orgs) {
+                            //    //if (item.ParentAccountId == null)
+                            //    //    continue;
+                            //    GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, _org.NewAddress, _org.NewMonthlypay, _org.NewPriostDate, _org.NewObjDeleteDate,_org.full));
+                            //}
+                            foreach (var o in orgs)
+                                GuardObjectsByAccountsList.Add(o);
+                        }
+                        //получаем охраняемые объекты у дочерних бизнес-партнеров
+                        foreach (AccountModel item in SubOrganizationList) {
+                            var orgs = (from goeb in MsCrmContext.NewGuardObjectExtensionBase
+                                        join gob in MsCrmContext.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
+                                        join sub in MsCrmContext.SystemUserBase on gob.OwningUser equals sub.SystemUserId
+                                        where gob.DeletionStateCode == 0
+                                          && gob.Statecode == 0
+                                          && gob.Statuscode == 1
+                                          && goeb.NewAccount == item.AccountId
+                                          && goeb.NewRemoveDate == null
+                                          && goeb.NewPriostDate == null
+                                        //select (goeb)
+                                        select new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName,
+                                        goeb.NewGuardObjectId, goeb.NewName, goeb.NewAddress, goeb.NewMonthlypay, goeb.NewPriostDate, goeb.NewObjDeleteDate, sub.FullName)
+                                        ).AsNoTracking().Distinct().ToList();
+                            //if (orgs.Count() <= 0)
+                            //    continue;
+                            //foreach (var _org in orgs)
+                            //    GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.ParentAccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, 
+                            //        _org.NewAddress, _org.NewMonthlypay, _org.NewPriostDate, _org.NewObjDeleteDate));
+                            foreach (var o in orgs)
+                                GuardObjectsByAccountsList.Add(o);
+                        }
+                        //CalculateTotals.Execute(null);
+                        CalcTotals.Execute(null);
+                    });
+                };
+                bw.RunWorkerCompleted += (s, e) => {
+                    Loading = false;
+                };
+                bw.RunWorkerAsync();
+            });
+        }
+
+        private RelayCommand _OpenInCrmCommand;
+        public RelayCommand OpenInCrmCommand {
+            get => _OpenInCrmCommand ??= new RelayCommand(async obj => {
+                bool k = false;
+                if (obj == null)
+                    return;
+                if (string.IsNullOrEmpty(obj.ToString()))
+                    return;
+                Process.Start(new ProcessStartInfo("iexplore.exe", obj.ToString()) { UseShellExecute = true });
+            });
+        }
+        private RelayCommand _CalcTotals;
+        public RelayCommand CalcTotals {
+            get => _CalcTotals ??= new RelayCommand(async obj => {
+                if (HeadOrganizationList.Count() <= 0)
+                    return;
+                if (SubOrganizationList.Count() <= 0)
+                    return;
+                if (GuardObjectsByAccountsList.Count() <= 0)
+                    return;
+                foreach (var head in HeadOrganizationList) {
+                    var subs = SubOrganizationList.Where(x => x.ParentAccountId == head.AccountId && x.AccountEndDate == null).ToList();
+                    foreach (var sub_item in subs) {
+                        var guard_objects = GuardObjectsByAccountsList.Where(x => (x.AccountID == sub_item.AccountId /*|| x.AccountID == head.AccountId*/) && x.DatePriost == null && x.DateRemove == null).ToList();
+                        if (guard_objects.Count() <= 0)
+                            continue;
+                        sub_item.PaySumObjects = guard_objects.Sum(x => x.Pay);
+                        sub_item.CountObjects = guard_objects.Count;
+                    }
+                    var go = GuardObjectsByAccountsList.Where(x => x.AccountID == head.AccountId && x.DatePriost == null && x.DateRemove == null).ToList();
+                    if (go.Count() <= 0)
+                        continue;
+                    head.PaySumObjects += go.Sum(x => x.Pay);
+                    head.PaySumObjects += subs.Sum(x => x.PaySumObjects);
+                    head.CountObjects = go.Count();
+                    head.CountSubOrg = subs.Count();
                 }
-                //получаем охраняемые объекты у дочерних бизнес-партнеров
-                foreach (AccountModel item in SubOrganizationList) {
-                    var orgs = (from goeb in MsCrmContext.NewGuardObjectExtensionBase
-                                join gob in MsCrmContext.NewGuardObjectBase on goeb.NewGuardObjectId equals gob.NewGuardObjectId
-                                join sub in MsCrmContext.SystemUserBase on gob.OwningUser equals sub.SystemUserId
-                                where gob.DeletionStateCode == 0
-                                  && gob.Statecode == 0
-                                  && gob.Statuscode == 1
-                                  && goeb.NewAccount == item.AccountId
-                                  && goeb.NewRemoveDate == null
-                                  && goeb.NewPriostDate == null
-                                //select (goeb)
-                                select new AccountInfo(item.AccountId, item.AccountId, item.AccountName, item.ParentAccountName,
-                                goeb.NewGuardObjectId, goeb.NewName, goeb.NewAddress, goeb.NewMonthlypay, goeb.NewPriostDate, goeb.NewObjDeleteDate, sub.FullName)
-                                ).AsNoTracking().Distinct().ToList();
-                    //if (orgs.Count() <= 0)
-                    //    continue;
-                    //foreach (var _org in orgs)
-                    //    GuardObjectsByAccountsList.Add(new AccountInfo(item.AccountId, item.ParentAccountId, item.AccountName, item.ParentAccountName, _org.NewGuardObjectId, _org.NewName, 
-                    //        _org.NewAddress, _org.NewMonthlypay, _org.NewPriostDate, _org.NewObjDeleteDate));
-                    foreach (var o in orgs)
-                        GuardObjectsByAccountsList.Add(o);
-                }
-                CalculateTotals.Execute(null);
+                if (HeadOrganizationList.Count() == 1)
+                    SelectedHeadOrganization = HeadOrganizationList[0];
             });
         }
 
@@ -432,6 +514,39 @@ namespace VityazReports.ViewModel {
             });
         }
 
+        private RelayCommand _CreateReport;
+        public RelayCommand CreateReport {
+            get => _CreateReport ??= new RelayCommand(async obj => {
+                if (HeadOrganizationList.Count() <= 0)
+                    return;
+                if (SubOrganizationList.Count() <= 0)
+                    return;
+                Reports.Clear();
+                SaveFileDialog sfd = new SaveFileDialog();
+                sfd.FileName = string.Format("Отчёт по корп.клиентам ({0})", DateTime.Now.Date.ToShortDateString());
+                sfd.Filter = "CSV documents (.csv)|*.csv";
+                DialogResult dr = sfd.ShowDialog();
+                if (dr == DialogResult.OK) {
+                    //using (StreamWriter sw = new StreamWriter(@"C:\Services\1.csv", false, System.Text.Encoding.UTF8)) {
+                    using (StreamWriter sw = new StreamWriter(sfd.FileName, false, System.Text.Encoding.UTF8)) {
+                        sw.WriteLine(string.Format("{0};{1};{2};{3};{4}", "Бизнес-партнёр", "Адрес", "Кол-во доч.орг.", "Аб. плата", "Ответственный"));
+                        foreach (var head in HeadOrganizationList) {
+                            sw.WriteLine(string.Format("{0};{1};{2};{3};{4}", head.AccountName, head.Address, head.CountSubOrg, head.CountObjects, head.Owner));
+                        }
+                    }
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }, obj => HeadOrganizationList.Count() > 0);
+        }
+
+        private ObservableCollection<ReportCorpClients> _Reports;
+        public ObservableCollection<ReportCorpClients> Reports {
+            get => _Reports;
+            set {
+                _Reports = value;
+                OnPropertyChanged(nameof(Reports));
+            }
+        }
         private ObservableCollection<AnalyzeModel> _Analyze;
         public ObservableCollection<AnalyzeModel> Analyze {
             get => _Analyze;
@@ -452,50 +567,54 @@ namespace VityazReports.ViewModel {
         private RelayCommand _AnalyzeCommand;
         public RelayCommand AnalyzeCommand {
             get => _AnalyzeCommand ??= new RelayCommand(async obj => {
-                int order = 1;
-                if (SelectedHeadOrganization == null)
-                    return;
-                //сортируем список охраняемых объектов по дате расторжения от ранней к старшей
-                //считаем сумму абонентских плат от даты из п.1.
-                Analyze.Clear();
-                ChartAnalytics = new SeriesCollection();
-                //if (GuardObjectsByAccountsList.Count() <= 0) {
-                if (SelectedGuardObjects.Count() <= 0) {
-                    //TODO: сообщение пользователю
-                    notificationManager.Show(new NotificationContent {
-                        Title = "Ошибка",
-                        Message = string.Format("Список охраняемых объектов пустой"),
-                        Type = NotificationType.Error
-                    });
-                    Loading = false;
-                    return;
-                }                
-                //var sorted = GuardObjectsByAccountsList.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
-                var sorted = SelectedGuardObjects.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
-                foreach (var s in sorted) {
-                    int sum = 0;
-                    //var subs = SubOrganizationList.Where(x => x.AccountEndDate == null);
-                    var subs = SelectedSubOrganization.Where(x => x.AccountEndDate == null);
-                    foreach (var item in subs) {
-                        //sum += GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
-                        sum += SelectedGuardObjects.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
-
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    int order = 1;
+                    if (SelectedHeadOrganization == null)
+                        return;
+                    //сортируем список охраняемых объектов по дате расторжения от ранней к старшей
+                    //считаем сумму абонентских плат от даты из п.1.
+                    Analyze.Clear();
+                    ChartAnalytics = new SeriesCollection();
+                    //if (GuardObjectsByAccountsList.Count() <= 0) {
+                    if (SelectedGuardObjects.Count() <= 0) {
+                        //TODO: сообщение пользователю
+                        notificationManager.Show(new NotificationContent {
+                            Title = "Ошибка",
+                            Message = string.Format("Список охраняемых объектов пустой"),
+                            Type = NotificationType.Error
+                        });
+                        Loading = false;
+                        return;
                     }
-                    Analyze.Add(new AnalyzeModel(s.Value, sum, order));
-                    order++;
-                }
-                ChartAnalytics = new SeriesCollection();
-                double[] ys1 = new double[Analyze.Count];
-                for (int i = 0; i < Analyze.Count; i++) {
-                    ys1[i] = double.Parse(Analyze[i].MonthlyPay.ToString());
-                }
-                var s1 = new LineSeries() {
-                    Title = "Размер аб. платы",
-                    Values = new ChartValues<double>(ys1),
+                    //var sorted = GuardObjectsByAccountsList.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
+                    var sorted = SelectedGuardObjects.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
+                    sorted.Add(sorted.Min().Value.AddDays(-1));
+                    sorted = sorted.OrderBy(x => x.Value).Distinct().ToList();
+                    foreach (var s in sorted) {
+                        int sum = 0;
+                        //var subs = SubOrganizationList.Where(x => x.AccountEndDate == null);
+                        var subs = SelectedSubOrganization.Where(x => x.AccountEndDate == null);
+                        foreach (var item in subs) {
+                            //sum += GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
+                            sum += SelectedGuardObjects.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
 
-                };
-                ChartAnalytics.Add(s1);
-                ChartFlyoutVisible = true;
+                        }
+                        Analyze.Add(new AnalyzeModel(s.Value, sum, order));
+                        order++;
+                    }
+                    ChartAnalytics = new SeriesCollection();
+                    double[] ys1 = new double[Analyze.Count];
+                    for (int i = 0; i < Analyze.Count; i++) {
+                        ys1[i] = double.Parse(Analyze[i].MonthlyPay.ToString());
+                    }
+                    var s1 = new LineSeries() {
+                        Title = "Размер аб. платы",
+                        Values = new ChartValues<double>(ys1),
+
+                    };
+                    ChartAnalytics.Add(s1);
+                    ChartFlyoutVisible = true;
+                });
             });
         }
     }

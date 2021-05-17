@@ -69,5 +69,14 @@ namespace VityazReports.Models.CorpClients {
         public DateTime? DatePriost { get; set; }
         public DateTime? DateRemove { get; set; }
         public string Owner { get; set; }
+        private string _Link { get; set; }
+        public string Link {
+            get {
+                return string.Format(@"http://crm/vtz2/userdefined/edit.aspx?id=%7b{0}%7d&_CreateFromType=1&etc=10000#", GuardObjectID);
+            }
+            set {
+                _Link = string.Format(@"http://crm/vtz2/userdefined/edit.aspx?id=%7b{0}%7d&_CreateFromType=1&etc=10000#", GuardObjectID);
+            }
+        }
     }
 }

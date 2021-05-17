@@ -19,6 +19,9 @@
             <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
                 <iconPacks:BootstrapIcons Kind="Filter"/>
             </Button>
+            <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding CreateReport}">
+                <iconPacks:BootstrapIcons Kind="Receipt"/>
+            </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <mah:MetroWindow.RightWindowCommands>
@@ -26,7 +29,7 @@
             <TextBlock Text="{Binding SelectedHeadOrganization.AccountName}" Margin="5"/>
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
-    <Grid>        
+    <Grid>
         <Grid.Resources>
             <CollectionViewSource x:Key="GuardObjectByAccounts" Source="{Binding SelectedGuardObjects}">
                 <CollectionViewSource.GroupDescriptions>                          
@@ -44,15 +47,24 @@
                 <Button Margin="5" Content="Показать" Command="{Binding ShowAllCommand}"/>
             </StackPanel>
         </mah:Flyout>
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="25" Width="{Binding ActualWidth, ElementName=Corp}" 
-              Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" Height="{Binding ActualHeight, ElementName=Corp}">
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="25" Background="#75100110" Width="{Binding ActualWidth, ElementName=Corp}" 
+            Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Height="{Binding ActualHeight, ElementName=Corp}" >
             <mah:ProgressRing IsActive="{Binding Loading}"/>
         </Grid>
-        <mah:MetroAnimatedSingleRowTabControl>
+        <mah:MetroAnimatedSingleRowTabControl Panel.ZIndex="1">
             <mah:MetroTabItem Header="Главное окно" x:Name="MainZone">
                 <mah:MetroAnimatedSingleRowTabControl>
                     <mah:MetroTabItem Header="Головные орг.">
-                        <DataGrid ItemsSource="{Binding HeadOrganizationList}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" SelectedItem="{Binding SelectedHeadOrganization}">
+                        <DataGrid ItemsSource="{Binding HeadOrganizationList}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" SelectedItem="{Binding SelectedHeadOrganization}" x:Name="dg_main">
+                            <DataGrid.Resources>
+                                <DataTemplate x:Key="tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_main}" CommandParameter="{Binding Path=Link}"/>
+                                </DataTemplate>
+                                <DataTemplate x:Key="edt_tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_main}" CommandParameter="{Binding Path=Link}"/>
+                                </DataTemplate>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
                                 <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
@@ -60,11 +72,20 @@
                                 <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}"/>
                                 <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}"/>
                                 <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
+                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </mah:MetroTabItem>
                     <mah:MetroTabItem Header="Дочерние орг." IsSelected="{Binding SubOrgMetroTabItemSelected}" IsEnabled="{Binding SelectedOrgVisible}">
-                        <DataGrid ItemsSource="{Binding SelectedSubOrganization}" AutoGenerateColumns="False">
+                        <DataGrid ItemsSource="{Binding SelectedSubOrganization}" AutoGenerateColumns="False" x:Name="dg_sub">
+                            <DataGrid.Resources>
+                                <DataTemplate x:Key="tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}"/>
+                                </DataTemplate>
+                                <DataTemplate x:Key="edt_tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}"/>
+                                </DataTemplate>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
                                 <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
@@ -72,11 +93,12 @@
                                 <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}"/>
                                 <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}"/>
                                 <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
+                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </mah:MetroTabItem>
                     <mah:MetroTabItem Header="Охр. объекты"  IsEnabled="{Binding SelectedOrgVisible}">
-                        <DataGrid ItemsSource="{Binding Source={StaticResource GuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5">
+                        <DataGrid ItemsSource="{Binding Source={StaticResource GuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5" x:Name="dg">
                             <DataGrid.GroupStyle>
                                 <GroupStyle>
                                     <GroupStyle.ContainerStyle>
@@ -102,6 +124,14 @@
                                     </GroupStyle.ContainerStyle>
                                 </GroupStyle>
                             </DataGrid.GroupStyle>
+                            <DataGrid.Resources>
+                                <DataTemplate x:Key="tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg}" CommandParameter="{Binding Path=Link}"/>
+                                </DataTemplate>
+                                <DataTemplate x:Key="edt_tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg}" CommandParameter="{Binding Path=Link}"/>
+                                </DataTemplate>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding GuardObjectName}"/>
                                 <DataGridTextColumn Header="Адрес" Binding="{Binding GuardObjectAddress}"/>
@@ -109,6 +139,7 @@
                                 <DataGridTextColumn Header="Дата приостановления" Binding="{Binding DatePriost, StringFormat=\{0:dd.MM.yyyy\}}"/>
                                 <DataGridTextColumn Header="Дата расторжения" Binding="{Binding DateRemove, StringFormat=\{0:dd.MM.yyyy\}}"/>
                                 <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
+                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
                             </DataGrid.Columns>
                         </DataGrid >
                     </mah:MetroTabItem>

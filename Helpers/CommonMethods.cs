@@ -10,8 +10,12 @@
                     if (char.IsDigit(item)) {
                         r += item;
                     }
-                    else if (char.IsPunctuation(item))
-                        break;
+                    else if (char.IsPunctuation(item)) {
+                        if (!string.IsNullOrEmpty(r))
+                            return int.Parse(r);
+                        else
+                            return 0;
+                    }
                 }
                 if (string.IsNullOrEmpty(r))
                     return 0;

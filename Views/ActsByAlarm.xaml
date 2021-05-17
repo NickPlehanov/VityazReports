@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VityazReports.Views"
                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
-                   xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" xmlns:viewmodel="clr-namespace:VityazReports.ViewModel"
+                   xmlns:mah1="http://schemas.microsoft.com/netfx/2009/xaml/presentation" 
+                  xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase" 
+                  xmlns:viewmodel="clr-namespace:VityazReports.ViewModel"
                    mc:Ignorable="d"
         Title="Акты по тревогам" Height="450" Width="800" x:Name="ActsByAlarmWindow">
     <mah:MetroWindow.LeftWindowCommands>
