@@ -10,25 +10,37 @@
                   xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                   mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800" x:Name="Corp"
-      Title="Корпортивные клиенты">
+      Title="Корпоративные клиенты">
     <mah:MetroWindow.DataContext>
         <vm:CorpClientsViewModel/>
     </mah:MetroWindow.DataContext>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
-            <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding OpenFlyoutFilterCommand}">
+            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Фильтр" Command="{Binding OpenFlyoutFilterCommand}">
                 <iconPacks:BootstrapIcons Kind="Filter"/>
             </Button>
-            <Button Foreground="White" BorderThickness="0" Width="35" Command="{Binding CreateReport}">
+            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Отчёт" Command="{Binding CreateReport}">
                 <iconPacks:BootstrapIcons Kind="Receipt"/>
+            </Button>
+            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Справка" Command="{Binding HelpCommand}">
+                <iconPacks:BootstrapIcons Kind="Question"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
             <TextBlock Text="{Binding SelectedHeadOrganization.AccountName}" Margin="5"/>
+            <TextBox Text="{Binding FilterValue, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="5" Width="100">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding ApplyFilter}" CommandParameter="{Binding FilterValue}"/>
+                    <KeyBinding Key="Esc" Command="{Binding ApplyFilter}"/>
+                </TextBox.InputBindings>
+            </TextBox>
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
+    <mah:MetroWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="bool2vis"/>
+    </mah:MetroWindow.Resources>
     <Grid>
         <Grid.Resources>
             <CollectionViewSource x:Key="GuardObjectByAccounts" Source="{Binding SelectedGuardObjects}">
@@ -43,7 +55,12 @@
         <mah:Flyout Position="Top" Panel.ZIndex="25" Height="120" IsModal="True" AreAnimationsEnabled="True" IsOpen="{Binding FilterFlyoutVisible}">
             <StackPanel >
                 <Label Content="Укажите в поле ниже часть наименования бизнес-партнера"/>
-                <TextBox Text="{Binding SearchText}" Margin="5"/>
+                <TextBox Text="{Binding SearchText,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="5">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding ShowAllCommand}"/>
+                        <KeyBinding Key="Return" Command="{Binding ShowAllCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
                 <Button Margin="5" Content="Показать" Command="{Binding ShowAllCommand}"/>
             </StackPanel>
         </mah:Flyout>
@@ -56,7 +73,7 @@
             <mah:MetroTabItem Header="Главное окно" x:Name="MainZone">
                 <mah:MetroAnimatedSingleRowTabControl>
                     <mah:MetroTabItem Header="Головные орг.">
-                        <DataGrid ItemsSource="{Binding HeadOrganizationList}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" SelectedItem="{Binding SelectedHeadOrganization}" x:Name="dg_main">
+                        <DataGrid ItemsSource="{Binding HeadOrganizationList, IsAsync=True, Mode=TwoWay}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" SelectedItem="{Binding SelectedHeadOrganization}" x:Name="dg_main">
                             <DataGrid.Resources>
                                 <DataTemplate x:Key="tmp_Link">
                                     <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_main}" CommandParameter="{Binding Path=Link}"/>
@@ -66,12 +83,12 @@
                                 </DataTemplate>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
-                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
-                                <DataGridTextColumn Header="Кол-во доч. орг" Binding="{Binding CountSubOrg}"/>
-                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}"/>
-                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}"/>
-                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName, IsAsync=True, Mode=TwoWay}"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address, IsAsync=True, Mode=TwoWay}"/>
+                                <DataGridTextColumn Header="Кол-во доч. орг" Binding="{Binding CountSubOrg, IsAsync=True, Mode=TwoWay}"/>
+                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects, IsAsync=True, Mode=TwoWay}"/>
+                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects, IsAsync=True, Mode=TwoWay}"/>
+                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner, IsAsync=True, Mode=TwoWay}"/>
                                 <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -145,7 +162,7 @@
                     </mah:MetroTabItem>
                 </mah:MetroAnimatedSingleRowTabControl>
             </mah:MetroTabItem>
-            <mah:MetroTabItem Header="Аналитика">
+            <mah:MetroTabItem Header="Аналитика" IsEnabled="{Binding SelectedOrgVisible}">
                 <mah:MetroAnimatedSingleRowTabControl>
                     <mah:MetroTabItem Header="Аналитика">
                         <Grid>

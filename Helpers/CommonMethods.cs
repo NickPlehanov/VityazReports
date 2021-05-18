@@ -5,7 +5,7 @@
             if (string.IsNullOrEmpty(param))
                 return 0;
             else if (!int.TryParse(param, out _)) {
-                char[] arr = param.ToCharArray();
+                char[] arr = param.Replace(" ","").ToCharArray();
                 foreach (var item in arr) {
                     if (char.IsDigit(item)) {
                         r += item;
