@@ -9,7 +9,7 @@ namespace VityazReports.Models.GuardsOnMap {
             get {
                 return TimeSpan.FromSeconds(Duration).Minutes.ToString() + ":" + TimeSpan.FromSeconds(Duration).Seconds.ToString();
             }
-                }
+        }
         public double Distance { get; set; }
         public List<List<double>> Coordinates { get; set; }
     }

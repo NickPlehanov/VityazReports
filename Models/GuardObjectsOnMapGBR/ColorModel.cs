@@ -3,7 +3,7 @@ using System.Windows.Media;
 
 namespace VityazReports.Models.GuardObjectsOnMapGBR {
     public class ColorModel {
-        public ColorModel(Brush color, bool isfree=true, string objtypeid = null) {
+        public ColorModel(Brush color, bool isfree = true, string objtypeid = null) {
             Color = color ?? throw new ArgumentNullException(nameof(color));
             Isfree = isfree;
             ObjTypeId = objtypeid;

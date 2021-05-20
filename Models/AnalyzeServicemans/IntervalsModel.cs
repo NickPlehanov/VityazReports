@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace VityazReports.Models.AnalyzeServicemans {
+﻿namespace VityazReports.Models.AnalyzeServicemans {
     public class IntervalsModel {
         public IntervalsModel(string range, string duration) {
             Range = range;

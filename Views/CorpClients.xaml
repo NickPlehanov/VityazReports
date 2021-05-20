@@ -25,17 +25,18 @@
             <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Справка" Command="{Binding HelpCommand}">
                 <iconPacks:BootstrapIcons Kind="Question"/>
             </Button>
+            <mah:ToggleSwitch Content="Фильтр" Command="{Binding OpenFilterFieldsCommand}" IsOn="{Binding FilterVisibleState}"/>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
             <TextBlock Text="{Binding SelectedHeadOrganization.AccountName}" Margin="5"/>
-            <TextBox Text="{Binding FilterValue, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="5" Width="100">
+            <!--<TextBox Text="{Binding FilterValue, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="5" Width="100">
                 <TextBox.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding ApplyFilter}" CommandParameter="{Binding FilterValue}"/>
                     <KeyBinding Key="Esc" Command="{Binding ApplyFilter}"/>
                 </TextBox.InputBindings>
-            </TextBox>
+            </TextBox>-->
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
     <mah:MetroWindow.Resources>
@@ -43,9 +44,17 @@
     </mah:MetroWindow.Resources>
     <Grid>
         <Grid.Resources>
-            <CollectionViewSource x:Key="GuardObjectByAccounts" Source="{Binding SelectedGuardObjects}">
-                <CollectionViewSource.GroupDescriptions>                          
-                    <PropertyGroupDescription PropertyName="AccountName"/>             
+            <CollectionViewSource x:Key="RealGuardObjectByAccounts" Source="{Binding RealGuardObjects}">
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="AccountName"/>
+                </CollectionViewSource.GroupDescriptions>
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="GuardObjectPay"/>
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+            <CollectionViewSource x:Key="RemoveGuardObjectByAccounts" Source="{Binding RemoveGuardObjects}">
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="AccountName"/>
                 </CollectionViewSource.GroupDescriptions>
                 <CollectionViewSource.SortDescriptions>
                     <scm:SortDescription PropertyName="GuardObjectPay"/>
@@ -74,48 +83,178 @@
                 <mah:MetroAnimatedSingleRowTabControl>
                     <mah:MetroTabItem Header="Головные орг.">
                         <DataGrid ItemsSource="{Binding HeadOrganizationList, IsAsync=True, Mode=TwoWay}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" SelectedItem="{Binding SelectedHeadOrganization}" x:Name="dg_main">
-                            <DataGrid.Resources>
-                                <DataTemplate x:Key="tmp_Link">
-                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_main}" CommandParameter="{Binding Path=Link}"/>
-                                </DataTemplate>
-                                <DataTemplate x:Key="edt_tmp_Link">
-                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_main}" CommandParameter="{Binding Path=Link}"/>
-                                </DataTemplate>
-                            </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName, IsAsync=True, Mode=TwoWay}"/>
-                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address, IsAsync=True, Mode=TwoWay}"/>
-                                <DataGridTextColumn Header="Кол-во доч. орг" Binding="{Binding CountSubOrg, IsAsync=True, Mode=TwoWay}"/>
-                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects, IsAsync=True, Mode=TwoWay}"/>
-                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects, IsAsync=True, Mode=TwoWay}"/>
-                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner, IsAsync=True, Mode=TwoWay}"/>
-                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
+                                <!--бизнес-партнер-->
+                                <DataGridTemplateColumn SortMemberPath="AccountName" Width="3*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Бизнес-партнёр" x:Name="SubOrgHeader" FontSize="14" FontWeight="Thin"/>
+                                                <TextBox Visibility="{Binding DataContext.SubOrgFilterVisibility,Converter={StaticResource BooleanToVisibilityConverter}, ElementName=dg_main}" FontSize="12" FontWeight="UltraLight" 
+                                                         Text="{Binding DataContext.NameFilter, ElementName=dg_main, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}">
+                                                    <TextBox.InputBindings>
+                                                        <KeyBinding Key="Enter" Command="{Binding DataContext.ApplyFilterNameCommand, ElementName=dg_main}"/>
+                                                    </TextBox.InputBindings>
+                                                </TextBox>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding AccountName}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <!--адрес-->
+                                <DataGridTemplateColumn SortMemberPath="Address" Width="3*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Адрес" FontSize="14" FontWeight="Thin"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Address}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <!--Кол-во дочерних-->
+                                <DataGridTemplateColumn SortMemberPath="CountSubOrg" Width="*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Кол-во доч. орг" x:Name="SubOrgHeader" FontSize="14" FontWeight="Thin"/>
+                                                <TextBox Visibility="{Binding DataContext.SubOrgFilterVisibility,Converter={StaticResource BooleanToVisibilityConverter}, ElementName=dg_main}" FontSize="12" FontWeight="UltraLight" 
+                                                         Text="{Binding DataContext.SubOrgFilter, ElementName=dg_main, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}">
+                                                    <TextBox.InputBindings>
+                                                        <KeyBinding Key="Enter" Command="{Binding DataContext.ApplyFilterSubOrgCommand, ElementName=dg_main}"/>
+                                                    </TextBox.InputBindings>
+                                                </TextBox>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding CountSubOrg}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <!--Кол-во объектов-->
+                                <DataGridTemplateColumn SortMemberPath="CountObjects" Width="*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Кол-во объектов" x:Name="SubOrgHeader" FontSize="14" FontWeight="Thin"/>
+                                                <TextBox Visibility="{Binding DataContext.SubOrgFilterVisibility,Converter={StaticResource BooleanToVisibilityConverter}, ElementName=dg_main}" FontSize="12" FontWeight="UltraLight" 
+                                                         Text="{Binding DataContext.GuardsFilter, ElementName=dg_main, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}">
+                                                    <TextBox.InputBindings>
+                                                        <KeyBinding Key="Enter" Command="{Binding DataContext.ApplyFilterGuardsCommand, ElementName=dg_main}"/>
+                                                    </TextBox.InputBindings>
+                                                </TextBox>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding CountObjects}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <!--аб.плата-->
+                                <DataGridTemplateColumn SortMemberPath="PaySumObjects" Width="*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Аб.плата" FontSize="14" FontWeight="Thin"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding PaySumObjects}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <!--Ответственный-->
+                                <DataGridTemplateColumn SortMemberPath="Owner" Width="*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Ответственный" FontSize="14" FontWeight="Thin"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Owner}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <!--Ответственный-->
+                                <DataGridTemplateColumn  Width="*">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Ссылка" FontSize="14" FontWeight="Thin"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_main}" CommandParameter="{Binding Path=Link}" FontSize="14" FontWeight="Thin" Margin="5"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
                             </DataGrid.Columns>
                         </DataGrid>
                     </mah:MetroTabItem>
-                    <mah:MetroTabItem Header="Дочерние орг." IsSelected="{Binding SubOrgMetroTabItemSelected}" IsEnabled="{Binding SelectedOrgVisible}">
+                    <mah:MetroTabItem Header="Дочерние орг." IsSelected="{Binding SubOrgMetroTabItemSelected}" Visibility="{Binding SelectedOrgVisible,Converter={StaticResource BooleanToVisibilityConverter}}">
                         <DataGrid ItemsSource="{Binding SelectedSubOrganization}" AutoGenerateColumns="False" x:Name="dg_sub">
                             <DataGrid.Resources>
                                 <DataTemplate x:Key="tmp_Link">
-                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}"/>
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}" Margin="5"/>
                                 </DataTemplate>
                                 <DataTemplate x:Key="edt_tmp_Link">
-                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}"/>
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}" Margin="5"/>
                                 </DataTemplate>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}"/>
-                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
-                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding AccountEndDate, StringFormat=\{0:dd.MM.yyyy\}}"/>
-                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}"/>
-                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}"/>
-                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
-                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding AccountName}" Width="3*"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}" Width="2*"/>
+                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding AccountEndDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Кол-во объектов" Binding="{Binding CountObjects}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Аб.плата" Binding="{Binding PaySumObjects}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}" Width="*"/>
+                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}" Width="0.5*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </mah:MetroTabItem>
-                    <mah:MetroTabItem Header="Охр. объекты"  IsEnabled="{Binding SelectedOrgVisible}">
-                        <DataGrid ItemsSource="{Binding Source={StaticResource GuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5" x:Name="dg">
+                    <mah:MetroTabItem Header="Охр. объекты (действ.)"  Visibility="{Binding SelectedOrgVisible,Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DataGrid ItemsSource="{Binding Source={StaticResource RealGuardObjectByAccounts}}" AutoGenerateColumns="False" x:Name="dg">
                             <DataGrid.GroupStyle>
                                 <GroupStyle>
                                     <GroupStyle.ContainerStyle>
@@ -139,30 +278,128 @@
                                             </Setter>
                                         </Style>
                                     </GroupStyle.ContainerStyle>
+                                    <GroupStyle.Panel>
+                                        <ItemsPanelTemplate>
+                                            <DataGridRowsPresenter x:Name="real"/>
+                                        </ItemsPanelTemplate>
+                                    </GroupStyle.Panel>
                                 </GroupStyle>
                             </DataGrid.GroupStyle>
                             <DataGrid.Resources>
                                 <DataTemplate x:Key="tmp_Link">
-                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg}" CommandParameter="{Binding Path=Link}"/>
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg}" CommandParameter="{Binding Path=Link}" Margin="5"/>
                                 </DataTemplate>
                                 <DataTemplate x:Key="edt_tmp_Link">
-                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg}" CommandParameter="{Binding Path=Link}"/>
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg}" CommandParameter="{Binding Path=Link}" Margin="5"/>
                                 </DataTemplate>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding GuardObjectName}"/>
-                                <DataGridTextColumn Header="Адрес" Binding="{Binding GuardObjectAddress}"/>
-                                <DataGridTextColumn Header="Аб. плата" Binding="{Binding GuardObjectPay}"/>
-                                <DataGridTextColumn Header="Дата приостановления" Binding="{Binding DatePriost, StringFormat=\{0:dd.MM.yyyy\}}"/>
-                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding DateRemove, StringFormat=\{0:dd.MM.yyyy\}}"/>
-                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}"/>
-                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}"/>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding GuardObjectName}" Width="3*"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding GuardObjectAddress}" Width="2*"/>
+                                <DataGridTextColumn Header="Аб. плата" Binding="{Binding GuardObjectPay}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Дата приостановления" Binding="{Binding DatePriost, StringFormat=\{0:dd.MM.yyyy\}}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding DateRemove, StringFormat=\{0:dd.MM.yyyy\}}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}" Width="*"/>
+                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}" Width="0.5*"/>
+                            </DataGrid.Columns>
+                        </DataGrid >
+                    </mah:MetroTabItem>
+                    <mah:MetroTabItem Header="Охр. объекты (раст.)"  Visibility="{Binding SelectedOrgVisible,Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DataGrid ItemsSource="{Binding Source={StaticResource RemoveGuardObjectByAccounts}}" AutoGenerateColumns="False" Margin="5" x:Name="dg_remove">
+                            <DataGrid.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.ContainerStyle>
+                                        <Style TargetType="{x:Type GroupItem}">
+                                            <Setter Property="Margin" Value="5"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                        <Expander IsExpanded="False" BorderThickness="1">
+                                                            <Expander.Header>
+                                                                <WrapPanel>
+                                                                    <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="5"/>
+                                                                </WrapPanel>
+                                                            </Expander.Header>
+                                                            <Expander.Content>
+                                                                <ItemsPresenter/>
+                                                            </Expander.Content>
+                                                        </Expander>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </GroupStyle.ContainerStyle>
+                                    <GroupStyle.Panel>
+                                        <ItemsPanelTemplate>
+                                            <DataGridRowsPresenter x:Name="real"/>
+                                        </ItemsPanelTemplate>
+                                    </GroupStyle.Panel>
+                                </GroupStyle>
+                            </DataGrid.GroupStyle>
+                            <DataGrid.Resources>
+                                <DataTemplate x:Key="tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_remove}" CommandParameter="{Binding Path=Link}" Margin="5"/>
+                                </DataTemplate>
+                                <DataTemplate x:Key="edt_tmp_Link">
+                                    <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_remove}" CommandParameter="{Binding Path=Link}" Margin="5"/>
+                                </DataTemplate>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Бизнес-партнёр" Binding="{Binding GuardObjectName}" Width="3*"/>
+                                <DataGridTextColumn Header="Адрес" Binding="{Binding GuardObjectAddress}" Width="2*"/>
+                                <DataGridTextColumn Header="Аб. плата" Binding="{Binding GuardObjectPay}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Дата приостановления" Binding="{Binding DatePriost, StringFormat=\{0:dd.MM.yyyy\}}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Дата расторжения" Binding="{Binding DateRemove, StringFormat=\{0:dd.MM.yyyy\}}" Width="*">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Ответственный" Binding="{Binding Owner}" Width="*"/>
+                                <DataGridTemplateColumn Header="Ссылка" CellTemplate="{StaticResource tmp_Link}" CellEditingTemplate="{StaticResource edt_tmp_Link}" Width="0.5*"/>
                             </DataGrid.Columns>
                         </DataGrid >
                     </mah:MetroTabItem>
                 </mah:MetroAnimatedSingleRowTabControl>
             </mah:MetroTabItem>
-            <mah:MetroTabItem Header="Аналитика" IsEnabled="{Binding SelectedOrgVisible}">
+            <mah:MetroTabItem Header="Аналитика" Visibility="{Binding SelectedOrgVisible,Converter={StaticResource BooleanToVisibilityConverter}}">
                 <mah:MetroAnimatedSingleRowTabControl>
                     <mah:MetroTabItem Header="Аналитика">
                         <Grid>
@@ -177,14 +414,15 @@
                                     <DataGridTextColumn Header="Сумма аб. платы" Binding="{Binding MonthlyPay}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <wpf:CartesianChart Grid.Row="1" Margin="5" Series="{Binding ChartAnalytics}"/>
+                            <wpf:CartesianChart Grid.Row="1" Margin="5" Series="{Binding ChartAnalytics}">
+                            </wpf:CartesianChart>
                         </Grid>
                     </mah:MetroTabItem>
                 </mah:MetroAnimatedSingleRowTabControl>
             </mah:MetroTabItem>
-            
+
         </mah:MetroAnimatedSingleRowTabControl>
 
-        
+
     </Grid>
 </mah:MetroWindow>

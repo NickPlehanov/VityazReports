@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VityazReports.Models.ReglamentWorks {
     public class ReglamentWorksDetail {
-        public ReglamentWorksDetail(DateTime? dateTimeOrder, string category, string servicemanName, string reason,string techConclusion) {
+        public ReglamentWorksDetail(DateTime? dateTimeOrder, string category, string servicemanName, string reason, string techConclusion) {
             DateTimeOrder = dateTimeOrder;
             Category = category;
             ServicemanName = servicemanName;

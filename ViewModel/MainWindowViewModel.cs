@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AppCenter.Crashes;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace VityazReports.ViewModel {
         private readonly ReportBaseContext reportBaseContext;
 
         public MainWindowViewModel() {
+            GetCrash.Execute(null);
+
             reportBaseContext = new ReportBaseContext();
 
             string login = Environment.UserName;
@@ -29,6 +32,23 @@ namespace VityazReports.ViewModel {
                 ReportList.Add(item);
 
             LoadingText = "Открыто окно отчёта. Для просмотра другого отчёта, закройте окно текущего отчёта";
+        }
+
+        private RelayCommand _GetCrash;
+        public RelayCommand GetCrash {
+            get => _GetCrash ??= new RelayCommand(async obj => {
+
+                bool didAppCrash = await Crashes.HasCrashedInLastSessionAsync();
+                if (!didAppCrash)
+                    return;
+
+                ErrorReport crashReport = await Crashes.GetLastSessionCrashReportAsync();
+                Exception exception = new Exception();
+                Crashes.TrackError(crashReport.Exception,
+                            new Dictionary<string, string> {
+                                {"StackTrace",crashReport.StackTrace}
+                            });
+            });
         }
         /// <summary>
         /// Команда закрытия окна, 
@@ -119,6 +139,10 @@ namespace VityazReports.ViewModel {
                     case "E56507EA-3FB3-49CF-9528-2634A4C0E21F": //корпоротивные клиенты
                         CorpClients cc = new CorpClients();
                         cc.Show();
+                        break;
+                    case "00FECD82-3774-48F6-BF3D-2B95EDE265BC": //заявки техникам
+                        ServiceOrders so = new ServiceOrders();
+                        so.Show();
                         break;
                 }
             }, obj => obj != null);

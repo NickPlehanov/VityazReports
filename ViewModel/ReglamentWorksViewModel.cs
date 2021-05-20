@@ -1,31 +1,29 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Notifications.Wpf;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Windows.Threading;
 using VityazReports.Data;
 using VityazReports.Helpers;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.ObjectModel;
 using VityazReports.Models.ReglamentWorks;
-using System.ComponentModel;
-using VityazReports.Models;
-using System.Windows.Threading;
-using System.IO;
-using System.Diagnostics;
-using Notifications.Wpf;
 
 namespace VityazReports.ViewModel {
     public class ReglamentWorksViewModel : BaseViewModel {
         private readonly MsCRMContext context;
-        private readonly Compare compare;
-        private readonly CommonMethods cm;
+        //private readonly Compare compare;
+        //private readonly CommonMethods cm;
 
         NotificationManager notificationManager = new NotificationManager();
 
         public ReglamentWorksViewModel() {
             context = new MsCRMContext();
             FilterFlyoutVisible = true;
-            compare = new Compare();
+            //compare = new Compare();
             IsTabSecurity = true;
         }
 
@@ -637,7 +635,7 @@ namespace VityazReports.ViewModel {
                                       && e.Name.Equals("New_test2")
                                       && goeb.NewGuardObjectId == item.NewGuardObjectId
                                       && teb.NewCategory == 1
-                                      && teb.NewDate!=null
+                                      && teb.NewDate != null
                                   select new { teb, smeb, ll }).AsNoTracking().Distinct().OrderByDescending(x => x.teb.NewDate).ToList();
                         App.Current.Dispatcher.Invoke((System.Action)delegate {
                             ReglamentWorksFireAlarmList.Add(new ReglamentWorksOutputModel() {

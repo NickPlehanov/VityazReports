@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VityazReports.Models.ServicemanOnMapViewModel {
     public class ServicemanCoords {
-        public ServicemanCoords(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, string name, DateTime? income, DateTime? outgone,string address) {
+        public ServicemanCoords(string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude, int? number, string name, DateTime? income, DateTime? outgone, string address) {
             IncomeLatitude = incomeLatitude;
             IncomeLongitude = incomeLongitude;
             OutgoneLatitude = outgoneLatitude;

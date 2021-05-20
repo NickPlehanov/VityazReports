@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace VityazReports.Models.CorpClients {
+﻿namespace VityazReports.Models.CorpClients {
     public class ReportCorpClients {
         public ReportCorpClients(string headOrganizationName, string subOrganizationName, string sumMonthlyPay, string countGuardObject) {
             HeadOrganizationName = headOrganizationName;

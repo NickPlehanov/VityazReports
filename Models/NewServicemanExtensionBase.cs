@@ -48,5 +48,8 @@ namespace VityazReports.Models
         public virtual NewServicemanBase NewGenTechNavigation { get; set; }
         [ForeignKey(nameof(NewServicemanId))]
         public virtual NewServicemanBase NewServiceman { get; set; }
+
+        [NotMapped]
+        public bool Checked { get; set; }
     }
 }

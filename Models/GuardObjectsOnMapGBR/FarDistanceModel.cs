@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace VityazReports.Models.GuardObjectsOnMapGBR {
+﻿namespace VityazReports.Models.GuardObjectsOnMapGBR {
     public class FarDistanceModel {
         public FarDistanceModel(int objectNumber, string objectName, string objectAddress, double distance) {
             ObjectNumber = objectNumber;

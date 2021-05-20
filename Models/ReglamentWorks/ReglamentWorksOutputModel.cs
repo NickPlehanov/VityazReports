@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VityazReports.Models.ReglamentWorks {
     public class ReglamentWorksOutputModel {
@@ -8,7 +6,7 @@ namespace VityazReports.Models.ReglamentWorks {
         public int? ObjectNumber { get; set; }
         public string ObjectName { get; set; }
         public string ObjectAddress { get; set; }
-        
+
         private bool? _RrEveryMonth { get; set; }
         public bool? RrEveryMonth {
             get => _RrEveryMonth;

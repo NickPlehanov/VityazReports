@@ -1,27 +1,29 @@
-﻿using System;
+﻿using LiveCharts;
+using LiveCharts.Configurations;
+using LiveCharts.Wpf;
+using Microsoft.EntityFrameworkCore;
+using Notifications.Wpf;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 using VityazReports.Data;
 using VityazReports.Helpers;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using VityazReports.Models.CorpClients;
-using System.Collections.ObjectModel;
-using Notifications.Wpf;
-using LiveCharts;
-using LiveCharts.Wpf;
-using System.IO;
-using System.Diagnostics;
-using System.Windows.Forms;
-using System.ComponentModel;
 
 namespace VityazReports.ViewModel {
     public class CorpClientsViewModel : BaseViewModel {
-        NotificationManager notificationManager;
+        private readonly NotificationManager notificationManager;
         /// <summary>
         /// Конструктор ViewModel-и
         /// </summary>
         public CorpClientsViewModel() {
             HeadOrganizationList = new ObservableCollection<AccountModel>();
+            FullHeadOrganizationList = new ObservableCollection<AccountModel>();
             FilteredHeadOrganizationList = new ObservableCollection<AccountModel>();
             SubOrganizationList = new ObservableCollection<AccountModel>();
             GuardObjectsByAccountsList = new ObservableCollection<AccountInfo>();
@@ -29,10 +31,14 @@ namespace VityazReports.ViewModel {
             SelectedGuardObjects = new ObservableCollection<AccountInfo>();
             Reports = new ObservableCollection<ReportCorpClients>();
             Analyze = new ObservableCollection<AnalyzeModel>();
-            notificationManager = new NotificationManager();
-            FilterFlyoutVisible = true;
+            RealGuardObjects = new ObservableCollection<AccountInfo>();
+            RemoveGuardObjects = new ObservableCollection<AccountInfo>();
 
+            notificationManager = new NotificationManager();
+            
+            FilterFlyoutVisible = true;
             Loading = false;
+            SubOrgFilterVisibility = false;
         }
         /// <summary>
         /// Свойство хранения контекста Црм
@@ -57,6 +63,14 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private ObservableCollection<AccountModel> _FullHeadOrganizationList;
+        public ObservableCollection<AccountModel> FullHeadOrganizationList {
+            get => _FullHeadOrganizationList;
+            set {
+                _FullHeadOrganizationList = value;
+                OnPropertyChanged(nameof(FullHeadOrganizationList));
+            }
+        }
         private ObservableCollection<AccountModel> _FilteredHeadOrganizationList;
         public ObservableCollection<AccountModel> FilteredHeadOrganizationList {
             get => _FilteredHeadOrganizationList;
@@ -137,6 +151,24 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(SelectedGuardObjects));
             }
         }
+
+        private ObservableCollection<AccountInfo> _RealGuardObjects;
+        public ObservableCollection<AccountInfo> RealGuardObjects {
+            get => _RealGuardObjects;
+            set {
+                _RealGuardObjects = value;
+                OnPropertyChanged(nameof(RealGuardObjects));
+            }
+        }
+
+        private ObservableCollection<AccountInfo> _RemoveGuardObjects;
+        public ObservableCollection<AccountInfo> RemoveGuardObjects {
+            get => _RemoveGuardObjects;
+            set {
+                _RemoveGuardObjects = value;
+                OnPropertyChanged(nameof(RemoveGuardObjects));
+            }
+        }
         /// <summary>
         /// Видимость индикиатора загрузки
         /// </summary>
@@ -196,6 +228,138 @@ namespace VityazReports.ViewModel {
             }
         }
 
+        private bool _SubOrgFilterVisibility;
+        public bool SubOrgFilterVisibility {
+            get => _SubOrgFilterVisibility;
+            set {
+                _SubOrgFilterVisibility = value;
+                OnPropertyChanged(nameof(SubOrgFilterVisibility));
+            }
+        }
+
+        private bool _FilterVisibleState;
+        public bool FilterVisibleState {
+            get => _FilterVisibleState;
+            set {
+                _FilterVisibleState = value;
+                if (!_FilterVisibleState) {
+                    NameFilter = "";
+                    //SubOrgFilter = "0";
+                    //GuardsFilter = "0";
+                    SubOrgFilter =0;
+                    GuardsFilter = 0;
+                    ApplyFilterCommand.Execute(null);
+                }
+                OnPropertyChanged(nameof(FilterVisibleState));
+            }
+        }
+
+        private int _SubOrgFilter=0;
+        public int SubOrgFilter {
+            get => _SubOrgFilter;
+            set {
+                _SubOrgFilter = value;
+                ApplyFilterCommand.Execute(_SubOrgFilter);
+                OnPropertyChanged(nameof(SubOrgFilter));
+            }
+        }
+
+        private int _GuardsFilter=0;
+        public int GuardsFilter {
+            get => _GuardsFilter;
+            set {
+                _GuardsFilter = value;
+                ApplyFilterCommand.Execute(_GuardsFilter);
+                OnPropertyChanged(nameof(GuardsFilter));
+            }
+        }
+
+        private string _NameFilter;
+        public string NameFilter {
+            get => _NameFilter;
+            set {
+                _NameFilter = value;
+                ApplyFilterCommand.Execute(_NameFilter);
+                OnPropertyChanged(nameof(NameFilter));
+            }
+        }
+        /// <summary>
+        /// Открываем поля фильтрации в DataGrid на Головных организациях
+        /// При закрытии окна фильтрации - значения фильтра сбрасываются
+        /// </summary>
+        private RelayCommand _OpenFilterFieldsCommand;
+        public RelayCommand OpenFilterFieldsCommand {
+            get => _OpenFilterFieldsCommand ??= new RelayCommand(async obj => {
+                SubOrgFilterVisibility = FilterVisibleState;
+                //if (!SubOrgFilterVisibility) {
+                //    NameFilter = "";
+                //    SubOrgFilter = "0";
+                //    GuardsFilter = "0";
+                //    ApplyFilterNameCommand.Execute(null);
+                //}
+            });
+        }
+
+        private RelayCommand _ApplyFilterCommand;
+        public RelayCommand ApplyFilterCommand {
+            get => _ApplyFilterCommand ??= new RelayCommand(async obj => {
+                //int.TryParse(SubOrgFilter, out int _suborg);
+                //int.TryParse(GuardsFilter, out int _guards);
+
+                //HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
+                //&& x.AccountName.ToLower().Contains(NameFilter.ToLower())
+                //&& x.CountObjects.Value >= _guards
+                //));
+                HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= SubOrgFilter
+                && x.AccountName.ToLower().Contains(NameFilter.ToLower())
+                && x.CountObjects.Value >= GuardsFilter
+                ));
+            });
+        }
+        //private RelayCommand _ApplyFilterSubOrgCommand;
+        //public RelayCommand ApplyFilterSubOrgCommand {
+        //    get => _ApplyFilterSubOrgCommand ??= new RelayCommand(async obj => {
+        //        int.TryParse(SubOrgFilter, out int _suborg);
+        //        int.TryParse(GuardsFilter, out int _guards);
+
+        //        HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
+        //        && x.AccountName.ToLower().Contains(NameFilter.ToLower())
+        //        && x.CountObjects.Value >= _guards
+        //        ));
+        //    });
+        //}
+        //private RelayCommand _ApplyFilterGuardsCommand;
+        //public RelayCommand ApplyFilterGuardsCommand {
+        //    get => _ApplyFilterGuardsCommand ??= new RelayCommand(async obj => {
+        //        string _nameFilter = NameFilter;
+        //        int.TryParse(SubOrgFilter, out int _suborg);
+        //        int.TryParse(GuardsFilter, out int _guards);
+
+        //        HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
+        //        && x.AccountName.ToLower().Contains(_nameFilter.ToLower())
+        //        && x.CountObjects.Value >= _guards
+        //        ));
+        //    });
+        //}
+        //private RelayCommand _ApplyFilterNameCommand;
+        //public RelayCommand ApplyFilterNameCommand {
+        //    get => _ApplyFilterNameCommand ??= new RelayCommand(async obj => {
+        //        string _nameFilter = NameFilter;
+        //        int.TryParse(SubOrgFilter, out int _suborg);
+        //        int.TryParse(GuardsFilter, out int _guards);
+
+        //        HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
+        //        && x.AccountName.ToLower().Contains(_nameFilter.ToLower())
+        //        && x.CountObjects.Value >= _guards
+        //        ));
+        //    });
+        //}
+        private RelayCommand _ClearFilterSubOrgCommand;
+        public RelayCommand ClearFilterSubOrgCommand {
+            get => _ClearFilterSubOrgCommand ??= new RelayCommand(async obj => {
+                HeadOrganizationList = FullHeadOrganizationList;
+            });
+        }
         private RelayCommand _ApplyFilter;
         public RelayCommand ApplyFilter {
             get => _ApplyFilter ??= new RelayCommand(async obj => {
@@ -280,6 +444,9 @@ namespace VityazReports.ViewModel {
                         });
 
                 }
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    SelectedSubOrganization = new ObservableCollection<AccountModel>(SelectedSubOrganization.OrderBy(x => x.AccountEndDate).ToList());
+                });
                 var s_h_go = GuardObjectsByAccountsList.Where(x => x.AccountID == SelectedHeadOrganization.AccountId).ToList();
                 if (s_h_go == null)
                     return;
@@ -287,8 +454,23 @@ namespace VityazReports.ViewModel {
                     App.Current.Dispatcher.Invoke((Action)delegate {
                         SelectedGuardObjects.Add(s_h_go_item);
                     });
+                if (SelectedGuardObjects.Count() <= 0)
+                    return;
 
-                //var s_go = GuardObjectsByAccountsList.Where(x => x.AccountID);
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    RealGuardObjects.Clear();
+                    RemoveGuardObjects.Clear();
+                });
+
+                //foreach (var item in SelectedGuardObjects) {
+
+                //}
+
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    RealGuardObjects = new ObservableCollection<AccountInfo>(SelectedGuardObjects.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
+                    RemoveGuardObjects = new ObservableCollection<AccountInfo>(SelectedGuardObjects.Where(x => x.DatePriost != null || x.DateRemove != null).ToList());
+                });
+                
             });
         }
         /// <summary>
@@ -514,7 +696,6 @@ namespace VityazReports.ViewModel {
         private RelayCommand _OpenInCrmCommand;
         public RelayCommand OpenInCrmCommand {
             get => _OpenInCrmCommand ??= new RelayCommand(async obj => {
-                bool k = false;
                 if (obj == null)
                     return;
                 if (string.IsNullOrEmpty(obj.ToString()))
@@ -531,6 +712,7 @@ namespace VityazReports.ViewModel {
                 //    return;
                 if (GuardObjectsByAccountsList.Count() <= 0)
                     return;
+                ExceptNullableHeadOrganizationCommand.Execute(null);
                 foreach (var head in HeadOrganizationList) {
                     var subs = SubOrganizationList.Where(x => x.ParentAccountId == head.AccountId && x.AccountEndDate == null).ToList();
                     foreach (var sub_item in subs) {
@@ -546,8 +728,9 @@ namespace VityazReports.ViewModel {
                     var go = GuardObjectsByAccountsList.Where(x => x.AccountID == head.AccountId && x.DatePriost == null && x.DateRemove == null).ToList();
                     if (go.Count() <= 0)
                         continue;
-                    head.PaySumObjects += go.Sum(x => x.Pay);                    
-                    head.CountObjects = go.Count();                    
+                    head.PaySumObjects += go.Sum(x => x.Pay);
+                    head.CountObjects += go.Count();
+                    head.CountObjects += subs.Sum(x => x.CountObjects);
                 }
                 if (HeadOrganizationList.Count() == 1)
                     SelectedHeadOrganization = HeadOrganizationList[0];
@@ -555,6 +738,26 @@ namespace VityazReports.ViewModel {
             });
         }
 
+        private RelayCommand _ExceptNullableHeadOrganizationCommand;
+        public RelayCommand ExceptNullableHeadOrganizationCommand {
+            get => _ExceptNullableHeadOrganizationCommand ??= new RelayCommand(async obj => {
+                //BackgroundWorker bw = new BackgroundWorker();
+                //bw.DoWork += (s, e) => {
+                var heads = HeadOrganizationList.ToList();
+                foreach (var head in heads) {
+                    var subs_count = SubOrganizationList.Count(x => x.ParentAccountId == head.AccountId && x.AccountEndDate == null);
+                    if (subs_count <= 0)
+                        App.Current.Dispatcher.Invoke((Action)delegate {
+                            HeadOrganizationList.Remove(head);
+                        });
+                }
+                FullHeadOrganizationList = HeadOrganizationList;
+                //};
+                //bw.RunWorkerCompleted += (s, e) => {
+                //};
+                //bw.RunWorkerAsync();
+            });
+        }
         private RelayCommand _CalculateTotals;
         public RelayCommand CalculateTotals {
             get => _CalculateTotals ??= new RelayCommand(async obj => {
@@ -606,9 +809,10 @@ namespace VityazReports.ViewModel {
                 if (SubOrganizationList.Count() <= 0)
                     return;
                 Reports.Clear();
-                SaveFileDialog sfd = new SaveFileDialog();
-                sfd.FileName = string.Format("Отчёт по корп.клиентам ({0})", DateTime.Now.Date.ToShortDateString());
-                sfd.Filter = "CSV documents (.csv)|*.csv";
+                SaveFileDialog sfd = new SaveFileDialog {
+                    FileName = string.Format("Отчёт по корп.клиентам ({0})", DateTime.Now.Date.ToShortDateString()),
+                    Filter = "CSV documents (.csv)|*.csv"
+                };
                 DialogResult dr = sfd.ShowDialog();
                 if (dr == DialogResult.OK) {
                     //using (StreamWriter sw = new StreamWriter(@"C:\Services\1.csv", false, System.Text.Encoding.UTF8)) {
@@ -684,38 +888,72 @@ namespace VityazReports.ViewModel {
                         Loading = false;
                         return;
                     }
+                    List<DateTime> sorted = new List<DateTime>();
                     //var sorted = GuardObjectsByAccountsList.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
-                    var sorted = SelectedGuardObjects.Where(z => z.DateRemove != null).Select(y => y.DateRemove).OrderBy(x => x.Value).Distinct().ToList();
-                    sorted.Add(sorted.Min().Value.AddDays(-1));
-                    sorted = sorted.OrderBy(x => x.Value).Distinct().ToList();
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        sorted = SelectedGuardObjects.Where(z => z.DateRemove.HasValue).Select(y => y.DateRemove.Value).OrderBy(x => x.Date).Distinct().ToList();
+                        if (sorted != null)
+                            if (sorted.Count() > 0) {
+                                sorted.Add(sorted.Min().AddDays(-1));
+                                sorted = sorted.OrderBy(x => x.Date).Distinct().ToList();
+                            }
+                    });
                     foreach (var s in sorted) {
                         int sum = 0;
                         //var subs = SubOrganizationList.Where(x => x.AccountEndDate == null);
                         var subs = SelectedSubOrganization.Where(x => x.AccountEndDate == null);
                         foreach (var item in subs) {
                             //sum += GuardObjectsByAccountsList.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
-                            sum += SelectedGuardObjects.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
+                            sum += SelectedGuardObjects.Where(y => y.DateRemove > s.Date || y.DateRemove == null && y.AccountID == item.AccountId).Sum(x => x.Pay);
                         }
                         //if (subs.Count() <= 0) {
-                        sum += SelectedGuardObjects.Where(y => y.DateRemove > s.Value || y.DateRemove == null && y.AccountID == SelectedHeadOrganization.AccountId).Sum(x => x.Pay);
+                        sum += SelectedGuardObjects.Where(y => y.DateRemove > s.Date || y.DateRemove == null && y.AccountID == SelectedHeadOrganization.AccountId).Sum(x => x.Pay);
                         //}
-                        Analyze.Add(new AnalyzeModel(s.Value, sum, order));
+                        Analyze.Add(new AnalyzeModel(s.Date, sum, order));
                         order++;
                     }
                     ChartAnalytics = new SeriesCollection();
-                    double[] ys1 = new double[Analyze.Count];
-                    for (int i = 0; i < Analyze.Count; i++) {
-                        ys1[i] = double.Parse(Analyze[i].MonthlyPay.ToString());
-                    }
+                    //double[] ys1 = new double[Analyze.Count];
+                    //for (int i = 0; i < Analyze.Count; i++) {
+                    //    ys1[i] = double.Parse(Analyze[i].MonthlyPay.ToString());
+                    //}
+                    //var s1 = new LineSeries() {
+                    //    Title = "Размер аб. платы",
+                    //    Values = new ChartValues<double>(ys1)
+
+                    //};
+                    //ChartAnalytics.Add(s1);
+                    //ChartFlyoutVisible = true;
+
+                    //lets instead plot elapsed milliseconds and value
+                    var mapper = Mappers.Xy<ChartSeriesModel>()
+                        .X(x => x.Order)
+                        .Y(x => x.Value);
+
+                    //save the mapper globally         
+                    Charting.For<ChartSeriesModel>(mapper);
+
+
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        Values = new ChartValues<ChartSeriesModel>();
+                    });
+
+                    //List<ChartSeriesModel> ys1 = new List<ChartSeriesModel>();
+                    foreach (var item in Analyze)
+                        App.Current.Dispatcher.Invoke((Action)delegate {
+                            Values.Add(new ChartSeriesModel() { Order = item.Order, Value = Math.Round(double.Parse(item.MonthlyPay.ToString("F")), 2) });
+                        });
+
                     var s1 = new LineSeries() {
                         Title = "Размер аб. платы",
-                        Values = new ChartValues<double>(ys1),
-
+                        Values = Values
                     };
+
                     ChartAnalytics.Add(s1);
                     ChartFlyoutVisible = true;
                 });
             });
         }
+        public ChartValues<ChartSeriesModel> Values { get; set; }
     }
 }

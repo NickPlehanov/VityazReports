@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VityazReports.Models.AnalyzeServicemans {
     public class ClientsOrdersNotCompleted {
-        public ClientsOrdersNotCompleted(int? objectNumber, string objectName, string objectAddress, int? orderType, string orderTypeString, string reasonOrder, DateTime? income, DateTime? outgone, 
+        public ClientsOrdersNotCompleted(int? objectNumber, string objectName, string objectAddress, int? orderType, string orderTypeString, string reasonOrder, DateTime? income, DateTime? outgone,
             string latitudeObject, string longitudeObject, double? distanceIncome, double? distanceOutgone,
             int? result, string resultString, int? reasonResult, string reasonResultString, string reasonComment, string conclusion
-            ,string incomeLatitude,string incomeLongitude, string outgoneLatitude, string outgoneLongitude) {
+            , string incomeLatitude, string incomeLongitude, string outgoneLatitude, string outgoneLongitude) {
             ObjectNumber = objectNumber;
             ObjectName = objectName;
             ObjectAddress = objectAddress;

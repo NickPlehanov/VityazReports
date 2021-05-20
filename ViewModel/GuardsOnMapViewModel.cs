@@ -10,13 +10,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using VityazReports.Data;
 using VityazReports.Helpers;
@@ -452,9 +448,9 @@ namespace VityazReports.ViewModel {
                             Source = Conv.ToImageSource(Properties.Resources.Icon),
                             Stretch = Stretch.Fill
                         },
-                        ZIndex=1000,
-                        Position= new PointLatLng(Convert.ToDouble(item.NewLatitude.Replace('.', ',')), Convert.ToDouble(item.NewLongitude.Replace('.', ','))),
-                        Offset=new System.Windows.Point(0,0)
+                        ZIndex = 1000,
+                        Position = new PointLatLng(Convert.ToDouble(item.NewLatitude.Replace('.', ',')), Convert.ToDouble(item.NewLongitude.Replace('.', ','))),
+                        Offset = new System.Windows.Point(0, 0)
                     };
                     marker.Tag = item.NewPlacesGbrid.ToString();
                     //GMap.NET.PointLatLng pnt = gmaps_contol.FromLocalToLatLng(marker.LocalPositionY, marker.LocalPositionX);

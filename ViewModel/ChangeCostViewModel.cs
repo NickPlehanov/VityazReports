@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using VityazReports.Data;
 using VityazReports.Helpers;
-using VityazReports.Models;
 using VityazReports.Models.ChangeCost;
 
 namespace VityazReports.ViewModel {
@@ -214,7 +212,7 @@ namespace VityazReports.ViewModel {
                                             objectExtensionBase.NewAddress,
                                             objectExtensionBase.NewName,
                                             objectExtensionBase.NewObjectNumber
-                                            )) ;
+                                            ));
                                     });
                             }
                     }

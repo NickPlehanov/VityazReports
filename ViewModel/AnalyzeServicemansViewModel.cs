@@ -1,14 +1,11 @@
 ﻿using GeoCoordinatePortable;
 using GMap.NET;
 using GMap.NET.WindowsPresentation;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -18,7 +15,6 @@ using VityazReports.Data;
 using VityazReports.Helpers;
 using VityazReports.Models;
 using VityazReports.Models.AnalyzeServicemans;
-using VityazReports.Models.ServicemanOnMapViewModel;
 
 namespace VityazReports.ViewModel {
     public class AnalyzeServicemansViewModel : BaseViewModel {

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace VityazReports.Models.GuardObjectsOnMapGBR {
     public class MatrixTotals {
-        
+
         public MatrixTotals() {
         }
 

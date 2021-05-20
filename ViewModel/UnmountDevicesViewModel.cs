@@ -7,8 +7,6 @@ using System.Windows.Threading;
 using VityazReports.Data;
 using VityazReports.Helpers;
 using VityazReports.Models.UnmountDevices;
-using System.Runtime.CompilerServices;
-using System.Windows.Data;
 
 namespace VityazReports.ViewModel {
     public class UnmountDevicesViewModel : BaseViewModel {

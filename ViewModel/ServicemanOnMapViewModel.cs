@@ -1,12 +1,14 @@
-﻿using GMap.NET;
+﻿using GeoCoordinatePortable;
+using GMap.NET;
 using GMap.NET.WindowsPresentation;
 using Microsoft.EntityFrameworkCore;
 using Notifications.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -14,9 +16,6 @@ using VityazReports.Data;
 using VityazReports.Helpers;
 using VityazReports.Models;
 using VityazReports.Models.ServicemanOnMapViewModel;
-using GeoCoordinatePortable;
-using System.Diagnostics;
-using System.IO;
 
 namespace VityazReports.ViewModel {
     public class ServicemanOnMapViewModel : BaseViewModel {
@@ -262,7 +261,7 @@ namespace VityazReports.ViewModel {
                                     && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                     && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
                                   select new { soc, soeb }).AsNoTracking().ToList();
-;
+                    ;
                     if (coords.Count() <= 0) {
                         notificationManager.Show(new NotificationContent() { Type = NotificationType.Error, Title = "Ошибка", Message = "Для выбранного техника не удалось найти координаты" });
                         ListDatesEnabled = false;
@@ -276,7 +275,7 @@ namespace VityazReports.ViewModel {
                     var coords = (from soc in context.ServiceOrderCoordinates
                                   join soeb in context.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId /*into lj_soeb from soeb in lj_soeb.DefaultIfEmpty()*/
                                   //join soeb in context.NewTest2ExtensionBase on soc.SocServiceOrderId equals soeb.NewTest2Id
-                                  where soeb.NewServicemanServiceorder== SelectedServiceman.NewServicemanId
+                                  where soeb.NewServicemanServiceorder == SelectedServiceman.NewServicemanId
                                     && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
                                     && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                     && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
@@ -315,7 +314,7 @@ namespace VityazReports.ViewModel {
                                 && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                 && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
-                              select new ServicemanCoords(soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone,soeb.NewAddress)
+                              select new ServicemanCoords(soc.SocIncomeLatitude, soc.SocIncomeLongitude, soc.SocOutcomeLatitide, soc.SocOutcomeLongitude, soeb.NewNumber, soeb.NewName, soeb.NewIncome, soeb.NewOutgone, soeb.NewAddress)
                                   ).AsNoTracking().ToList();
                 }
                 else {
@@ -375,7 +374,7 @@ namespace VityazReports.ViewModel {
                     }
 
                     if (a28obj == null)
-                        Points.Add(new ServicemansPoints((int)item.Number, (DateTime)item.Income.Value.AddHours(5), (DateTime)item.Outgone.Value.AddHours(5), counter, c1.GetDistanceTo(c2),item.Address));
+                        Points.Add(new ServicemansPoints((int)item.Number, (DateTime)item.Income.Value.AddHours(5), (DateTime)item.Outgone.Value.AddHours(5), counter, c1.GetDistanceTo(c2), item.Address));
                     else {
                         if (a28obj.Latitude.HasValue && a28obj.Longitude.HasValue) {
                             GeoCoordinate c3 = new GeoCoordinate((double)a28obj.Latitude, (double)a28obj.Longitude);

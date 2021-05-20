@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace VityazReports.Models.UnmountDevices {
+﻿namespace VityazReports.Models.UnmountDevices {
     public class UnmountDevices {
         public UnmountDevices(int? objectNumber, string name, string nameForPult, string address, string accountName, string deviceName, decimal? devicePrice, int? deviceCount, bool? isReturn) {
             ObjectNumber = objectNumber;

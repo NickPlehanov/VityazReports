@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VityazReports.Models.CorpClients {
     public class AccountModel {
-        public AccountModel(Guid accountId, Guid? parentAccountId, string accountName, string parentAccountName, DateTime? accountEndDate, int? countObjects, double? paySumObjects, string address,int? countSubOrg,string owner) {
+        public AccountModel(Guid accountId, Guid? parentAccountId, string accountName, string parentAccountName, DateTime? accountEndDate, int? countObjects, double? paySumObjects, string address, int? countSubOrg, string owner) {
             AccountId = accountId;
             ParentAccountId = parentAccountId;
             AccountName = accountName;

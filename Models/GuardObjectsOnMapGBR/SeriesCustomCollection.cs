@@ -1,8 +1,5 @@
 ﻿using LiveCharts;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text;
 
 namespace VityazReports.Models.GuardObjectsOnMapGBR {
     public class SeriesCustomCollection {

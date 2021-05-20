@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VityazReports.Models.CorpClients {
     public class AnalyzeModel {
-        public AnalyzeModel(DateTime dateRemove, int monthlyPay,int order) {
+        public AnalyzeModel(DateTime dateRemove, int monthlyPay, int order) {
             DateRemove = dateRemove;
             MonthlyPay = monthlyPay;
             Order = order;

@@ -4,7 +4,7 @@ using VityazReports.Helpers;
 namespace VityazReports.Models.CorpClients {
     public class AccountInfo {
         private readonly CommonMethods cm = new CommonMethods();
-        public AccountInfo(Guid accountID, Guid? parentAccountID, string accountName, string parentAccountName, Guid guardObjectID, string guardObjectName,string guardObjectAddress, string guardObjectPay, DateTime? datePriost, DateTime? dateRemove,string owner) {
+        public AccountInfo(Guid accountID, Guid? parentAccountID, string accountName, string parentAccountName, Guid guardObjectID, string guardObjectName, string guardObjectAddress, string guardObjectPay, DateTime? datePriost, DateTime? dateRemove, string owner) {
             AccountID = accountID;
             ParentAccountID = parentAccountID;
             AccountName = accountName;

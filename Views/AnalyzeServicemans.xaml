@@ -27,19 +27,16 @@
             <ScrollViewer>
                 <StackPanel>
                     <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding DateOrder, StringFormat=\{0:dd.MM.yyyy\}}" Margin="5"/>
-                    <!--<Button Content="Запрос" Command="{Binding GetServiceordersOnDate}"/>-->
-                    <!--<ScrollViewer>-->
-                        <StackPanel CanVerticallyScroll="True">
-                            <ListBox ItemsSource="{Binding ServicemansList}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <ToggleButton Margin="5" Content="{Binding Name}" Tag="{Binding ServicemanID}"
+                    <StackPanel CanVerticallyScroll="True">
+                        <ListBox ItemsSource="{Binding ServicemansList}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <ToggleButton Margin="5" Content="{Binding Name}" Tag="{Binding ServicemanID}"
                                                   Command="{Binding DataContext.SelectServicemanCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self}}"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </StackPanel>
-                    <!--</ScrollViewer>-->
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </mah:Flyout>

@@ -1,32 +1,30 @@
 ﻿using GMap.NET;
 using GMap.NET.WindowsPresentation;
+using LiveCharts;
+using LiveCharts.Defaults;
+using LiveCharts.Wpf;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Notifications.Wpf;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Windows.Threading;
 using VityazReports.Data;
 using VityazReports.Helpers;
-using VityazReports.Models.GuardObjectsOnMapGBR;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Windows.Shapes;
-using System.Windows.Media;
-using System.Windows.Forms;
-using System.Windows.Controls.Primitives;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
-using System.Windows;
-using LiveCharts;
-using LiveCharts.Wpf;
-using System.Windows.Threading;
-using LiveCharts.Defaults;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.IO;
-using System.Diagnostics;
-using Notifications.Wpf;
-using System.ComponentModel;
-using System.Threading.Tasks;
 using VityazReports.Models;
+using VityazReports.Models.GuardObjectsOnMapGBR;
 using Xceed.Wpf.Toolkit;
 
 namespace VityazReports.ViewModel {
@@ -739,9 +737,9 @@ namespace VityazReports.ViewModel {
                     return;
                 App.Current.Dispatcher.Invoke((System.Action)delegate {
                     Loading = true;
-                    var r= gmaps_contol.Markers.Where(x => x.Tag == null).ToList();
-                    if (r.Count()>0)
-                        foreach (var item in r) 
+                    var r = gmaps_contol.Markers.Where(x => x.Tag == null).ToList();
+                    if (r.Count() > 0)
+                        foreach (var item in r)
                             gmaps_contol.Markers.Remove(item);
                     //требуется проверить что такой маршрут уже есть/нет на карте
                     var markers = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == ObjId.ToString()).ToList();
@@ -826,7 +824,7 @@ namespace VityazReports.ViewModel {
                                     StrokeThickness = 7.5,
                                     ToolTip = Convert.ToString(item.ObjectNumber, 16) + Environment.NewLine + item.Name + Environment.NewLine + item.Address,
                                     AllowDrop = true,
-                                    Tag=item.ObjTypeName
+                                    Tag = item.ObjTypeName
                                 }
                             };
                             marker.ZIndex = (int)ObjId;
@@ -857,11 +855,11 @@ namespace VityazReports.ViewModel {
             get => _ShowPlacesGBR ??= new RelayCommand(async obj => {
                 //var otl = ObjectTypeList.Where(x => x.IsShowOnMap == true).ToList();
                 //if (otl.Count() != 0) {
-                    var m = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР")).ToList();
-                    if (m.Count() > 0) {
-                        foreach (var item in m) {
-                            gmaps_contol.Markers.Remove(item);
-                        }
+                var m = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР")).ToList();
+                if (m.Count() > 0) {
+                    foreach (var item in m) {
+                        gmaps_contol.Markers.Remove(item);
+                    }
                     ChartObjectsList.Clear();
                     ChartSeries = null;
                     SeriesCollectionList.Clear();
@@ -1054,7 +1052,7 @@ namespace VityazReports.ViewModel {
                     FlyoutShowGroupsVisibleState = true;
                 }
                 ContextMenuIsOpen = false;
-            },obj => ObjectTypeList.Count(x => x.IsShowOnMap == true)==1);
+            }, obj => ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }
         /// <summary>
         /// Убираем с карты метку ГБР
