@@ -333,6 +333,9 @@ namespace VityazReports.ViewModel {
                     SelectedGuardObjects.Clear();
                     SelectedHeadOrganization = null;
                     SelectedSubOrganization.Clear();
+                    RealGuardObjects.Clear();
+                    RemoveGuardObjects.Clear();
+                    SelectedOrgVisible = false;
                 });
 
                 BackgroundWorker bw = new BackgroundWorker();
@@ -416,10 +419,11 @@ namespace VityazReports.ViewModel {
                 foreach (var item in sub_orgs) {
                     var s_guards = GuardObjectsByAccountsList.Where(x => x.AccountID == item.AccountId).ToList();
                     App.Current.Dispatcher.Invoke((Action)delegate {
-                        FullListGuardObjects.AddRange((IEnumerable<AccountInfo>)s_guards.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
+                        FullListGuardObjects.AddRange((IEnumerable<AccountInfo>)s_guards.ToList());
                     });
                 }
                 App.Current.Dispatcher.Invoke((Action)delegate {
+                    SelectedGuardObjects = new ObservableCollection<AccountInfo>(FullListGuardObjects);
                     RealGuardObjects = new ObservableCollection<AccountInfo>(FullListGuardObjects.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
                     RemoveGuardObjects = new ObservableCollection<AccountInfo>(FullListGuardObjects.Where(x => x.DatePriost != null || x.DateRemove != null).ToList());
                 });
