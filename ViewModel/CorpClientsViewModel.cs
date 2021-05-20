@@ -39,6 +39,7 @@ namespace VityazReports.ViewModel {
             FilterFlyoutVisible = true;
             Loading = false;
             SubOrgFilterVisibility = false;
+            SearchText = "";
         }
         /// <summary>
         /// Свойство хранения контекста Црм
@@ -316,72 +317,6 @@ namespace VityazReports.ViewModel {
                 ));
             });
         }
-        //private RelayCommand _ApplyFilterSubOrgCommand;
-        //public RelayCommand ApplyFilterSubOrgCommand {
-        //    get => _ApplyFilterSubOrgCommand ??= new RelayCommand(async obj => {
-        //        int.TryParse(SubOrgFilter, out int _suborg);
-        //        int.TryParse(GuardsFilter, out int _guards);
-
-        //        HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
-        //        && x.AccountName.ToLower().Contains(NameFilter.ToLower())
-        //        && x.CountObjects.Value >= _guards
-        //        ));
-        //    });
-        //}
-        //private RelayCommand _ApplyFilterGuardsCommand;
-        //public RelayCommand ApplyFilterGuardsCommand {
-        //    get => _ApplyFilterGuardsCommand ??= new RelayCommand(async obj => {
-        //        string _nameFilter = NameFilter;
-        //        int.TryParse(SubOrgFilter, out int _suborg);
-        //        int.TryParse(GuardsFilter, out int _guards);
-
-        //        HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
-        //        && x.AccountName.ToLower().Contains(_nameFilter.ToLower())
-        //        && x.CountObjects.Value >= _guards
-        //        ));
-        //    });
-        //}
-        //private RelayCommand _ApplyFilterNameCommand;
-        //public RelayCommand ApplyFilterNameCommand {
-        //    get => _ApplyFilterNameCommand ??= new RelayCommand(async obj => {
-        //        string _nameFilter = NameFilter;
-        //        int.TryParse(SubOrgFilter, out int _suborg);
-        //        int.TryParse(GuardsFilter, out int _guards);
-
-        //        HeadOrganizationList = new ObservableCollection<AccountModel>(FullHeadOrganizationList.Where(x => x.CountSubOrg.Value >= _suborg
-        //        && x.AccountName.ToLower().Contains(_nameFilter.ToLower())
-        //        && x.CountObjects.Value >= _guards
-        //        ));
-        //    });
-        //}
-        private RelayCommand _ClearFilterSubOrgCommand;
-        public RelayCommand ClearFilterSubOrgCommand {
-            get => _ClearFilterSubOrgCommand ??= new RelayCommand(async obj => {
-                HeadOrganizationList = FullHeadOrganizationList;
-            });
-        }
-        private RelayCommand _ApplyFilter;
-        public RelayCommand ApplyFilter {
-            get => _ApplyFilter ??= new RelayCommand(async obj => {
-                if (obj == null) {
-                    if (FilteredHeadOrganizationList.Count() > 0) {
-                        HeadOrganizationList = FilteredHeadOrganizationList;
-                    }
-                    return;
-                }
-                if (string.IsNullOrEmpty(obj.ToString())) {
-                    if (FilteredHeadOrganizationList.Count() > 0) {
-                        HeadOrganizationList = FilteredHeadOrganizationList;
-                        return;
-                    }
-                    if (FilteredHeadOrganizationList.Count() == HeadOrganizationList.Count())
-                        return;
-                }
-                FilteredHeadOrganizationList = HeadOrganizationList;
-                if (!string.IsNullOrEmpty(FilterValue))
-                    HeadOrganizationList = new ObservableCollection<AccountModel>(HeadOrganizationList.Where(x => x.AccountName.ToLower().Contains(FilterValue.ToLower())).ToList());
-            });
-        }
         private RelayCommand _OpenFlyoutFilterCommand;
         public RelayCommand OpenFlyoutFilterCommand {
             get => _OpenFlyoutFilterCommand ??= new RelayCommand(async obj => {
@@ -428,49 +363,66 @@ namespace VityazReports.ViewModel {
                     SelectedSubOrganization.Clear();
                 });
                 SelectedOrgVisible = true;
-                var s_sub = SubOrganizationList.Where(x => x.ParentAccountId == SelectedHeadOrganization.AccountId).ToList();
-                if (s_sub == null)
-                    return;
-                foreach (var s_item in s_sub) {
-                    App.Current.Dispatcher.Invoke((Action)delegate {
-                        SelectedSubOrganization.Add(s_item);
-                    });
-                    var s_go = GuardObjectsByAccountsList.Where(x => x.AccountID == s_item.AccountId).ToList();
-                    if (s_go == null)
-                        continue;
-                    foreach (var s_go_item in s_go)
-                        App.Current.Dispatcher.Invoke((Action)delegate {
-                            SelectedGuardObjects.Add(s_go_item);
-                        });
+                List<AccountModel> s_sub = SubOrganizationList.Where(x => x.ParentAccountId == SelectedHeadOrganization.AccountId).ToList();
+                //if (s_sub == null) {
+                //    notificationManager.Show(new NotificationContent {
+                //        Title = "Ошибка",
+                //        Message = string.Format("Дочерних бизнес-партнеров не найдено"),
+                //        Type = NotificationType.Error
+                //    });
+                //    return;
+                //}
+                GetSelectedGuardObjects.Execute(s_sub);
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    SelectedSubOrganization = new ObservableCollection<AccountModel>(s_sub);
+                });
+                //s_sub = SubOrganizationList.Where(x => x.ParentAccountId == SelectedHeadOrganization.AccountId).ToList();
+                //foreach (var s_item in s_sub) {
+                //    var s_go = GuardObjectsByAccountsList.Where(x => x.AccountID == s_item.AccountId).ToList();
+                //    foreach (var s_go_item in s_go)
+                //        App.Current.Dispatcher.Invoke((Action)delegate {
+                //            SelectedGuardObjects.Add(s_go_item);
+                //        });
+                //}
+                //var s_h_go = GuardObjectsByAccountsList.Where(x => x.AccountID == SelectedHeadOrganization.AccountId).ToList();
+                ////if (s_h_go == null)
+                ////    return;
+                //foreach (var s_h_go_item in s_h_go)
+                //    App.Current.Dispatcher.Invoke((Action)delegate {
+                //        SelectedGuardObjects.Add(s_h_go_item);
+                //    });
+                //if (SelectedGuardObjects.Count <= 0)
+                //    return;
 
+                //App.Current.Dispatcher.Invoke((Action)delegate {
+                //    RealGuardObjects.Clear();
+                //    RemoveGuardObjects.Clear();
+                //});
+                //App.Current.Dispatcher.Invoke((Action)delegate {
+                //    RealGuardObjects = new ObservableCollection<AccountInfo>(SelectedGuardObjects.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
+                //    RemoveGuardObjects = new ObservableCollection<AccountInfo>(SelectedGuardObjects.Where(x => x.DatePriost != null || x.DateRemove != null).ToList());
+                //});
+
+            });
+        }
+
+        private RelayCommand _GetSelectedGuardObjects;
+        public RelayCommand GetSelectedGuardObjects {
+            get => _GetSelectedGuardObjects ??= new RelayCommand(async obj => {
+                if (obj == null)
+                    return;
+                List<AccountModel> sub_orgs = obj as List<AccountModel>;
+                List<AccountInfo> FullListGuardObjects = new List<AccountInfo>();
+                foreach (var item in sub_orgs) {
+                    var s_guards = GuardObjectsByAccountsList.Where(x => x.AccountID == item.AccountId).ToList();
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        FullListGuardObjects.AddRange((IEnumerable<AccountInfo>)s_guards.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
+                    });
                 }
                 App.Current.Dispatcher.Invoke((Action)delegate {
-                    SelectedSubOrganization = new ObservableCollection<AccountModel>(SelectedSubOrganization.OrderBy(x => x.AccountEndDate).ToList());
+                    RealGuardObjects = new ObservableCollection<AccountInfo>(FullListGuardObjects.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
+                    RemoveGuardObjects = new ObservableCollection<AccountInfo>(FullListGuardObjects.Where(x => x.DatePriost != null || x.DateRemove != null).ToList());
                 });
-                var s_h_go = GuardObjectsByAccountsList.Where(x => x.AccountID == SelectedHeadOrganization.AccountId).ToList();
-                if (s_h_go == null)
-                    return;
-                foreach (var s_h_go_item in s_h_go)
-                    App.Current.Dispatcher.Invoke((Action)delegate {
-                        SelectedGuardObjects.Add(s_h_go_item);
-                    });
-                if (SelectedGuardObjects.Count() <= 0)
-                    return;
-
-                App.Current.Dispatcher.Invoke((Action)delegate {
-                    RealGuardObjects.Clear();
-                    RemoveGuardObjects.Clear();
-                });
-
-                //foreach (var item in SelectedGuardObjects) {
-
-                //}
-
-                App.Current.Dispatcher.Invoke((Action)delegate {
-                    RealGuardObjects = new ObservableCollection<AccountInfo>(SelectedGuardObjects.Where(x => x.DatePriost == null && x.DateRemove == null).ToList());
-                    RemoveGuardObjects = new ObservableCollection<AccountInfo>(SelectedGuardObjects.Where(x => x.DatePriost != null || x.DateRemove != null).ToList());
-                });
-                
             });
         }
         /// <summary>
@@ -487,21 +439,22 @@ namespace VityazReports.ViewModel {
 
                 MsCrmContext = GetMsCRMContext();
                 List<AccountModel> head_org_list = new List<AccountModel>();
-                if (string.IsNullOrEmpty(SearchText) || string.IsNullOrWhiteSpace(SearchText))
+                //if (string.IsNullOrEmpty(SearchText) || string.IsNullOrWhiteSpace(SearchText))
+                //    head_org_list = (from ab1 in MsCrmContext.AccountBase
+                //                     join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
+                //                     join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                //                     where ab1.ParentAccountId == null
+                //                         //&& aeb1.NewEndDate == null
+                //                         && ab1.DeletionStateCode == 0
+                //                         && ab1.StateCode == 0
+                //                         && ab1.StatusCode == 1
+                //                     select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
+                //                             ).AsNoTracking().Distinct().ToList();
+                //else
                     head_org_list = (from ab1 in MsCrmContext.AccountBase
                                      join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
                                      join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
-                                     where ab1.ParentAccountId == null
-                                         //&& aeb1.NewEndDate == null
-                                         && ab1.DeletionStateCode == 0
-                                         && ab1.StateCode == 0
-                                         && ab1.StatusCode == 1
-                                     select new AccountModel(ab1.AccountId, null, ab1.Name, null, aeb1.NewEndDate.Value.AddHours(5), 0, 0, aeb1.NewFactAddrKladr, 0, sub.FullName)
-                                             ).AsNoTracking().Distinct().ToList();
-                else
-                    head_org_list = (from ab1 in MsCrmContext.AccountBase
-                                     join aeb1 in MsCrmContext.AccountExtensionBase on ab1.AccountId equals aeb1.AccountId
-                                     join sub in MsCrmContext.SystemUserBase on ab1.OwningUser equals sub.SystemUserId
+                                     //join ab in MsCrmContext.AccountBase on ab1.AccountId equals ab.ParentAccountId
                                      where ab1.ParentAccountId == null
                                          //&& aeb1.NewEndDate == null
                                          && ab1.DeletionStateCode == 0
@@ -520,11 +473,15 @@ namespace VityazReports.ViewModel {
                 //    //Loading = false;
                 //    //return;
                 //}
-                foreach (AccountModel item in head_org_list)
-                    App.Current.Dispatcher.Invoke((Action)delegate {
-                        HeadOrganizationList.Add(item);
-                    });
-                //};
+
+                App.Current.Dispatcher.Invoke((Action)delegate {
+                    HeadOrganizationList = new ObservableCollection<AccountModel>(head_org_list);
+                });
+                //foreach (AccountModel item in head_org_list)
+                //    App.Current.Dispatcher.Invoke((Action)delegate {
+                //        HeadOrganizationList.Add(item);
+                //    });
+                ////};
                 //bw.RunWorkerCompleted += (s, e) => {
                 //    Loading = false;
                 //};
@@ -761,13 +718,13 @@ namespace VityazReports.ViewModel {
         private RelayCommand _CalculateTotals;
         public RelayCommand CalculateTotals {
             get => _CalculateTotals ??= new RelayCommand(async obj => {
-                if (GuardObjectsByAccountsList.Count() <= 0) {
+                if (GuardObjectsByAccountsList.Count <= 0) {
                     //TODO: сообщение пользователю
-                    notificationManager.Show(new NotificationContent {
-                        Title = "Ошибка",
-                        Message = string.Format("Список охраняемых объектов пустой"),
-                        Type = NotificationType.Error
-                    });
+                    //notificationManager.Show(new NotificationContent {
+                    //    Title = "Ошибка",
+                    //    Message = string.Format("Список охраняемых объектов пустой"),
+                    //    Type = NotificationType.Error
+                    //});
                     Loading = false;
                     return;
                 }
