@@ -5,22 +5,29 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:VityazReports.Views" xmlns:vm="clr-namespace:VityazReports.ViewModel"
                   mc:Ignorable="d" 
-                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-      d:DesignHeight="450" d:DesignWidth="800"
+                   xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+                  d:DesignHeight="450" d:DesignWidth="800"
       Title="Заявки техникам">
     <mah:MetroWindow.DataContext>
         <vm:ServiceOrdersViewModel/>
     </mah:MetroWindow.DataContext>
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
-            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Фильтр" Command="{Binding OpenFlyoutFilterCommand}">
+            <!--<Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Фильтр" Command="{Binding OpenFlyoutFilterCommand}">
                 <iconPacks:BootstrapIcons Kind="Filter"/>
-            </Button>
+            </Button>-->
             <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Справка" Command="{Binding HelpCommand}">
                 <iconPacks:BootstrapIcons Kind="Question"/>
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <StackPanel Margin="5,2">
+                <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding FilterDate, StringFormat=\{0:dd.MM.yyyy\}}" Padding="5"/>
+            </StackPanel>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
     <Grid>
         <mah:Flyout Panel.ZIndex="2" Position="Right" IsModal="True" IsOpen="{Binding FlyoutFilterOpened}" >
             <StackPanel>
@@ -53,7 +60,46 @@
                 </UserControl>
             </mah:MetroTabItem>
             <mah:MetroTabItem Header="Список">
-                <DataGrid ItemsSource="{Binding ServiceOrdersList}" AutoGenerateColumns="False" SelectionMode="Extended" SelectedItem="{Binding SelectedServiceOrder, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}">
+                <DataGrid x:Name="dg_main" ItemsSource="{Binding ServiceOrdersList, Mode=TwoWay}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedServiceOrder, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="0.5*">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Text=""/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" x:Name="chk" Tag="{Binding t2eb.NewTest2Id}" Margin="5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="Checked">
+                                                <i:InvokeCommandAction Command="{Binding DataContext.OnCheckedCommand, ElementName=dg_main}" CommandParameter="{Binding Tag, ElementName=chk}"/>
+                                            </i:EventTrigger>
+                                            <i:EventTrigger EventName="Unchecked">
+                                                <i:InvokeCommandAction Command="{Binding DataContext.OnCheckedCommand, ElementName=dg_main}" CommandParameter="{Binding Tag, ElementName=chk}"/>
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="№ объекта" Binding="{Binding t2eb.NewNumber}" Width="*"/>
+                        <DataGridTextColumn Header="Назв. объекта" Binding="{Binding t2eb.NewObjName}" Width="2*"/>
+                        <DataGridTextColumn Header="Адрес объекта" Binding="{Binding t2eb.NewAddress}" Width="2*"/>
+                        <DataGridTextColumn Header="Техник" Binding="{Binding smeb.NewName}" Width="*"/>
+                    </DataGrid.Columns>
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Назначить техника на выбранные заявки" Command="{Binding OpenFlyoutServicemanListCommand}"/>
+                            <MenuItem Header="Перенести на другую дату" Command="{Binding OpenFlyoutServicemanListCommand}"/>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                </DataGrid>
+            </mah:MetroTabItem>
+            <!--<mah:MetroTabItem Header="TEST">
+                <DataGrid x:Name="dg_selected" ItemsSource="{Binding SelectedOrders}" AutoGenerateColumns="False" SelectionMode="Extended">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="№ объекта" Binding="{Binding t2eb.NewNumber}"/>
                         <DataGridTextColumn Header="Назв. объекта" Binding="{Binding t2eb.NewObjName}"/>
@@ -66,7 +112,7 @@
                         </ContextMenu>
                     </DataGrid.ContextMenu>
                 </DataGrid>
-            </mah:MetroTabItem>
+            </mah:MetroTabItem>-->
         </mah:MetroAnimatedTabControl>
         
     </Grid>

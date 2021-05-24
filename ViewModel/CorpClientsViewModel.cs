@@ -377,7 +377,7 @@ namespace VityazReports.ViewModel {
                 //}
                 GetSelectedGuardObjects.Execute(s_sub);
                 App.Current.Dispatcher.Invoke((Action)delegate {
-                    SelectedSubOrganization = new ObservableCollection<AccountModel>(s_sub);
+                    SelectedSubOrganization = new ObservableCollection<AccountModel>(s_sub.OrderBy(x=>x.AccountEndDate));
                 });
                 //s_sub = SubOrganizationList.Where(x => x.ParentAccountId == SelectedHeadOrganization.AccountId).ToList();
                 //foreach (var s_item in s_sub) {

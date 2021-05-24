@@ -760,8 +760,13 @@ namespace VityazReports.ViewModel {
                     if (markers.Count <= 0) {
                         //а теперь можно добавлять на карту
                         string name = null;
-                        if (AllObjects.Count() > 0)
-                            name = AllObjects.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
+                        if (AllObjects.Count() > 0) {
+                            //TODO: при выборе 86 экипажа возвращает NULL
+                            if (AllObjects.Any(x => x.ObjTypeId == ObjId.Value))
+                                name = AllObjects.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
+                            else
+                                name = context.ObjType.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
+                        }
                         else
                             name = context.ObjType.FirstOrDefault(x => x.ObjTypeId == ObjId.Value).ObjTypeName;
                         if (string.IsNullOrEmpty(name))
@@ -1218,7 +1223,7 @@ namespace VityazReports.ViewModel {
                 }
                 CreateLegend.Execute(null);
                 CreateToolTip.Execute(null);
-                await Dispatcher.CurrentDispatcher.Invoke(async () => {
+                //await Dispatcher.CurrentDispatcher.Invoke(async () => {
                     ChartVisible = false;
                     Loading = true;
                     GMapMarker gbr = null;
@@ -1318,7 +1323,7 @@ namespace VityazReports.ViewModel {
                     CalculateCommandContent = "Показать/скрыть расчёт";
                     Loading = false;
                     PrivateID = null;
-                });
+                //});
             });
             //}, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР")) == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);
         }

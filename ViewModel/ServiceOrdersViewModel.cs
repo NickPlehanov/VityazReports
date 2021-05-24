@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Interactivity;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using VityazReports.Data;
@@ -23,14 +24,17 @@ namespace VityazReports.ViewModel {
             InitializeMapControl.Execute(null);
 
             FilterDate = DateTime.Now;
-            FlyoutFilterOpened = true;
+            //FlyoutFilterOpened = true;
 
             SelectedMarkers = new ObservableCollection<GMapMarker>();
             ServicemanList = new ObservableCollection<NewServicemanExtensionBase>();
             ServiceOrdersList = new ObservableCollection<ServiceOrdersModel>();
+            SelectedOrders = new ObservableCollection<ServiceOrdersModel>();
             GetServicemansCommand.Execute(null);
 
             notificationManager = new NotificationManager();
+
+            ShowServiceOrderOnMapCommand.Execute(null);
         }
         /// <summary>
         /// Контрол карты
@@ -138,10 +142,50 @@ namespace VityazReports.ViewModel {
             get => _SelectedServiceOrder;
             set {
                 _SelectedServiceOrder = value;
-                if (_SelectedServiceOrder != null)
-                    AddSelectedOrder.Execute(_SelectedServiceOrder);
+                //if (_SelectedServiceOrder != null)
+                //SelectDataGridRow.Execute(_SelectedServiceOrder);
                 OnPropertyChanged(nameof(SelectedServiceOrder));
             }
+        }
+
+        private RelayCommand _SelectDataGridRow;
+        public RelayCommand SelectDataGridRow {
+            get => _SelectDataGridRow ??= new RelayCommand(async obj => {
+                if (obj == null)
+                    return;
+                ServiceOrdersModel som = obj as ServiceOrdersModel;
+                if (som == null)
+                    return;
+                if (SelectedOrders.Contains(som)) {
+                    SelectedOrders.Remove(som);
+                    som.IsSelected = false;
+                    ServiceOrdersList.FirstOrDefault(x => x.t2eb.NewTest2Id == som.t2eb.NewTest2Id).IsSelected = false;
+                }
+                else {
+                    SelectedOrders.Add(som);
+                    som.IsSelected = true;
+                    ServiceOrdersList.FirstOrDefault(x => x.t2eb.NewTest2Id == som.t2eb.NewTest2Id).IsSelected = true;
+                }
+                OnPropertyChanged(nameof(ServiceOrdersList));
+            });
+        }
+        private RelayCommand _OnCheckedCommand;
+        public RelayCommand OnCheckedCommand {
+            get => _OnCheckedCommand ??= new RelayCommand(async obj => {
+                if (obj == null)
+                    return;
+                Guid? _id = obj as Guid?;
+                if (!_id.HasValue)
+                    return;
+                ServiceOrdersModel som = ServiceOrdersList.First(x => x.t2eb.NewTest2Id.Equals(_id));
+                if (som == null)
+                    return;
+                if (SelectedOrders.Contains(som))
+                    SelectedOrders.Remove(som);
+                else
+                    SelectedOrders.Add(som);
+                OnPropertyChanged(nameof(ServiceOrdersList));
+            });
         }
 
         private RelayCommand _AddSelectedOrder;
@@ -149,8 +193,7 @@ namespace VityazReports.ViewModel {
             get => _AddSelectedOrder ??= new RelayCommand(async obj => {
                 if (obj == null)
                     return;
-                var o = obj as ServiceOrdersModel;
-                if (o == null)
+                if (!(obj is ServiceOrdersModel o))
                     return;
                 if (SelectedOrders != null) {
                     var so = SelectedOrders.FirstOrDefault(x => x.t2eb.NewTest2Id == o.t2eb.NewTest2Id);
@@ -276,14 +319,14 @@ namespace VityazReports.ViewModel {
             });
         }
         /// <summary>
-        /// Назначаем техника на выбранные заявки
+        /// Назначаем техника на выбранные заявки по маркерам
         /// </summary>
-        private RelayCommand _AssignServicemanOnSelectedOrdersCommand;
-        public RelayCommand AssignServicemanOnSelectedOrdersCommand {
-            get => _AssignServicemanOnSelectedOrdersCommand ??= new RelayCommand(async obj => {
+        private RelayCommand _AssignServicemanOnSelectedMarkersCommand;
+        public RelayCommand AssignServicemanOnSelectedMarkersCommand {
+            get => _AssignServicemanOnSelectedMarkersCommand ??= new RelayCommand(async obj => {
                 if (SelectedMarkers == null)
                     return;
-                if (SelectedMarkers.Count() <= 0)
+                if (SelectedMarkers.Count <= 0)
                     return;
                 if (SelectedServiceman == null)
                     return;
@@ -295,13 +338,22 @@ namespace VityazReports.ViewModel {
                     element.NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId;
                     msCRMContext.Entry<NewTest2ExtensionBase>(element).State = EntityState.Modified;
                 }
+                //foreach (var item in SelectedOrders) {
+                //    var element = msCRMContext.NewTest2ExtensionBase.Find(item.t2eb.NewTest2Id);
+                //    if (element == null)
+                //        continue;
+                //    element.NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId;
+                //    msCRMContext.Entry<NewTest2ExtensionBase>(element).State = EntityState.Modified;
+                //}
                 await msCRMContext.SaveChangesAsync();
                 SelectServicemanCommand.Execute(SelectedServiceman);
                 SelectedServiceman = null;
                 FlyoutServicemanListOpened = false;
                 SelectedMarkers.Clear();
+                //SelectedOrders.Clear();
                 BrushesMarkersCommand.Execute(null);
-                UnCheckedToggleButtonServicemanListCommand.Execute(null);
+                //UnCheckedToggleButtonServicemanListCommand.Execute(null);
+                //ShowServiceOrderOnMapCommand.Execute(null);
                 notificationManager.Show(new NotificationContent {
                     Title = "Информация",
                     Message = "Данные сохранены",
@@ -309,12 +361,54 @@ namespace VityazReports.ViewModel {
                 });
             });
         }
-
+        /// <summary>
+        /// Назначаем техника на выбранные заявки по заявкам
+        /// </summary>
+        private RelayCommand _AssignServicemanOnSelectedOrdersCommand;
+        public RelayCommand AssignServicemanOnSelectedOrdersCommand {
+            get => _AssignServicemanOnSelectedOrdersCommand ??= new RelayCommand(async obj => {
+                if (SelectedMarkers == null)
+                    return;
+                if (SelectedOrders.Count <= 0)
+                    return;
+                if (SelectedServiceman == null)
+                    return;
+                msCRMContext = GetMsCRMContext();
+                //foreach (var item in SelectedMarkers) {
+                //    var element = msCRMContext.NewTest2ExtensionBase.Find(item.Tag);
+                //    if (element == null)
+                //        continue;
+                //    element.NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId;
+                //    msCRMContext.Entry<NewTest2ExtensionBase>(element).State = EntityState.Modified;
+                //}
+                foreach (var item in SelectedOrders) {
+                    var element = msCRMContext.NewTest2ExtensionBase.Find(item.t2eb.NewTest2Id);
+                    if (element == null)
+                        continue;
+                    element.NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId;
+                    msCRMContext.Entry<NewTest2ExtensionBase>(element).State = EntityState.Modified;
+                }
+                await msCRMContext.SaveChangesAsync();
+                SelectServicemanCommand.Execute(SelectedServiceman);
+                SelectedServiceman = null;
+                FlyoutServicemanListOpened = false;
+                //SelectedMarkers.Clear();
+                SelectedOrders.Clear();
+                //BrushesMarkersCommand.Execute(null);
+                //UnCheckedToggleButtonServicemanListCommand.Execute(null);
+                ShowServiceOrderOnMapCommand.Execute(null);
+                notificationManager.Show(new NotificationContent {
+                    Title = "Информация",
+                    Message = "Данные сохранены",
+                    Type = NotificationType.Success
+                });
+            });
+        }
         private RelayCommand _OpenFlyoutServicemanListCommand;
         public RelayCommand OpenFlyoutServicemanListCommand {
             get => _OpenFlyoutServicemanListCommand ??= new RelayCommand(async obj => {
                 FlyoutServicemanListOpened = !FlyoutServicemanListOpened;
-            }, obj => SelectedMarkers.Count() > 0);
+            }, obj => SelectedMarkers.Count > 0 || SelectedOrders.Count > 0);
         }
         private RelayCommand _SelectServicemanCommand;
         public RelayCommand SelectServicemanCommand {
@@ -330,7 +424,11 @@ namespace VityazReports.ViewModel {
                 if (SelectedServiceman == null)
                     return;
                 ServicemanList.FirstOrDefault(x => x.NewServicemanId == ServicemanID.Value).Checked = true;
-                AssignServicemanOnSelectedOrdersCommand.Execute(SelectedServiceman);
+                if (SelectedOrders.Count > 0)
+                    AssignServicemanOnSelectedOrdersCommand.Execute(SelectedServiceman);
+                if (SelectedMarkers.Count > 0)
+                    AssignServicemanOnSelectedMarkersCommand.Execute(SelectedServiceman);
+                tb.IsChecked = false;
             });
         }
 
