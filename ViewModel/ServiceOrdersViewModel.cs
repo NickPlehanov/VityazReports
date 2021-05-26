@@ -23,7 +23,7 @@ namespace VityazReports.ViewModel {
         public ServiceOrdersViewModel() {
             InitializeMapControl.Execute(null);
 
-            FilterDate = DateTime.Now;
+            FilterDate = NewServiceOrderDate = DateTime.Now;
             //FlyoutFilterOpened = true;
 
             SelectedMarkers = new ObservableCollection<GMapMarker>();
@@ -78,10 +78,19 @@ namespace VityazReports.ViewModel {
                 if (SelectedMarkers != null)
                     SelectedMarkers.Clear();
                 SelectedServiceman = null;
+                ShowServiceOrderOnMapCommand.Execute(null);
                 OnPropertyChanged(nameof(FilterDate));
             }
         }
 
+        private bool _FlyoutNewServiceOrder;
+        public bool FlyoutNewServiceOrder {
+            get => _FlyoutNewServiceOrder;
+            set {
+                _FlyoutNewServiceOrder = value;
+                OnPropertyChanged(nameof(FlyoutNewServiceOrder));
+            }
+        }
         private ObservableCollection<GMapMarker> _SelectedMarkers;
         public ObservableCollection<GMapMarker> SelectedMarkers {
             get => _SelectedMarkers;
@@ -142,12 +151,83 @@ namespace VityazReports.ViewModel {
             get => _SelectedServiceOrder;
             set {
                 _SelectedServiceOrder = value;
-                //if (_SelectedServiceOrder != null)
-                //SelectDataGridRow.Execute(_SelectedServiceOrder);
                 OnPropertyChanged(nameof(SelectedServiceOrder));
             }
         }
 
+        private DateTime _NewServiceOrderDate;
+        public DateTime NewServiceOrderDate {
+            get => _NewServiceOrderDate;
+            set {
+                _NewServiceOrderDate = value;
+                OnPropertyChanged(nameof(NewServiceOrderDate));
+            }
+        }
+
+        private string _NewServiceOrderObjectNumber;
+        public string NewServiceOrderObjectNumber {
+            get => _NewServiceOrderObjectNumber;
+            set {
+                _NewServiceOrderObjectNumber = value;
+                OnPropertyChanged(nameof(NewServiceOrderObjectNumber));
+            }
+        }
+
+        private string _NewServiceOrderDescription;
+        public string NewServiceOrderDescription {
+            get => _NewServiceOrderDescription;
+            set {
+                _NewServiceOrderDescription = value;
+                OnPropertyChanged(nameof(NewServiceOrderDescription));
+            }
+        }
+        private RelayCommand _AddNewServiceOrderCommand;
+        public RelayCommand AddNewServiceOrderCommand {
+            get => _AddNewServiceOrderCommand ??= new RelayCommand(async obj => {
+
+            },obj=>!string.IsNullOrEmpty(NewServiceOrderObjectNumber) && !string.IsNullOrEmpty(NewServiceOrderDescription));
+        }
+        private RelayCommand _FlyoutNewServiceOrderVisibleCommand;
+        public RelayCommand FlyoutNewServiceOrderVisibleCommand {
+            get => _FlyoutNewServiceOrderVisibleCommand ??= new RelayCommand(async obj => {
+                FlyoutNewServiceOrder = !FlyoutNewServiceOrder;
+            });
+        }
+        private RelayCommand _ChangeDateOrderCommand;
+        public RelayCommand ChangeDateOrderCommand {
+            get => _ChangeDateOrderCommand ??= new RelayCommand(async obj => {
+                DateTime? dt = obj as DateTime?;
+                if (SelectedServiceOrder == null || !dt.HasValue)
+                    return;
+                SelectedServiceOrder.t2eb.NewDate = dt.Value.AddHours(-5);
+
+                msCRMContext = GetMsCRMContext();
+                if (!ServiceOrdersList.Any(x => x.t2eb.NewNumber.Value.Equals(SelectedServiceOrder.t2eb.NewNumber) && x.t2eb.NewTest2Id != SelectedServiceOrder.t2eb.NewTest2Id)) {
+                    var local = msCRMContext.Set<NewTest2ExtensionBase>().Local.FirstOrDefault(entry => entry.NewTest2Id.Equals(SelectedServiceOrder.t2eb.NewTest2Id));
+                    if (local != null)
+                        msCRMContext.Entry(local).State = EntityState.Detached;
+                    msCRMContext.Entry<NewTest2ExtensionBase>(SelectedServiceOrder.t2eb).State = EntityState.Modified;
+                }
+                else {
+                    var list = ServiceOrdersList.Where(x => x.t2eb.NewNumber.Value.Equals(SelectedServiceOrder.t2eb.NewNumber) && x.t2eb.NewTest2Id != SelectedServiceOrder.t2eb.NewTest2Id);
+                    foreach (var item in list) {
+                        item.t2eb.NewDate = dt.Value.AddHours(-5);
+                        var local = msCRMContext.Set<NewTest2ExtensionBase>().Local.FirstOrDefault(entry => entry.NewTest2Id.Equals(item.t2eb.NewTest2Id));
+                        if (local != null)
+                            msCRMContext.Entry(local).State = EntityState.Detached;
+                        msCRMContext.Entry<NewTest2ExtensionBase>(item.t2eb).State = EntityState.Modified;
+                    }
+                }
+                await msCRMContext.SaveChangesAsync();
+
+                notificationManager.Show(new NotificationContent {
+                    Title = "Информация",
+                    Message = "Данные сохранены",
+                    Type = NotificationType.Success
+                });
+                ShowServiceOrderOnMapCommand.Execute(null);
+            });
+        }
         private RelayCommand _SelectDataGridRow;
         public RelayCommand SelectDataGridRow {
             get => _SelectDataGridRow ??= new RelayCommand(async obj => {
@@ -257,8 +337,8 @@ namespace VityazReports.ViewModel {
                               && t2b.Statuscode == 1
                               select new ServiceOrdersModel(t2eb, smeb, andr.NewLatitude, andr.NewLonitude)
                               ).AsNoTracking().Distinct().ToList();
-                if (orders.Count() <= 0)
-                    return;
+                //if (orders.Count <= 0)
+                //    return;
                 ServiceOrdersList = new ObservableCollection<ServiceOrdersModel>(orders);
                 //TODO: сообщение юзверю
                 foreach (var item in orders) {
@@ -314,7 +394,7 @@ namespace VityazReports.ViewModel {
             get => _GetServicemansCommand ??= new RelayCommand(async obj => {
                 msCRMContext = GetMsCRMContext();
                 //TODO: техники пс или обычные
-                var sm = msCRMContext.NewServicemanExtensionBase.Where(x => x.NewCategory == 6).AsNoTracking().ToList();
+                var sm = msCRMContext.NewServicemanExtensionBase.Where(x => x.NewCategory == 6 && x.NewIswork==true).AsNoTracking().ToList();
                 ServicemanList = new ObservableCollection<NewServicemanExtensionBase>(sm);
             });
         }

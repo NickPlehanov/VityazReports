@@ -16,8 +16,15 @@
             <!--<Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Фильтр" Command="{Binding OpenFlyoutFilterCommand}">
                 <iconPacks:BootstrapIcons Kind="Filter"/>
             </Button>-->
+            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Создать заявку" Command="{Binding FlyoutNewServiceOrderVisibleCommand}">
+                <iconPacks:EvaIcons Kind="PersonAdd"/>
+            </Button>
+            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Обновить" Command="{Binding ShowServiceOrderOnMapCommand}">
+                <iconPacks:EvaIcons Kind="Refresh"/>
+            </Button>
             <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Справка" Command="{Binding HelpCommand}">
-                <iconPacks:BootstrapIcons Kind="Question"/>
+                <iconPacks:EvaIcons Kind="QuestionMarkCircle"/>
+                <!--<iconPacks:BootstrapIcons Kind="Question"/>-->
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
@@ -48,6 +55,30 @@
                 </ListBox>
             </StackPanel>
         </mah:Flyout>
+        <mah:Flyout Panel.ZIndex="2" Position="Bottom" IsModal="True" IsOpen="{Binding FlyoutNewServiceOrder}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="4*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="Дата заявки" Margin="5"/>
+                <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding NewServiceOrderDate, StringFormat=\{0:dd.MM.yyyy\}}" Margin="5"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="№ объекта" Margin="5"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewServiceOrderObjectNumber}" Margin="5"/>
+                <Label Grid.Row="2" Grid.Column="0" Content="Техник" Margin="5"/>
+                <mah:DropDownButton Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ServicemanList}" DisplayMemberPath="NewName"  Margin="5"/>
+                <Label Grid.Row="3" Grid.Column="0" Content="Описание заявки" Margin="5"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewServiceOrderDescription}" Margin="5"/>
+                <Button Grid.Row="4" Grid.ColumnSpan="2" Margin="5" Content="Создать" Command="{Binding AddNewServiceOrderCommand}"/>
+            </Grid>
+        </mah:Flyout>
         <mah:MetroAnimatedTabControl>
             <mah:MetroTabItem Header="Карта">
                 <UserControl Content="{Binding gmaps_contol}">
@@ -60,7 +91,21 @@
                 </UserControl>
             </mah:MetroTabItem>
             <mah:MetroTabItem Header="Список">
-                <DataGrid x:Name="dg_main" ItemsSource="{Binding ServiceOrdersList, Mode=TwoWay}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedServiceOrder, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}">
+                <DataGrid x:Name="dg_main" ItemsSource="{Binding ServiceOrdersList, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedServiceOrder, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}">
+                    <DataGrid.Resources>
+                        <DataTemplate x:Key="dt_DateOrder">
+                            <DatePicker x:Name="dp" SelectedDate="{Binding Path=t2eb.DateOrder,StringFormat=\{0:dd.MM.yyyy\}}">
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="CalendarClosed">
+                                        <i:InvokeCommandAction Command="{Binding DataContext.ChangeDateOrderCommand, ElementName=dg_main}" CommandParameter="{Binding SelectedDate, ElementName=dp}"/>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </DatePicker>
+                        </DataTemplate>
+                        <!--<DataTemplate x:Key="edt_DateOrder">
+                            <DatePicker SelectedDate="{Binding Mode=TwoWay, Path=t2eb.DateOrder,StringFormat=\{0:dd.MM.yyyy\}, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DataTemplate>-->
+                    </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Width="0.5*">
                             <DataGridTemplateColumn.HeaderTemplate>
@@ -85,6 +130,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
+                        <DataGridTemplateColumn CellTemplate="{StaticResource dt_DateOrder}" Header="Дата"/>
                         <DataGridTextColumn Header="№ объекта" Binding="{Binding t2eb.NewNumber}" Width="*"/>
                         <DataGridTextColumn Header="Назв. объекта" Binding="{Binding t2eb.NewObjName}" Width="2*"/>
                         <DataGridTextColumn Header="Адрес объекта" Binding="{Binding t2eb.NewAddress}" Width="2*"/>

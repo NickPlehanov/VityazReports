@@ -102,6 +102,14 @@ namespace VityazReports.Models
         [Column("New_createorders")]
         [StringLength(100)]
         public string NewCreateorders { get; set; }
+        private DateTime? _DateOrder { get; set; }
+        [NotMapped]
+        public DateTime? DateOrder {
+            get => NewDate.Value.AddHours(5);
+            set {
+                _DateOrder = value.Value;
+            }
+        }
 
         [ForeignKey(nameof(NewAndromedaServiceorder))]
         [InverseProperty(nameof(NewAndromedaBase.NewTest2ExtensionBase))]
