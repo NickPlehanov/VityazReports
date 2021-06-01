@@ -5,7 +5,10 @@ using Notifications.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interactivity;
@@ -18,12 +21,12 @@ using VityazReports.Models.ServiceOrders;
 
 namespace VityazReports.ViewModel {
     public class ServiceOrdersViewModel : BaseViewModel {
-        private MsCRMContext msCRMContext;
+        private MsCRMContext msCRMContext = new MsCRMContext();
         NotificationManager notificationManager;
         public ServiceOrdersViewModel() {
             InitializeMapControl.Execute(null);
 
-            FilterDate = NewServiceOrderDate = DateTime.Now;
+            FilterDate = NewServiceOrderDate = OrderDate = DateTime.Now;
             //FlyoutFilterOpened = true;
 
             SelectedMarkers = new ObservableCollection<GMapMarker>();
@@ -34,7 +37,19 @@ namespace VityazReports.ViewModel {
 
             notificationManager = new NotificationManager();
 
-            ShowServiceOrderOnMapCommand.Execute(null);
+            //ShowServiceOrderOnMapCommand.Execute(null);
+
+        }
+        /// <summary>
+        /// На какое число создаются заявки
+        /// </summary>
+        private DateTime _OrderDate;
+        public DateTime OrderDate {
+            get => _OrderDate;
+            set {
+                _OrderDate = value;
+                OnPropertyChanged(nameof(OrderDate));
+            }
         }
         /// <summary>
         /// Контрол карты
@@ -78,7 +93,7 @@ namespace VityazReports.ViewModel {
                 if (SelectedMarkers != null)
                     SelectedMarkers.Clear();
                 SelectedServiceman = null;
-                ShowServiceOrderOnMapCommand.Execute(null);
+                //ShowServiceOrderOnMapCommand.Execute(null);
                 OnPropertyChanged(nameof(FilterDate));
             }
         }
@@ -181,11 +196,250 @@ namespace VityazReports.ViewModel {
                 OnPropertyChanged(nameof(NewServiceOrderDescription));
             }
         }
+
+        private NewServicemanExtensionBase _NewServiceOrderSelectedServiceman;
+        public NewServicemanExtensionBase NewServiceOrderSelectedServiceman {
+            get => _NewServiceOrderSelectedServiceman;
+            set {
+                _NewServiceOrderSelectedServiceman = value;
+                OnPropertyChanged(nameof(NewServiceOrderSelectedServiceman));
+            }
+        }
+
+
+        private bool _IsShowGuardObjectsWithDownTimeReglaments;
+        public bool IsShowGuardObjectsWithDownTimeReglaments {
+            get => _IsShowGuardObjectsWithDownTimeReglaments;
+            set {
+                _IsShowGuardObjectsWithDownTimeReglaments = value;
+                OnPropertyChanged(nameof(IsShowGuardObjectsWithDownTimeReglaments));
+            }
+        }
+
+        private bool _Loading;
+        public bool Loading {
+            get => _Loading;
+            set {
+                _Loading = value;
+                OnPropertyChanged(nameof(Loading));
+            }
+        }
+        private ObservableCollection<ServiceOrderDiffModel> _DiffModel = new ObservableCollection<ServiceOrderDiffModel>();
+        public ObservableCollection<ServiceOrderDiffModel> DiffModel {
+            get => _DiffModel;
+            set {
+                _DiffModel = value;
+                OnPropertyChanged(nameof(DiffModel));
+            }
+        }
+        /// <summary>
+        /// Получаем все объекты, у которых есть регламент на ПС и связываем с сущностью андромеды, в зависимости от цвета маркера становится ясно, на сколько всё плохо.
+        /// </summary>
+        private RelayCommand _ShowGuardObjectsWithDownTimeReglamentsCommand;
+        public RelayCommand ShowGuardObjectsWithDownTimeReglamentsCommand {
+            get => _ShowGuardObjectsWithDownTimeReglamentsCommand ??= new RelayCommand(async obj => {
+                //if (obj == null)
+                gmaps_contol.Markers.Clear();
+                //else {
+                //var andr = msCRMContext.NewAndromedaExtensionBase.Include(x => x.NewAndromeda).FirstOrDefault(x => x.NewNumber.Equals(obj));
+                //if (andr != null) {
+                //    var m = gmaps_contol.Markers.FirstOrDefault(x => x.Tag.ToString() == andr.NewAndromedaId.ToString() && andr.NewAndromeda.Statecode == 0 && andr.NewAndromeda.Statuscode == 1 && andr.NewAndromeda.DeletionStateCode == 0);
+                //    if (m != null)
+                //gmaps_contol.Markers.Remove(m);
+                //}
+                //}
+
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += (s, e) => {
+                    Loading = true;
+                    var datas = (from gob in msCRMContext.NewGuardObjectBase
+                                 join goeb in msCRMContext.NewGuardObjectExtensionBase on gob.NewGuardObjectId equals goeb.NewGuardObjectId
+                                 join andr in msCRMContext.NewAndromedaExtensionBase on goeb.NewObjectNumber equals andr.NewNumber
+                                 join a in msCRMContext.NewAndromedaBase on andr.NewAndromedaId equals a.NewAndromedaId
+                                 //join t2eb in msCRMContext.NewTest2ExtensionBase on goeb.NewObjectNumber equals t2eb.NewNumber
+                                 join t2eb in msCRMContext.NewTest2ExtensionBase on andr.NewAndromedaId equals t2eb.NewAndromedaServiceorder
+                                 join t2b in msCRMContext.NewTest2Base on t2eb.NewTest2Id equals t2b.NewTest2Id
+                                 where gob.DeletionStateCode == 0
+                                     && gob.Statecode == 0
+                                     && gob.Statuscode == 1
+                                     && goeb.NewRrPs == true
+                                     && goeb.NewPriostDate == null
+                                     && goeb.NewObjDeleteDate == null
+                                     && goeb.NewRemoveDate == null
+                                     && t2b.DeletionStateCode == 0
+                                     && t2b.Statecode == 0
+                                     && t2b.Statuscode == 1
+                                     && a.DeletionStateCode == 0
+                                     && a.Statecode == 0
+                                     && a.Statuscode == 1
+                                 //&& t2eb.NewNumber.ToString().Contains(obj == null ? "" : obj.ToString())
+                                 //&& goeb.NewObjectNumber==9520
+                                 select new { goeb, t2eb, andr }).AsNoTracking().Distinct().ToList();
+                    if (datas == null)
+                        return;
+                    var grp_result = datas.GroupBy(a => new { a.goeb.NewObjectNumber }).ToList();
+                    foreach (var grp_item in grp_result) {
+                        foreach (var item in grp_item.Where(x => x.t2eb.NewDate.HasValue).ToList()) {
+                            if (item.t2eb.NewDate.Value.AddHours(5).Date <= DateTime.Now.Date) {
+                                var diff = DiffModel.FirstOrDefault(x => x.ObjectID == item.andr.NewAndromedaId);
+                                if (diff == null)
+                                    Application.Current.Dispatcher.Invoke(() => {
+                                        DiffModel.Add(new ServiceOrderDiffModel(item.andr.NewAndromedaId, item.goeb.NewObjectNumber.Value, item.t2eb.NewDate.Value.AddHours(5),
+                                            null, Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays), null));
+                                    });
+                                else if (!diff.OldDays.HasValue) {
+                                    diff.OldDate = item.t2eb.NewDate.Value.AddHours(5);
+                                    diff.OldDays = Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays);
+                                }
+                                else if (Math.Abs(diff.OldDays.Value) > Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays) && item.t2eb.NewResult == 1) {
+                                    diff.OldDate = item.t2eb.NewDate.Value.AddHours(5);
+                                    diff.OldDays = Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays);
+                                }
+                            }
+                            else {
+                                var diff = DiffModel.FirstOrDefault(x => x.ObjectID == item.andr.NewAndromedaId);
+                                if (diff == null)
+                                    Application.Current.Dispatcher.Invoke(() => {
+                                        DiffModel.Add(new ServiceOrderDiffModel(item.andr.NewAndromedaId, item.goeb.NewObjectNumber.Value, null,
+                                            item.t2eb.NewDate, null, Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays)));
+                                    });
+                                else if (!diff.NewDay.HasValue) {
+                                    diff.NewDate = item.t2eb.NewDate.Value.AddHours(5);
+                                    diff.NewDay = Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays);
+                                }
+                                else if (Math.Abs(diff.NewDay.Value) > Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays)) {
+                                    diff.NewDate = item.t2eb.NewDate.Value.AddHours(5);
+                                    diff.NewDay = Math.Abs((DateTime.Now.Date - item.t2eb.NewDate).Value.TotalDays);
+                                }
+                            }
+
+                        }
+                        //DrawMarker.Execute(null);
+                    }
+                    App.Current.Dispatcher.Invoke((Action)delegate {
+                        foreach (var diffmodel_item in DiffModel) {
+                            NewAndromedaExtensionBase extensionBase = msCRMContext.NewAndromedaExtensionBase.FirstOrDefault(x => x.NewAndromedaId == diffmodel_item.ObjectID);
+                            if (extensionBase == null)
+                                continue;
+                            GMapMarker mark = gmaps_contol.Markers.FirstOrDefault(x => x.Tag.ToString() == diffmodel_item.ObjectID.ToString());
+                            if (mark == null) {
+                                GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(extensionBase.NewLatitude), Convert.ToDouble(extensionBase.NewLonitude))) {
+                                    Shape = new Ellipse {
+                                        Width = 20,
+                                        Height = 20,
+                                        Stroke = diffmodel_item.OldDays < 30 ? Brushes.Green :
+                                        diffmodel_item.OldDays < 50 ? Brushes.Blue :
+                                        diffmodel_item.OldDays < 100 ? Brushes.Yellow :
+                                        Brushes.Red,
+                                        StrokeThickness = 7.5,
+                                        ToolTip = string.Format("{0} ({1})" + Environment.NewLine + "{2}" 
+                                        + Environment.NewLine+ "Пред. {3:N} ({4})"
+                                        + Environment.NewLine + "След. {5:N} ({6})",
+                                            extensionBase.NewNumber, extensionBase.NewName, extensionBase.NewAddress
+                                            ,diffmodel_item.OldDays,diffmodel_item.OldDate,
+                                            diffmodel_item.NewDay,diffmodel_item.NewDate
+                                            ),
+                                        AllowDrop = false
+                                    }
+                                };
+                                marker.Tag = extensionBase.NewAndromedaId;
+                                marker.Shape.MouseLeftButtonDown += Shape_MouseLeftButtonDownAsync;
+                                gmaps_contol.Markers.Add(marker);
+                            }
+                            else {
+                                Ellipse ellipse = mark.Shape as Ellipse;
+                                ellipse.Stroke = diffmodel_item.OldDays < 30 ? Brushes.Green :
+                                        diffmodel_item.OldDays < 50 ? Brushes.Blue :
+                                        diffmodel_item.OldDays < 100 ? Brushes.Yellow :
+                                        Brushes.Red;
+                                mark.Tag = extensionBase.NewAndromedaId;
+                                mark.Shape.MouseLeftButtonDown += Shape_MouseLeftButtonDownAsync;
+                                gmaps_contol.Markers.Add(mark);
+                            }
+                        }
+                    });
+                };
+                bw.RunWorkerCompleted += (s, e) => {
+                    Loading = false;
+                };
+                bw.RunWorkerAsync();
+            });
+        }
+        /// <summary>
+        /// Создаем новую заявку технику
+        /// </summary>
         private RelayCommand _AddNewServiceOrderCommand;
         public RelayCommand AddNewServiceOrderCommand {
             get => _AddNewServiceOrderCommand ??= new RelayCommand(async obj => {
+                //получаем объект Андромеды. 
+                //TODO: требуется однозначно определить объект андромеды
+                msCRMContext = GetMsCRMContext();
+                List<NewAndromedaExtensionBase> andr_list = msCRMContext.NewAndromedaExtensionBase.Where(x => x.NewNumber.Value.ToString().Equals(NewServiceOrderObjectNumber) && x.NewAndromeda.DeletionStateCode == 0 && x.NewAndromeda.Statecode == 0 && x.NewAndromeda.Statuscode == 1).AsNoTracking().ToList();
+                if (andr_list.Count <= 0) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Объект Андромеды не может быть определен. Проверьте правильность номера",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                if (andr_list.Count > 1) {
+                    //метод по которому определяем однозначно
+                }
 
-            },obj=>!string.IsNullOrEmpty(NewServiceOrderObjectNumber) && !string.IsNullOrEmpty(NewServiceOrderDescription));
+                if (NewServiceOrderSelectedServiceman == null) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Выберите техника",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                //Требуется определить пользователя
+                SystemUserBase sub = msCRMContext.SystemUserBase.FirstOrDefault(x => x.DomainName.Contains(Environment.UserName));
+                if (sub == null) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Пользователь не определен",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                Guid id = Guid.NewGuid();
+                NewTest2Base t2b = new NewTest2Base {
+                    NewTest2Id = id,
+                    CreatedBy = sub.SystemUserId,
+                    CreatedOn = DateTime.Now.AddHours(-5),
+                    DeletionStateCode = 0,
+                    ModifiedBy = sub.SystemUserId,
+                    ModifiedOn = DateTime.Now.AddHours(-5),
+                    Statecode = 0,
+                    Statuscode = 1,
+                    OwningUser = sub.SystemUserId,
+                    OwningBusinessUnit = sub.BusinessUnitId
+                };
+
+                msCRMContext.Add<NewTest2Base>(t2b).State = EntityState.Added;
+                NewTest2ExtensionBase t2eb = new NewTest2ExtensionBase {
+                    NewTest2Id = id,
+                    NewWhoInit = sub.LastName,
+                    NewName = string.IsNullOrEmpty(NewServiceOrderDescription) ? "Регламент ПС" : NewServiceOrderDescription,
+                    NewDate = NewServiceOrderDate.AddHours(-5),
+                    NewCategory = 1,
+                    NewAndromedaServiceorder = andr_list[0].NewAndromedaId,
+                    NewObjName = andr_list[0].NewName,
+                    NewNumber = andr_list[0].NewNumber,
+                    NewAddress = andr_list[0].NewAddress,
+                    NewServicemanServiceorderPs = NewServiceOrderSelectedServiceman.NewServicemanId
+                };
+                msCRMContext.Add<NewTest2ExtensionBase>(t2eb).State = EntityState.Added;
+                int result = await msCRMContext.SaveChangesAsync();
+                notificationManager.Show(new NotificationContent {
+                    Title = "",
+                    Message = "Заявка создана",
+                    Type = NotificationType.Success
+                });
+            }, obj => !string.IsNullOrEmpty(NewServiceOrderObjectNumber));
         }
         private RelayCommand _FlyoutNewServiceOrderVisibleCommand;
         public RelayCommand FlyoutNewServiceOrderVisibleCommand {
@@ -225,7 +479,7 @@ namespace VityazReports.ViewModel {
                     Message = "Данные сохранены",
                     Type = NotificationType.Success
                 });
-                ShowServiceOrderOnMapCommand.Execute(null);
+                //ShowServiceOrderOnMapCommand.Execute(null);
             });
         }
         private RelayCommand _SelectDataGridRow;
@@ -312,55 +566,58 @@ namespace VityazReports.ViewModel {
                 gmaps_contol.DragButton = MouseButton.Left;
                 gmaps_contol.CenterPosition = new PointLatLng(55.159904, 61.401919);
                 gmaps_contol.IgnoreMarkerOnMouseWheel = true;
+
+                ShowGuardObjectsWithDownTimeReglamentsCommand.Execute(null);
+
             });
         }
 
         /// <summary>
         /// Отображаем на карте объекты, по которым есть заявки на указанную дату
         /// </summary>
-        private RelayCommand _ShowServiceOrderOnMapCommand;
-        public RelayCommand ShowServiceOrderOnMapCommand {
-            get => _ShowServiceOrderOnMapCommand ??= new RelayCommand(async obj => {
-                msCRMContext = GetMsCRMContext();
-                gmaps_contol.Markers.Clear();
-                if (msCRMContext == null)
-                    return;
-                //TODO: сообщение юзверю
-                //TODO: переключатель мужду ос/пс
-                var orders = (from t2eb in msCRMContext.NewTest2ExtensionBase
-                              join t2b in msCRMContext.NewTest2Base on t2eb.NewTest2Id equals t2b.NewTest2Id
-                              join andr in msCRMContext.NewAndromedaExtensionBase on t2eb.NewAndromedaServiceorder equals andr.NewAndromedaId
-                              join smeb in msCRMContext.NewServicemanExtensionBase on t2eb.NewServicemanServiceorderPs equals smeb.NewServicemanId
-                              where t2eb.NewDate.Value.Date == FilterDate.Date.AddHours(-5).Date
-                              && t2b.DeletionStateCode == 0
-                              && t2b.Statecode == 0
-                              && t2b.Statuscode == 1
-                              select new ServiceOrdersModel(t2eb, smeb, andr.NewLatitude, andr.NewLonitude)
-                              ).AsNoTracking().Distinct().ToList();
-                //if (orders.Count <= 0)
-                //    return;
-                ServiceOrdersList = new ObservableCollection<ServiceOrdersModel>(orders);
-                //TODO: сообщение юзверю
-                foreach (var item in orders) {
-                    GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(item.Latitude), Convert.ToDouble(item.Longitude))) {
-                        Shape = new Ellipse {
-                            Width = 20,
-                            Height = 20,
-                            Stroke = Brushes.Green,
-                            //Stroke = c1.GetDistanceTo(c2) > 150.0 ? Brushes.Red : Brushes.Purple,
-                            StrokeThickness = 7.5,
-                            //ToolTip = string.Format("{0} - {1} ({2})", item.Number, item.Name, item.Address),
-                            ToolTip = string.Format("{0} ({1})" + Environment.NewLine + "{2}",
-                                item.t2eb.NewNumber, item.t2eb.NewObjName, item.t2eb.NewAddress),
-                            AllowDrop = false
-                        }
-                    };
-                    marker.Tag = item.t2eb.NewTest2Id;
-                    marker.Shape.MouseLeftButtonDown += Shape_MouseLeftButtonDownAsync;
-                    gmaps_contol.Markers.Add(marker);
-                }
-            });
-        }
+        //private RelayCommand _ShowServiceOrderOnMapCommand;
+        //public RelayCommand ShowServiceOrderOnMapCommand {
+        //    get => _ShowServiceOrderOnMapCommand ??= new RelayCommand(async obj => {
+        //        msCRMContext = GetMsCRMContext();
+        //        gmaps_contol.Markers.Clear();
+        //        if (msCRMContext == null)
+        //            return;
+        //        //TODO: сообщение юзверю
+        //        //TODO: переключатель мужду ос/пс
+        //        var orders = (from t2eb in msCRMContext.NewTest2ExtensionBase
+        //                      join t2b in msCRMContext.NewTest2Base on t2eb.NewTest2Id equals t2b.NewTest2Id
+        //                      join andr in msCRMContext.NewAndromedaExtensionBase on t2eb.NewAndromedaServiceorder equals andr.NewAndromedaId
+        //                      join smeb in msCRMContext.NewServicemanExtensionBase on t2eb.NewServicemanServiceorderPs equals smeb.NewServicemanId
+        //                      where t2eb.NewDate.Value.Date == FilterDate.Date.AddHours(-5).Date
+        //                      && t2b.DeletionStateCode == 0
+        //                      && t2b.Statecode == 0
+        //                      && t2b.Statuscode == 1
+        //                      select new ServiceOrdersModel(t2eb, smeb, andr.NewLatitude, andr.NewLonitude)
+        //                      ).AsNoTracking().Distinct().ToList();
+        //        //if (orders.Count <= 0)
+        //        //    return;
+        //        ServiceOrdersList = new ObservableCollection<ServiceOrdersModel>(orders);
+        //        //TODO: сообщение юзверю
+        //        foreach (var item in orders) {
+        //            GMapMarker marker = new GMapMarker(new PointLatLng(Convert.ToDouble(item.Latitude), Convert.ToDouble(item.Longitude))) {
+        //                Shape = new Ellipse {
+        //                    Width = 20,
+        //                    Height = 20,
+        //                    Stroke = Brushes.Green,
+        //                    //Stroke = c1.GetDistanceTo(c2) > 150.0 ? Brushes.Red : Brushes.Purple,
+        //                    StrokeThickness = 7.5,
+        //                    //ToolTip = string.Format("{0} - {1} ({2})", item.Number, item.Name, item.Address),
+        //                    ToolTip = string.Format("{0} ({1})" + Environment.NewLine + "{2}",
+        //                        item.t2eb.NewNumber, item.t2eb.NewObjName, item.t2eb.NewAddress),
+        //                    AllowDrop = false
+        //                }
+        //            };
+        //            marker.Tag = item.t2eb.NewTest2Id;
+        //            marker.Shape.MouseLeftButtonDown += Shape_MouseLeftButtonDownAsync;
+        //            gmaps_contol.Markers.Add(marker);
+        //        }
+        //    });
+        //}
 
         private RelayCommand _ClearSelectionCommand;
         public RelayCommand ClearSelectionCommand {
@@ -373,16 +630,25 @@ namespace VityazReports.ViewModel {
         private RelayCommand _BrushesMarkersCommand;
         public RelayCommand BrushesMarkersCommand {
             get => _BrushesMarkersCommand ??= new RelayCommand(async obj => {
+                if (SelectedMarkers == null)
+                    SelectedMarkers = new ObservableCollection<GMapMarker>();
                 var s_markers = gmaps_contol.Markers.Intersect(SelectedMarkers).ToList();
                 foreach (var s_item in s_markers) {
                     Ellipse ellipse = s_item.Shape as Ellipse;
-                    ellipse.Stroke = Brushes.Red;
+                    ellipse.Stroke = Brushes.Purple;
                 }
 
                 var us_markers = gmaps_contol.Markers.Except(SelectedMarkers).ToList();
                 foreach (var us_item in us_markers) {
                     Ellipse ellipse = us_item.Shape as Ellipse;
-                    ellipse.Stroke = Brushes.Green;
+                    //ellipse.Stroke = Brushes.Green;
+                    ServiceOrderDiffModel diffModel = DiffModel.FirstOrDefault(x => x.ObjectID.ToString() == us_item.Tag.ToString());
+                    if (diffModel == null)
+                        continue;
+                    ellipse.Stroke = diffModel.OldDays < 30 ? Brushes.Green :
+                             diffModel.OldDays < 50 ? Brushes.Blue :
+                             diffModel.OldDays < 100 ? Brushes.Yellow :
+                             Brushes.Red;
                 }
             });
         }
@@ -394,7 +660,7 @@ namespace VityazReports.ViewModel {
             get => _GetServicemansCommand ??= new RelayCommand(async obj => {
                 msCRMContext = GetMsCRMContext();
                 //TODO: техники пс или обычные
-                var sm = msCRMContext.NewServicemanExtensionBase.Where(x => x.NewCategory == 6 && x.NewIswork==true).AsNoTracking().ToList();
+                var sm = msCRMContext.NewServicemanExtensionBase.Where(x => x.NewCategory == 6 && x.NewIswork == true).AsNoTracking().ToList();
                 ServicemanList = new ObservableCollection<NewServicemanExtensionBase>(sm);
             });
         }
@@ -411,20 +677,66 @@ namespace VityazReports.ViewModel {
                 if (SelectedServiceman == null)
                     return;
                 msCRMContext = GetMsCRMContext();
-                foreach (var item in SelectedMarkers) {
-                    var element = msCRMContext.NewTest2ExtensionBase.Find(item.Tag);
-                    if (element == null)
-                        continue;
-                    element.NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId;
-                    msCRMContext.Entry<NewTest2ExtensionBase>(element).State = EntityState.Modified;
-                }
-                //foreach (var item in SelectedOrders) {
-                //    var element = msCRMContext.NewTest2ExtensionBase.Find(item.t2eb.NewTest2Id);
+                //foreach (var item in SelectedMarkers) {
+                //    var element = msCRMContext.NewTest2ExtensionBase.Find(item.Tag);
                 //    if (element == null)
                 //        continue;
                 //    element.NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId;
                 //    msCRMContext.Entry<NewTest2ExtensionBase>(element).State = EntityState.Modified;
                 //}
+
+                SystemUserBase sub = msCRMContext.SystemUserBase.FirstOrDefault(x => x.DomainName.Contains(Environment.UserName));
+                if (sub == null) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Пользователь не определен",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+
+                foreach (var item in SelectedMarkers) {
+                    var andromeda_element = msCRMContext.NewAndromedaExtensionBase.FirstOrDefault(x => x.NewAndromedaId.ToString() == item.Tag.ToString());
+                    if (andromeda_element == null)
+                        continue;
+                    Guid id = Guid.NewGuid();
+                    NewTest2Base t2b = new NewTest2Base {
+                        NewTest2Id = id,
+                        CreatedBy = sub.SystemUserId,
+                        CreatedOn = DateTime.Now.AddHours(-5),
+                        DeletionStateCode = 0,
+                        ModifiedBy = sub.SystemUserId,
+                        ModifiedOn = DateTime.Now.AddHours(-5),
+                        Statecode = 0,
+                        Statuscode = 1,
+                        OwningUser = sub.SystemUserId,
+                        OwningBusinessUnit = sub.BusinessUnitId
+                    };
+
+                    msCRMContext.Add<NewTest2Base>(t2b).State = EntityState.Added;
+                    NewTest2ExtensionBase t2eb = new NewTest2ExtensionBase {
+                        NewTest2Id = id,
+                        NewWhoInit = sub.LastName,
+                        NewName = "Регламент ПС",
+                        NewDate = OrderDate.AddHours(-5),
+                        NewCategory = 1,
+                        NewAndromedaServiceorder = andromeda_element.NewAndromedaId,
+                        NewObjName = andromeda_element.NewName,
+                        NewNumber = andromeda_element.NewNumber,
+                        NewAddress = andromeda_element.NewAddress,
+                        //NewServicemanServiceorderPs = NewServiceOrderSelectedServiceman.NewServicemanId
+                        NewServicemanServiceorderPs = SelectedServiceman.NewServicemanId
+                    };
+                    msCRMContext.Add<NewTest2ExtensionBase>(t2eb).State = EntityState.Added;
+                    int result = await msCRMContext.SaveChangesAsync();
+                    notificationManager.Show(new NotificationContent {
+                        Title = "",
+                        Message = "Заявка создана",
+                        Type = NotificationType.Success
+                    });
+
+                    //ShowGuardObjectsWithDownTimeReglamentsCommand.Execute(andromeda_element.NewNumber);
+                }
                 await msCRMContext.SaveChangesAsync();
                 SelectServicemanCommand.Execute(SelectedServiceman);
                 SelectedServiceman = null;
@@ -476,7 +788,7 @@ namespace VityazReports.ViewModel {
                 SelectedOrders.Clear();
                 //BrushesMarkersCommand.Execute(null);
                 //UnCheckedToggleButtonServicemanListCommand.Execute(null);
-                ShowServiceOrderOnMapCommand.Execute(null);
+                //ShowServiceOrderOnMapCommand.Execute(null);
                 notificationManager.Show(new NotificationContent {
                     Title = "Информация",
                     Message = "Данные сохранены",
@@ -526,18 +838,18 @@ namespace VityazReports.ViewModel {
             Ellipse img = sender as Ellipse;
             if (img == null)
                 return;
-            GMapMarker marker = img.DataContext as GMapMarker;
-            if (marker == null)
+            if (!(img.DataContext is GMapMarker marker))
                 return;
             Ellipse ellipse = marker.Shape as Ellipse;
-            ellipse.Stroke = Brushes.Red;
+            ellipse.Stroke = Brushes.Purple;
             var mr = SelectedMarkers.FirstOrDefault(x => x.Tag.ToString() == marker.Tag.ToString());
             if (mr == null)
                 SelectedMarkers.Add(marker);
             else {
                 SelectedMarkers.Remove(mr);
-                ellipse.Stroke = Brushes.Green;
+                //ellipse.Stroke = Brushes.Green;
             }
+            BrushesMarkersCommand.Execute(null);
         }
     }
 }

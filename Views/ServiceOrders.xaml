@@ -6,7 +6,7 @@
       xmlns:local="clr-namespace:VityazReports.Views" xmlns:vm="clr-namespace:VityazReports.ViewModel"
                   mc:Ignorable="d" 
                    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-                  d:DesignHeight="450" d:DesignWidth="800"
+                  d:DesignHeight="450" d:DesignWidth="800" x:Name="ServOrders"
       Title="Заявки техникам">
     <mah:MetroWindow.DataContext>
         <vm:ServiceOrdersViewModel/>
@@ -19,22 +19,35 @@
             <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Создать заявку" Command="{Binding FlyoutNewServiceOrderVisibleCommand}">
                 <iconPacks:EvaIcons Kind="PersonAdd"/>
             </Button>
-            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Обновить" Command="{Binding ShowServiceOrderOnMapCommand}">
+            <!--<Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Обновить" Command="{Binding ShowServiceOrderOnMapCommand}">
                 <iconPacks:EvaIcons Kind="Refresh"/>
-            </Button>
+            </Button>-->
             <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Справка" Command="{Binding HelpCommand}">
                 <iconPacks:EvaIcons Kind="QuestionMarkCircle"/>
                 <!--<iconPacks:BootstrapIcons Kind="Question"/>-->
             </Button>
+            <Button Foreground="White" BorderThickness="0" Width="35" ToolTip="Показать объекты" Command="{Binding ShowGuardObjectsWithDownTimeReglamentsCommand}">
+                <iconPacks:EvaIcons Kind="Award"/>
+            </Button>
+            <!--<CheckBox x:Name="chk" IsChecked="{Binding IsShowGuardObjectsWithDownTimeReglaments}" Content="Показать объекты">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="Checked">
+                        <i:InvokeCommandAction Command="{Binding DataContext.ShowGuardObjectsWithDownTimeReglamentsCommand, ElementName=dg_main}" CommandParameter="True"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="Unchecked">
+                        <i:InvokeCommandAction Command="{Binding DataContext.ShowGuardObjectsWithDownTimeReglamentsCommand, ElementName=dg_main}" CommandParameter="False"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </CheckBox>-->
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
-    <mah:MetroWindow.RightWindowCommands>
+    <!--<mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
             <StackPanel Margin="5,2">
                 <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding FilterDate, StringFormat=\{0:dd.MM.yyyy\}}" Padding="5"/>
             </StackPanel>
         </mah:WindowCommands>
-    </mah:MetroWindow.RightWindowCommands>
+    </mah:MetroWindow.RightWindowCommands>-->
     <Grid>
         <mah:Flyout Panel.ZIndex="2" Position="Right" IsModal="True" IsOpen="{Binding FlyoutFilterOpened}" >
             <StackPanel>
@@ -44,7 +57,9 @@
             </StackPanel>
         </mah:Flyout>
         <mah:Flyout Panel.ZIndex="2" Position="Left" IsModal="True" IsOpen="{Binding FlyoutServicemanListOpened}">
+        <!--<mah:Flyout Panel.ZIndex="2" Position="Left" IsModal="True" IsOpen="True">-->
             <StackPanel CanVerticallyScroll="True">
+                <DatePicker SelectedDateFormat="Short" SelectedDate="{Binding OrderDate, StringFormat=\{0:dd.MM.yyyy\}}" Padding="5" Margin="5"/>
                 <ListBox ItemsSource="{Binding ServicemanList}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -73,7 +88,7 @@
                 <Label Grid.Row="1" Grid.Column="0" Content="№ объекта" Margin="5"/>
                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewServiceOrderObjectNumber}" Margin="5"/>
                 <Label Grid.Row="2" Grid.Column="0" Content="Техник" Margin="5"/>
-                <mah:DropDownButton Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ServicemanList}" DisplayMemberPath="NewName"  Margin="5"/>
+                <mah:SplitButton SelectedItem="{Binding NewServiceOrderSelectedServiceman}" Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ServicemanList}" DisplayMemberPath="NewName"  Margin="5"/>
                 <Label Grid.Row="3" Grid.Column="0" Content="Описание заявки" Margin="5"/>
                 <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewServiceOrderDescription}" Margin="5"/>
                 <Button Grid.Row="4" Grid.ColumnSpan="2" Margin="5" Content="Создать" Command="{Binding AddNewServiceOrderCommand}"/>
@@ -85,12 +100,12 @@
                     <UserControl.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="Назначить техника на выбранные заявки" Command="{Binding OpenFlyoutServicemanListCommand}"/>
-                            <MenuItem Header="Перенести на другую дату" Command="{Binding OpenFlyoutServicemanListCommand}"/>
+                            <!--<MenuItem Header="Перенести на другую дату" Command="{Binding OpenFlyoutServicemanListCommand}"/>-->
                         </ContextMenu>
                     </UserControl.ContextMenu>
                 </UserControl>
             </mah:MetroTabItem>
-            <mah:MetroTabItem Header="Список">
+            <!--<mah:MetroTabItem Header="Список">
                 <DataGrid x:Name="dg_main" ItemsSource="{Binding ServiceOrdersList, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedServiceOrder, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}">
                     <DataGrid.Resources>
                         <DataTemplate x:Key="dt_DateOrder">
@@ -102,9 +117,9 @@
                                 </i:Interaction.Triggers>
                             </DatePicker>
                         </DataTemplate>
-                        <!--<DataTemplate x:Key="edt_DateOrder">
+                        --><!--<DataTemplate x:Key="edt_DateOrder">
                             <DatePicker SelectedDate="{Binding Mode=TwoWay, Path=t2eb.DateOrder,StringFormat=\{0:dd.MM.yyyy\}, UpdateSourceTrigger=PropertyChanged}"/>
-                        </DataTemplate>-->
+                        </DataTemplate>--><!--
                     </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Width="0.5*">
@@ -143,7 +158,7 @@
                         </ContextMenu>
                     </DataGrid.ContextMenu>
                 </DataGrid>
-            </mah:MetroTabItem>
+            </mah:MetroTabItem>-->
             <!--<mah:MetroTabItem Header="TEST">
                 <DataGrid x:Name="dg_selected" ItemsSource="{Binding SelectedOrders}" AutoGenerateColumns="False" SelectionMode="Extended">
                     <DataGrid.Columns>
@@ -159,7 +174,26 @@
                     </DataGrid.ContextMenu>
                 </DataGrid>
             </mah:MetroTabItem>-->
+            <mah:MetroTabItem Header="Cписок">
+                <DataGrid ItemsSource="{Binding DiffModel}" AutoGenerateColumns="False">
+                    <DataGrid.Resources>
+                        <DataTemplate x:Key="tmp_Link">
+                            <Button Content="CRM" Command="{Binding DataContext.OpenInCrmCommand, ElementName=dg_sub}" CommandParameter="{Binding Path=Link}" Margin="5"/>
+                        </DataTemplate>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="№ объекта" Binding="{Binding ObjectNumber}" Width="*"/>
+                        <DataGridTextColumn Header="Дата (пред.)" Binding="{Binding OldDate,StringFormat=\{0:dd.MM.yyyy\} }" Width="*"/>
+                        <DataGridTextColumn Header="Дней (пред.)" Binding="{Binding OldDays,StringFormat=\{0:N\}}" Width="0.5*"/>
+                        <DataGridTextColumn Header="Дата (след.)" Binding="{Binding NewDate,StringFormat=\{0:dd.MM.yyyy\} }" Width="*"/>
+                        <DataGridTextColumn Header="Дней (след.)" Binding="{Binding NewDay,StringFormat=\{0:N\} }" Width="0.5*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </mah:MetroTabItem>
         </mah:MetroAnimatedTabControl>
-        
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Background="#75100110" Panel.ZIndex="15" Width="{Binding ActualWidth, ElementName=ServOrders}" Visibility="{Binding Loading, Converter={StaticResource BooleanToVisibilityConverter}}" 
+              Height="{Binding ActualHeight, ElementName=ServOrders}" Grid.ColumnSpan="3">
+            <mah:ProgressRing IsActive="{Binding Loading}"/>
+        </Grid>
     </Grid>
 </mah:MetroWindow>
