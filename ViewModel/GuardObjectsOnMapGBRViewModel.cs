@@ -365,8 +365,8 @@ namespace VityazReports.ViewModel {
                 //За центр Челябинска примем центральную точку GmapControl
                 PointLatLng center = gmaps_contol.CenterPosition;
                 int? Nkm = 50;
-                if (center == null)
-                    return;
+                //if (center == null)
+                //    return;
                 int number = commonMethods.ParseDigit(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true).ObjTypeName);
                 if (number == 0)
                     return;
