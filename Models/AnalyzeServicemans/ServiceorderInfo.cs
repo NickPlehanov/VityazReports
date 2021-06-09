@@ -27,7 +27,7 @@ namespace VityazReports.Models.AnalyzeServicemans {
             Andr_lat = andrlat;
             Andr_lon = andrlon;
         }
-        public ServiceorderInfo(int? numberObject, string addressObject, string nameObject, string reason, string time, DateTime income, DateTime outgone, string conclusion) {
+        public ServiceorderInfo(int? numberObject, string addressObject, string nameObject, string reason, string time, DateTime income, DateTime outgone, string conclusion, string timefrom, string timeto) {
             Number = numberObject;
             Address = addressObject;
             Name = nameObject;
@@ -36,6 +36,8 @@ namespace VityazReports.Models.AnalyzeServicemans {
             Income = income;
             Outgone = outgone;
             Conclusion = conclusion;
+            TimeFrom = timefrom;
+            TimeTo = timeto;
         }
 
         /// <summary>
@@ -116,5 +118,13 @@ namespace VityazReports.Models.AnalyzeServicemans {
         public string TechName { get; set; }
         public string Andr_lat { get; set; }
         public string Andr_lon { get; set; }
+        /// <summary>
+        /// Время (от)
+        /// </summary>
+        public string TimeFrom { get; set; }
+        /// <summary>
+        /// Время (до)
+        /// </summary>
+        public string TimeTo { get; set; }
     }
 }

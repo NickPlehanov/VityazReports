@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -398,56 +399,65 @@ namespace VityazReports.ViewModel {
                 int counter = 1;
                 foreach (var item in ObjectsList) {
                     //Tasks.Add(new Task((Action)async delegate {
-                    if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
-                        LoadingText = null;
-                        notificationManager.Show(new NotificationContent {
-                            Title = "Ошибка",
-                            Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
-                            Type = NotificationType.Error
-                        });
-                        return;
-                    }
-                    LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
-                    if (item.Latitude != null && item.Longitude != null) {
-                        string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
-                        HttpResponseMessage response = await client.GetAsync(resp);
-                        if (response.IsSuccessStatusCode) {
-                            var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
-                            if (osrm.code.Equals("Ok")) //так же обработать noRoutes
-                                if (osrm.routes.Count >= 1)
-                                    if (osrm.routes[0].distance / 1000 > Nkm)
-                                        await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
-                                            FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
-                                        });
-                            if (osrm.code.Equals("NoRoute"))
+                        if (!SelectedObjType.Equals(ObjectTypeList.FirstOrDefault(x => x.IsShowOnMap == true))) {
+                            LoadingText = null;
+                            notificationManager.Show(new NotificationContent {
+                                Title = "Ошибка",
+                                Message = "Анализ расстояния по объектам был завершен, так как изменились объекты на карте",
+                                Type = NotificationType.Error
+                            });
+                            return;
+                        }
+                        LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), ObjectsList.Count.ToString());
+                        if (item.Latitude != null && item.Longitude != null) {
+                            string resp = @"http://router.project-osrm.org/route/v1/driving/" + center.Lng.ToString().Replace(',', '.') + "," + center.Lat.ToString().Replace(',', '.') + ";" + item.Longitude.ToString().Replace(',', '.') + "," + item.Latitude.ToString().Replace(',', '.') + "?geometries=geojson";
+                            HttpResponseMessage response = await client.GetAsync(resp);
+                            if (response.IsSuccessStatusCode) {
+                                var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
+                                if (osrm.code.Equals("Ok")) //так же обработать noRoutes
+                                    if (osrm.routes.Count >= 1)
+                                        if (osrm.routes[0].distance / 1000 > Nkm)
+                                            await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                                FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, osrm.routes[0].distance / 1000));
+                                            });
+                                if (osrm.code.Equals("NoRoute"))
+                                    await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
+                                        FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
+                                    });
+                            }
+                            else {
                                 await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
                                     FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
                                 });
+                            }
                         }
                         else {
                             await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
                                 FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
                             });
                         }
-                    }
-                    else {
-                        await Dispatcher.CurrentDispatcher.InvokeAsync((Action)delegate {
-                            FarDistanceList.Add(new FarDistanceModel(Convert.ToInt32(Convert.ToString(item.ObjectNumber, 16)), item.Name, item.Address, -1));
-                        });
-                    }
-                    counter++;
-                    //},TaskCreationOptions.RunContinuationsAsynchronously));
+                        counter++;
+                    //}, TaskCreationOptions.RunContinuationsAsynchronously));
                 }
-                //var block = 50;
-                //var numberblocks = Tasks.Count / 50;
-                //for (int i=0;i<(int)Math.Ceiling((double)(Tasks.Count / 50))+1;i++) {
-                //    var current = Tasks.Skip(i * 50).Take(50);
+                //var block = 30;
+                //var numberblocks = Tasks.Count / block;
+                //for (int i = 0; i < (int)Math.Ceiling((double)numberblocks) + 1; i++) {
+                //    var current = Tasks.Skip(i * block).Take(block);
+                //    //foreach (var item in current) {
+                //    //    item.Start();
+                //    //    Thread.Sleep(1000);
+                //    //}
+                //    ParallelOptions parallelOptions = new ParallelOptions();
+                //    parallelOptions.MaxDegreeOfParallelism = 20;
+                //    Parallel.ForEach(current, parallelOptions, c=> {
+                //        c.Start();
+                //    });
                 //    await Task.WhenAll(current);
                 //}
                 //await Task.WhenAll(Tasks);
                 AnalyzeVisible = true;
                 LoadingText = null;
-            }, obj => ObjectTypeList.Count(x => x.IsShowOnMap == true) >= 1);
+            }, obj => ObjectTypeList.Any(x => x.IsShowOnMap == true));
         }
         /// <summary>
         /// Коллекция хранящая список результатов анализа расстояния
@@ -1224,59 +1234,59 @@ namespace VityazReports.ViewModel {
                 CreateLegend.Execute(null);
                 CreateToolTip.Execute(null);
                 //await Dispatcher.CurrentDispatcher.Invoke(async () => {
-                    ChartVisible = false;
-                    Loading = true;
-                    GMapMarker gbr = null;
-                    var otl = ObjectTypeList.Where(x => x.IsShowOnMap == true).ToList();
-                    if (otl.Count() != 1) {
-                        notificationManager.Show(new NotificationContent {
-                            Title = "Ошибка",
-                            Message = "Расчёт времени прибытия невозможен, так как должен быть выбран только один маршрут",
-                            Type = NotificationType.Error
-                        });
-                        return;
-                    }
-                    gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР") && x.Tag.ToString().Contains(commonMethods.ParseDigit(otl[0].ObjTypeName).ToString()));
-                    var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "1000" && !x.Tag.ToString().Contains("ГБР")).ToList();
-                    ChartObjectsList.Clear();
+                ChartVisible = false;
+                Loading = true;
+                GMapMarker gbr = null;
+                var otl = ObjectTypeList.Where(x => x.IsShowOnMap == true).ToList();
+                if (otl.Count() != 1) {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Расчёт времени прибытия невозможен, так как должен быть выбран только один маршрут",
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+                gbr = gmaps_contol.Markers.FirstOrDefault(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР") && x.Tag.ToString().Contains(commonMethods.ParseDigit(otl[0].ObjTypeName).ToString()));
+                var objects = gmaps_contol.Markers.Where(x => x.ZIndex.ToString() != "1000" && !x.Tag.ToString().Contains("ГБР")).ToList();
+                ChartObjectsList.Clear();
 
-                    if (gbr != null && objects != null) {
-                        if (objects.Count > 0) {
-                            using (HttpClient client = new HttpClient()) {
-                                int counter = 1;
-                                foreach (var item in objects) {
-                                    LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), objects.Count.ToString());
-                                    string resp = @"http://router.project-osrm.org/route/v1/driving/" + gbr.Position.Lng.ToString().Replace(',', '.') + "," + gbr.Position.Lat.ToString().Replace(',', '.') + ";" + item.Position.Lng.ToString().Replace(',', '.') + "," + item.Position.Lat.ToString().Replace(',', '.') + "?geometries=geojson";
-                                    HttpResponseMessage response = await client.GetAsync(resp);
-                                    if (response.IsSuccessStatusCode) {
-                                        //TODO: вероятно стоит сделать список и сохранять целиком ответ
-                                        var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
-                                        if (osrm.code.Equals("Ok")) {
-                                            if (osrm.routes.Count >= 1) {
-                                                TimeSpan ts = TimeSpan.FromSeconds(osrm.routes[0].duration);
-                                                ChartObjectsList.Add(new MatrixTotals(
-                                                    osrm.routes[0].duration,
-                                                    ts.Minutes.ToString() + ":" + ts.Seconds.ToString(),
-                                                    (item.Shape as Ellipse).ToolTip.ToString().LastIndexOf(':') != -1 ?
-                                                    (item.Shape as Ellipse).ToolTip.ToString().Substring(0, (item.Shape as Ellipse).ToolTip.ToString().LastIndexOf(':') - 2) + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString() :
-                                                (item.Shape as Ellipse).ToolTip + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString(),
-                                                    int.Parse(item.Tag.ToString()),
-                                                    osrm.routes[0].geometry.coordinates
-                                                    ));
-                                                Ellipse el = item.Shape as Ellipse;
-                                                el.ToolTip = el.ToolTip.ToString().LastIndexOf(':') != -1 ?
-                                                el.ToolTip.ToString().Substring(0, el.ToolTip.ToString().LastIndexOf(':') - 2) + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString() :
-                                                el.ToolTip + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString();
-                                                //el.ToolTip += Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString();
-                                            }
+                if (gbr != null && objects != null) {
+                    if (objects.Count > 0) {
+                        using (HttpClient client = new HttpClient()) {
+                            int counter = 1;
+                            foreach (var item in objects) {
+                                LoadingText = string.Format("Обрабатывается {0} из {1}", counter.ToString(), objects.Count.ToString());
+                                string resp = @"http://router.project-osrm.org/route/v1/driving/" + gbr.Position.Lng.ToString().Replace(',', '.') + "," + gbr.Position.Lat.ToString().Replace(',', '.') + ";" + item.Position.Lng.ToString().Replace(',', '.') + "," + item.Position.Lat.ToString().Replace(',', '.') + "?geometries=geojson";
+                                HttpResponseMessage response = await client.GetAsync(resp);
+                                if (response.IsSuccessStatusCode) {
+                                    //TODO: вероятно стоит сделать список и сохранять целиком ответ
+                                    var osrm = JsonConvert.DeserializeObject<OSRM>(response.Content.ReadAsStringAsync().Result);
+                                    if (osrm.code.Equals("Ok")) {
+                                        if (osrm.routes.Count >= 1) {
+                                            TimeSpan ts = TimeSpan.FromSeconds(osrm.routes[0].duration);
+                                            ChartObjectsList.Add(new MatrixTotals(
+                                                osrm.routes[0].duration,
+                                                ts.Minutes.ToString() + ":" + ts.Seconds.ToString(),
+                                                (item.Shape as Ellipse).ToolTip.ToString().LastIndexOf(':') != -1 ?
+                                                (item.Shape as Ellipse).ToolTip.ToString().Substring(0, (item.Shape as Ellipse).ToolTip.ToString().LastIndexOf(':') - 2) + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString() :
+                                            (item.Shape as Ellipse).ToolTip + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString(),
+                                                int.Parse(item.Tag.ToString()),
+                                                osrm.routes[0].geometry.coordinates
+                                                ));
+                                            Ellipse el = item.Shape as Ellipse;
+                                            el.ToolTip = el.ToolTip.ToString().LastIndexOf(':') != -1 ?
+                                            el.ToolTip.ToString().Substring(0, el.ToolTip.ToString().LastIndexOf(':') - 2) + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString() :
+                                            el.ToolTip + Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString();
+                                            //el.ToolTip += Environment.NewLine + ts.Minutes.ToString() + ":" + ts.Seconds.ToString();
                                         }
                                     }
-                                    counter++;
                                 }
+                                counter++;
                             }
-                            ChartVisible = true;
+                        }
+                        ChartVisible = true;
 
-                            ChartSeries = new SeriesCollection() {
+                        ChartSeries = new SeriesCollection() {
                             new PieSeries
                             {
                                 Title = ">15",
@@ -1308,21 +1318,21 @@ namespace VityazReports.ViewModel {
                                 DataLabels = true
                             },
                         };
-                            CreateLegend.Execute(null);
+                        CreateLegend.Execute(null);
 
-                            CreateToolTip.Execute(null);
-                        }
+                        CreateToolTip.Execute(null);
                     }
-                    else {
-                        notificationManager.Show(new NotificationContent {
-                            Title = "Ошибка",
-                            Message = "Расчет маршрута невозможен. Не указано расположение ГБР на карте или не найдено охр. объектов",
-                            Type = NotificationType.Error
-                        });
-                    }
-                    CalculateCommandContent = "Показать/скрыть расчёт";
-                    Loading = false;
-                    PrivateID = null;
+                }
+                else {
+                    notificationManager.Show(new NotificationContent {
+                        Title = "Ошибка",
+                        Message = "Расчет маршрута невозможен. Не указано расположение ГБР на карте или не найдено охр. объектов",
+                        Type = NotificationType.Error
+                    });
+                }
+                CalculateCommandContent = "Показать/скрыть расчёт";
+                Loading = false;
+                PrivateID = null;
                 //});
             });
             //}, obj => gmaps_contol.Markers.Count(x => x.ZIndex.ToString() == "1000" && x.Tag.ToString().Contains("ГБР")) == 1 && gmaps_contol.Markers.Count(x => x.ZIndex.ToString() != "1000") > 0 && ObjectTypeList.Count(x => x.IsShowOnMap == true) == 1);

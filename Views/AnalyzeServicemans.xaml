@@ -62,14 +62,14 @@
                 <Label Content="Опоздания" Grid.Row="0" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
                 <DataGrid Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding LatesOrders}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="№ объекта" Binding="{Binding NumberObject}"/>
-                        <DataGridTextColumn Header="Адрес объекта" Binding="{Binding AddressObject}"/>
-                        <DataGridTextColumn Header="Наименование объекта" Binding="{Binding NameObject}"/>
-                        <DataGridTextColumn Header="Причина" Binding="{Binding Reasons}"/>
-                        <DataGridTextColumn Header="Время заявки" Binding="{Binding TimeOrder}"/>
-                        <DataGridTextColumn Header="Пришел" Binding="{Binding Income}"/>
-                        <DataGridTextColumn Header="Ушел" Binding="{Binding Outgone}"/>
-                        <DataGridTextColumn Header="Заключение" Binding="{Binding Conclusion}"/>
+                        <DataGridTextColumn Width="0.3*" Header="№ объекта" Binding="{Binding NumberObject}"/>
+                        <DataGridTextColumn Width="*" Header="Адрес объекта" Binding="{Binding AddressObject}"/>
+                        <DataGridTextColumn Width="*" Header="Наименование объекта" Binding="{Binding NameObject}"/>
+                        <DataGridTextColumn  Width="0.5*" Header="Причина" Binding="{Binding Reasons}"/>
+                        <DataGridTextColumn Width="0.3*" Header="Время заявки" Binding="{Binding TimeOrder}"/>
+                        <DataGridTextColumn Width="0.3*" Header="Пришел" Binding="{Binding Income}"/>
+                        <DataGridTextColumn Width="0.3*" Header="Ушел" Binding="{Binding Outgone}"/>
+                        <DataGridTextColumn Width="*" Header="Заключение" Binding="{Binding Conclusion}"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <Label Content="Интервалы между заявками(>40)" Grid.Row="2" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
@@ -108,19 +108,19 @@
                     <Label Content="Заявки (перенос/отмена)" Grid.Row="2" Grid.ColumnSpan="8" FontWeight="UltraLight" FontSize="16"/>
                     <DataGrid Grid.Row="3" Grid.ColumnSpan="8" AutoGenerateColumns="False" ItemsSource="{Binding NotCompletedOrdersList}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="№ объекта" Binding="{Binding ObjectNumber}"/>
-                            <DataGridTextColumn Header="Наим. объекта" Binding="{Binding ObjectName}"/>
-                            <DataGridTextColumn Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
-                            <DataGridTextColumn Header="Тип заявки" Binding="{Binding OrderTypeString}"/>
-                            <DataGridTextColumn Header="Причина посещения" Binding="{Binding ReasonOrder}"/>
-                            <DataGridTextColumn Header="Результат" Binding="{Binding ResultString}"/>
-                            <DataGridTextColumn Header="Причина результата" Binding="{Binding ReasonResultString}"/>
-                            <DataGridTextColumn Header="Комментарий к причине результата" Binding="{Binding ReasonComment}"/>
-                            <DataGridTextColumn Header="Заключение" Binding="{Binding Conclusion}"/>
-                            <DataGridTextColumn Header="Пришел" Binding="{Binding Income, StringFormat=\{0:HH:mm:ss\}}"/>
-                            <DataGridTextColumn Header="Ушел" Binding="{Binding Outgone, StringFormat=\{0:HH:mm:ss\}}"/>
-                            <DataGridTextColumn Header="Расстояние(пришел)" Binding="{Binding DistanceIncome, StringFormat=\{0:F\}}"/>
-                            <DataGridTextColumn Header="Расстояние(ушел)" Binding="{Binding DistanceOutgone, StringFormat=\{0:F\}}"/>
+                            <DataGridTextColumn Width="0.3*" Header="№ объекта" Binding="{Binding ObjectNumber}"/>
+                            <DataGridTextColumn Width="*" Header="Наим. объекта" Binding="{Binding ObjectName}"/>
+                            <DataGridTextColumn Width="*" Header="Адрес объекта" Binding="{Binding ObjectAddress}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Тип заявки" Binding="{Binding OrderTypeString}"/>
+                            <DataGridTextColumn Width="0.5*" Header="Причина посещения" Binding="{Binding ReasonOrder}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Результат" Binding="{Binding ResultString}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Причина результата" Binding="{Binding ReasonResultString}"/>
+                            <DataGridTextColumn Width="0.5*" Header="Комментарий к причине результата" Binding="{Binding ReasonComment}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Заключение" Binding="{Binding Conclusion}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Пришел" Binding="{Binding Income, StringFormat=\{0:HH:mm:ss\}}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Ушел" Binding="{Binding Outgone, StringFormat=\{0:HH:mm:ss\}}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Расстояние(пришел)" Binding="{Binding DistanceIncome, StringFormat=\{0:F\}}"/>
+                            <DataGridTextColumn Width="0.3*" Header="Расстояние(ушел)" Binding="{Binding DistanceOutgone, StringFormat=\{0:F\}}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

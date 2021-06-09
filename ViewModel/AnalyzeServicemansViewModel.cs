@@ -220,9 +220,9 @@ namespace VityazReports.ViewModel {
                                     && sob.Statuscode == 1
                                   select new { soeb.NewIncome, soeb.NewOutgone }
                                   ).AsNoTracking().ToList();
-                    if (coords.Count() <= 0)
+                    if (coords.Count <= 0)
                         return;
-                    coords = coords.OrderBy(x => x.NewIncome).ToList();
+                    coords = coords.Where(x=>x.NewIncome.Value.Date==DateOrder.Date).OrderBy(x => x.NewIncome).ToList();
                     for (int i = 0; i < coords.Count - 1; i++) {
                         var d = (coords[i + 1].NewIncome - coords[i].NewOutgone).Value.Duration();
                         //Intervals.Add(string.Format("({0}) {1}-{2}", d.Minutes, coords[i].NewOutgone.Value.ToShortTimeString(), coords[i + 1].NewIncome.Value.ToShortTimeString()));
@@ -231,7 +231,8 @@ namespace VityazReports.ViewModel {
                                 Intervals.Add(new IntervalsModel(coords[i].NewOutgone.Value.ToShortTimeString() + " - " + coords[i + 1].NewIncome.Value.ToShortTimeString(), d.Hours.ToString() + ":" + d.Minutes.ToString()));
                     }
                 });
-                AnalyzeSelectedServicemanVisibleFlyout = Intervals.Count > 0 || LatesOrders.Count > 0;
+                //AnalyzeSelectedServicemanVisibleFlyout = Intervals.Count > 0 || LatesOrders.Count > 0;
+                AnalyzeSelectedServicemanVisibleFlyout = true;
             });
         }
 
@@ -243,7 +244,7 @@ namespace VityazReports.ViewModel {
                 NotCompletedOrdersList.Clear();
                 //Требуется получить количество заявок , сколько выполнено, перенесено, отменено
                 //Сколько клиентских заявок всего - сделано/перенесено и отменено
-                App.Current.Dispatcher.Invoke((Action)delegate {
+                //App.Current.Dispatcher.Invoke((Action)delegate {
                     msCRMContext = GetMsCRMContext();
 
 
@@ -255,22 +256,22 @@ namespace VityazReports.ViewModel {
                     AllCountComplete = soebs.Count(x => x.NewResult == 1);
 
                     List<NewServiceorderExtensionBase> soebs_transfer = new List<NewServiceorderExtensionBase>();
-                    soebs_transfer = soebs.Where(x => x.NewResult == 2).ToList();
+                    soebs_transfer = soebs.Where(x => x.NewResult == 2).Distinct().ToList();
                     AllCountTransfer = soebs_transfer.Count;
 
                     List<NewServiceorderExtensionBase> soebs_cancel = new List<NewServiceorderExtensionBase>();
-                    soebs_cancel = soebs.Where(x => x.NewResult == 3).ToList();
+                    soebs_cancel = soebs.Where(x => x.NewResult == 3).Distinct().ToList();
                     AllCountCancel = soebs_cancel.Count;
 
                     List<NewServiceorderExtensionBase> soebs_clients = new List<NewServiceorderExtensionBase>();
-                    soebs_clients = soebs.Where(x => x.NewOrderFrom != 3).ToList();
+                    soebs_clients = soebs.Where(x => x.NewOrderFrom != 3).Distinct().ToList();
 
                     List<NewServiceorderExtensionBase> soebs_clients_transfer = new List<NewServiceorderExtensionBase>();
-                    soebs_clients_transfer = soebs_clients.Where(x => x.NewResult == 2).ToList();
+                    soebs_clients_transfer = soebs_clients.Where(x => x.NewResult == 2).Distinct().ToList();
                     int ClientCountTransfer = soebs_clients_transfer.Count();
 
                     List<NewServiceorderExtensionBase> soebs_clients_cancel = new List<NewServiceorderExtensionBase>();
-                    soebs_clients_cancel = soebs_clients.Where(x => x.NewResult == 3).ToList();
+                    soebs_clients_cancel = soebs_clients.Where(x => x.NewResult == 3).Distinct().ToList();
                     int ClientCountCancel = soebs_clients_cancel.Count();
 
                     //получаем всю информацию по заявкам, которые были с результатом отмена/перенос
@@ -288,7 +289,7 @@ namespace VityazReports.ViewModel {
                                          select new ClientsOrdersNotCompleted(soeb.NewNumber, soeb.NewObjName, soeb.NewAddress, soeb.NewOrderFrom, null,
                                          soeb.NewName, soeb.NewIncome, soeb.NewOutgone, andr_e.NewLatitude, andr_e.NewLonitude, null, null, soeb.NewResult, null, soeb.NewResultId, null, soeb.NewTransferReason, soeb.NewTechConclusion
                                          , x.SocIncomeLatitude, x.SocIncomeLongitude, x.SocOutcomeLatitide, x.SocOutcomeLongitude)
-                                ).AsNoTracking().ToList();
+                                ).AsNoTracking().Distinct().ToList();
                         //вероятно это лишнее, но на всякий случай сделать стоит, так как кто его знает, вдруг решат менять порядок причин или в целом наименование причин.
                         foreach (var tr in transfers) {
                             var result = (from apv in msCRMContext.AttributePicklistValue
@@ -298,7 +299,7 @@ namespace VityazReports.ViewModel {
                                           where a.PhysicalName == "New_Result"
                                           && e.Name == "New_serviceorder"
                                           && apv.Value == tr.Result
-                                          select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().ToList();
+                                          select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().Distinct().ToList();
                             if (result != null)
                                 tr.ResultString = result.FirstOrDefault().label;
                             var resultID = (from apv in msCRMContext.AttributePicklistValue
@@ -308,7 +309,7 @@ namespace VityazReports.ViewModel {
                                             where a.PhysicalName == "New_ResultId"
                                             && e.Name == "New_serviceorder"
                                             && apv.Value == tr.ReasonResult
-                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().ToList();
+                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().Distinct().ToList();
                             if (resultID != null)
                                 tr.ReasonResultString = resultID.FirstOrDefault().label;
                             var ord_type = (from apv in msCRMContext.AttributePicklistValue
@@ -318,7 +319,7 @@ namespace VityazReports.ViewModel {
                                             where a.PhysicalName == "New_order_from"
                                             && e.Name == "New_serviceorder"
                                             && apv.Value == tr.OrderType
-                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().ToList();
+                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().Distinct().ToList();
                             if (ord_type != null)
                                 tr.OrderTypeString = ord_type.FirstOrDefault().label;
 
@@ -350,7 +351,7 @@ namespace VityazReports.ViewModel {
                                        select new ClientsOrdersNotCompleted(soeb.NewNumber, soeb.NewObjName, soeb.NewAddress, soeb.NewOrderFrom, null,
                                        soeb.NewName, soeb.NewIncome, soeb.NewOutgone, andr_e.NewLatitude, andr_e.NewLonitude, null, null, soeb.NewResult, null, soeb.NewResultId, null, soeb.NewTransferReason, soeb.NewTechConclusion
                                        , x.SocIncomeLatitude, x.SocIncomeLongitude, x.SocOutcomeLatitide, x.SocOutcomeLongitude)
-                                ).AsNoTracking().ToList();
+                                ).AsNoTracking().Distinct().ToList();
                         //вероятно это лишнее, но на всякий случай сделать стоит, так как кто его знает, вдруг решат менять порядок причин или в целом наименование причин.
                         foreach (var c in cancels) {
                             var result = (from apv in msCRMContext.AttributePicklistValue
@@ -360,7 +361,7 @@ namespace VityazReports.ViewModel {
                                           where a.PhysicalName == "New_Result"
                                           && e.Name == "New_serviceorder"
                                           && apv.Value == c.Result
-                                          select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().ToList();
+                                          select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().Distinct().ToList();
                             if (result != null)
                                 c.ResultString = result.FirstOrDefault().label;
                             var resultID = (from apv in msCRMContext.AttributePicklistValue
@@ -370,7 +371,7 @@ namespace VityazReports.ViewModel {
                                             where a.PhysicalName == "New_ResultId"
                                             && e.Name == "New_serviceorder"
                                             && apv.Value == c.ReasonResult
-                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().ToList();
+                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().Distinct().ToList();
                             if (resultID != null)
                                 c.ReasonResultString = resultID.FirstOrDefault().label;
                             var ord_type = (from apv in msCRMContext.AttributePicklistValue
@@ -380,7 +381,7 @@ namespace VityazReports.ViewModel {
                                             where a.PhysicalName == "New_order_from"
                                             && e.Name == "New_serviceorder"
                                             && apv.Value == c.OrderType
-                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().ToList();
+                                            select new { label = ll.Label, order = apv.DisplayOrder, value = apv.Value }).AsNoTracking().Distinct().ToList();
                             if (ord_type != null)
                                 c.OrderTypeString = ord_type.FirstOrDefault().label;
 
@@ -398,7 +399,7 @@ namespace VityazReports.ViewModel {
                             NotCompletedOrdersList.Add(c);
                         }
                     }
-                });
+                //});
             });
         }
 
@@ -418,7 +419,7 @@ namespace VityazReports.ViewModel {
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
-                                                 select new ServiceorderInfo(soeb.NewNumber, soeb.NewAddress, soeb.NewObjName, soeb.NewName, soeb.NewTime, (DateTime)soeb.NewIncome, (DateTime)soeb.NewOutgone, soeb.NewTechConclusion)
+                                                 select new ServiceorderInfo(soeb.NewNumber, soeb.NewAddress, soeb.NewObjName, soeb.NewName, soeb.NewTime, (DateTime)soeb.NewIncome, (DateTime)soeb.NewOutgone, soeb.NewTechConclusion, soeb.NewTimeFrom, soeb.NewTimeTo)
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0)
                     return;
