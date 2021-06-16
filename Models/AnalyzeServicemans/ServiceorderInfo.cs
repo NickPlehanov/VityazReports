@@ -27,10 +27,10 @@ namespace VityazReports.Models.AnalyzeServicemans {
             Andr_lat = andrlat;
             Andr_lon = andrlon;
         }
-        public ServiceorderInfo(int? numberObject, string addressObject, string nameObject, string reason, string time, DateTime income, DateTime outgone, string conclusion, string timefrom, string timeto) {
+        public ServiceorderInfo(int? numberObject, string addressObject, string nameObject, string reason, string time, DateTime income, DateTime outgone, string conclusion, int? timefrom, int? timeto) {
             Number = numberObject;
             Address = addressObject;
-            Name = nameObject;
+            ObjectName = nameObject;
             Name = reason;
             Time = time;
             Income = income;
@@ -121,10 +121,28 @@ namespace VityazReports.Models.AnalyzeServicemans {
         /// <summary>
         /// Время (от)
         /// </summary>
-        public string TimeFrom { get; set; }
+        public int? TimeFrom { get; set; }
         /// <summary>
         /// Время (до)
         /// </summary>
-        public string TimeTo { get; set; }
+        public int? TimeTo { get; set; }
+
+        private DateTime? _IncomeReal { get; set; }
+        public DateTime? IncomeReal {
+            get {
+                if (Income.HasValue)
+                    return Income.Value.AddHours(5);
+                else
+                    return null;
+            }
+        }
+        public DateTime? OutgoneReal {
+            get {
+                if (Outgone.HasValue)
+                    return Outgone.Value.AddHours(5);
+                else
+                    return null;
+            }
+        }
     }
 }

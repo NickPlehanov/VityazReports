@@ -155,6 +155,10 @@ namespace VityazReports.Models
         [Column("New_history_button")]
         [StringLength(100)]
         public string NewHistoryButton { get; set; }
+        [Column("New_TimeFrom")]
+        public int? NewTimeFrom { get; set; }
+        [Column("New_TimeTo")]
+        public int? NewTimeTo { get; set; }
 
         [ForeignKey(nameof(NewAndromedaServiceorder))]
         public virtual NewAndromedaBase NewAndromedaServiceorderNavigation { get; set; }

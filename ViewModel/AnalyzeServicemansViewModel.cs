@@ -201,7 +201,7 @@ namespace VityazReports.ViewModel {
                 LatesOrders.Clear();
                 Intervals.Clear();
                 AnalyzeSelectedServicemanVisibleFlyout = Intervals.Count > 0 || LatesOrders.Count > 0;
-                if (SelectedServicemans == null || DateOrder == null)
+                if (SelectedServicemans == null)
                     return;
                 App.Current.Dispatcher.Invoke((Action)delegate {
                     var coords = (from soc in msCRMContext.ServiceOrderCoordinates
@@ -222,7 +222,7 @@ namespace VityazReports.ViewModel {
                                   ).AsNoTracking().ToList();
                     if (coords.Count <= 0)
                         return;
-                    coords = coords.Where(x=>x.NewIncome.Value.Date==DateOrder.Date).OrderBy(x => x.NewIncome).ToList();
+                    coords = coords.Where(x => x.NewIncome.Value.Date == DateOrder.Date).OrderBy(x => x.NewIncome).ToList();
                     for (int i = 0; i < coords.Count - 1; i++) {
                         var d = (coords[i + 1].NewIncome - coords[i].NewOutgone).Value.Duration();
                         //Intervals.Add(string.Format("({0}) {1}-{2}", d.Minutes, coords[i].NewOutgone.Value.ToShortTimeString(), coords[i + 1].NewIncome.Value.ToShortTimeString()));
@@ -236,15 +236,130 @@ namespace VityazReports.ViewModel {
             });
         }
 
+        private RelayCommand _ClearMarkersCommand;
+        public RelayCommand ClearMarkersCommand {
+            get => _ClearMarkersCommand ??= new RelayCommand(async obj => {
+                if (!gmaps_contol.Markers.Any())
+                    return;
+                gmaps_contol.Markers.Clear();
+            });
+        }
+        private RelayCommand _DrawMarkersCommand;
+        public RelayCommand DrawMarkersCommand {
+            get => _DrawMarkersCommand ??= new RelayCommand(async obj => {
+                if (obj == null)
+                    return;
+                List<NewServiceorderExtensionBase> soebs = obj as List<NewServiceorderExtensionBase>;
+                if (!soebs.Any())
+                    return;
+                ClearMarkersCommand.Execute(null);
+                foreach (var item in soebs) {
+                    List<ServiceorderInfo> coords = (from soeb in msCRMContext.NewServiceorderExtensionBase
+                                                     join sob in msCRMContext.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
+                                                     join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
+                                                     join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
+                                                     join soc in msCRMContext.ServiceOrderCoordinates on soeb.NewServiceorderId equals soc.SocServiceOrderId into lj_soc
+                                                     from x_soc in lj_soc.DefaultIfEmpty()
+                                                     where
+                                                       //soeb.NewDate.Value.Date == DateTime.Now.AddDays(-1).Date
+                                                       //&& !string.IsNullOrEmpty(x_soc.SocIncomeLatitude)
+                                                       //&& !string.IsNullOrEmpty(x_soc.SocIncomeLongitude)
+                                                       //&& string.IsNullOrEmpty(x_soc.SocOutcomeLatitide)
+                                                       //&& string.IsNullOrEmpty(x_soc.SocOutcomeLongitude)
+                                                       sob.DeletionStateCode == 0
+                                                       && sob.Statecode == 0
+                                                       && sob.Statuscode == 1
+                                                       && soeb.NewServiceorderId == item.NewServiceorderId
+                                                     select new ServiceorderInfo(x_soc.SocIncomeLatitude,
+                                                     x_soc.SocIncomeLongitude,
+                                                     x_soc.SocOutcomeLatitide,
+                                                     x_soc.SocOutcomeLongitude,
+                                                     soeb.NewNumber,
+                                                     soeb.NewCategory,
+                                                     "наименование категории",
+                                                     soeb.NewObjName,
+                                                     soeb.NewName,
+                                                     soeb.NewTechConclusion,
+                                                     soeb.NewResult,
+                                                     "результат работы по заявке",
+                                                     soeb.NewIncome,
+                                                     soeb.NewOutgone,
+                                                     soeb.NewAddress,
+                                                     soeb.NewOrderFrom,
+                                                     soeb.NewWhoInit,
+                                                     soeb.NewTime,
+                                                     smeb.NewName,
+                                                     andr.NewLatitude,
+                                                     andr.NewLonitude
+                                                         )
+                                  ).AsNoTracking().ToList();
+                    if (!coords.Any())
+                        continue;
+                    CreateMarkerCommand.Execute(coords[0]);
+                }
+            });
+        }
+
+        private RelayCommand _CreateMarkerCommand;
+        public RelayCommand CreateMarkerCommand {
+            get => _CreateMarkerCommand ??= new RelayCommand(async obj => {
+                if (obj == null)
+                    return;
+                if (!(obj is ServiceorderInfo order))
+                    return;
+                GMapMarker marker = null;
+                if (!string.IsNullOrEmpty(order.IncomeLatitude) && !string.IsNullOrEmpty(order.IncomeLongitude)) {
+                    GeoCoordinate c1 = new GeoCoordinate(Convert.ToDouble(order.IncomeLatitude), Convert.ToDouble(order.IncomeLongitude));
+                    GeoCoordinate c2 = new GeoCoordinate(Convert.ToDouble(order.Andr_lat), Convert.ToDouble(order.Andr_lon));
+
+                    marker = new GMapMarker(new PointLatLng(Convert.ToDouble(order.IncomeLatitude), Convert.ToDouble(order.IncomeLongitude))) {
+                        Shape = new Ellipse {
+                            Width = 20,
+                            Height = 20,
+                            Stroke = c1.GetDistanceTo(c2) > 150.0 ? Brushes.Red : Brushes.Purple,
+                            StrokeThickness = 7.5,
+                            ToolTip = string.Format("{0} ({1})" + Environment.NewLine + "{2} {3}" + Environment.NewLine+"{4}",
+                                    order.TechName,
+                                    order.Number,
+                                    order.ObjectName + " " + order.Address,
+                                    order.Name,
+                                c1.GetDistanceTo(c2) > 150.0 ? Environment.NewLine + string.Format("расстояние от объекта: {0}", c1.GetDistanceTo(c2).ToString()) : null
+                                    ),
+                            AllowDrop = false
+                        }
+                    };
+                }
+                else {
+                    marker = new GMapMarker(new PointLatLng(Convert.ToDouble(order.Andr_lat), Convert.ToDouble(order.Andr_lon))) {
+                        Shape = new Ellipse {
+                            Width = 20,
+                            Height = 20,
+                            Stroke = Brushes.Black,
+                            StrokeThickness = 7.5,
+                            ToolTip = string.Format("{0} ({1})" + Environment.NewLine + "{2} {3}" + Environment.NewLine,
+                                    order.TechName,
+                                    order.Number,
+                                    order.ObjectName + " " + order.Address,
+                                    order.Name
+                                    ),
+                            AllowDrop = false
+                        }
+                    };
+                }
+                if (marker != null)
+                    gmaps_contol.Markers.Add(marker);
+            });
+        }
+
         private RelayCommand _GetInfoByServiceman;
         public RelayCommand GetInfoByServiceman {
             get => _GetInfoByServiceman ??= new RelayCommand(async obj => {
-                if (SelectedServicemans == null || DateOrder == null)
+                if (SelectedServicemans == null)
                     return;
                 NotCompletedOrdersList.Clear();
                 //Требуется получить количество заявок , сколько выполнено, перенесено, отменено
                 //Сколько клиентских заявок всего - сделано/перенесено и отменено
-                //App.Current.Dispatcher.Invoke((Action)delegate {
+                App.Current.Dispatcher.Invoke((Action)delegate {
                     msCRMContext = GetMsCRMContext();
 
 
@@ -252,6 +367,9 @@ namespace VityazReports.ViewModel {
                     soebs = msCRMContext.NewServiceorderExtensionBase.Where(x => x.NewDate.Value.AddHours(-5).Date == DateOrder.Date && x.NewServicemanServiceorder == SelectedServicemans.ServicemanID).AsNoTracking().ToList();
                     if (soebs.Count <= 0)
                         return;
+                    //Отрисовываем все заявки
+                    DrawMarkersCommand.Execute(soebs);
+                    Timer.Stop();
                     AllCountOrders = soebs.Count;
                     AllCountComplete = soebs.Count(x => x.NewResult == 1);
 
@@ -399,31 +517,60 @@ namespace VityazReports.ViewModel {
                             NotCompletedOrdersList.Add(c);
                         }
                     }
-                //});
+                });
+                FillLatesOrders.Execute(null);
             });
         }
 
         private RelayCommand _FillLatesOrders;
         public RelayCommand FillLatesOrders {
             get => _FillLatesOrders ??= new RelayCommand(async obj => {
-                if (SelectedServicemans == null || DateOrder == null)
+                if (SelectedServicemans == null)
                     return;
                 LatesOrders.Clear();
                 List<ServiceorderInfo> coords = (from soc in msCRMContext.ServiceOrderCoordinates
                                                  join soeb in msCRMContext.NewServiceorderExtensionBase on soc.SocServiceOrderId equals soeb.NewServiceorderId
                                                  join smeb in msCRMContext.NewServicemanExtensionBase on soeb.NewServicemanServiceorder equals smeb.NewServicemanId
                                                  join andr in msCRMContext.NewAndromedaExtensionBase on soeb.NewAndromedaServiceorder equals andr.NewAndromedaId
+                                                 join sob in msCRMContext.NewServiceorderBase on soeb.NewServiceorderId equals sob.NewServiceorderId
+                                                 join and in msCRMContext.NewAndromedaBase on andr.NewAndromedaId equals and.NewAndromedaId
                                                  where soeb.NewServicemanServiceorder == SelectedServicemans.ServicemanID
                                                  && soeb.NewDate.Value.Date == DateOrder.Date.AddHours(-5).Date
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLatitude)
                                                    && !string.IsNullOrEmpty(soc.SocIncomeLongitude)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLatitide)
                                                    && !string.IsNullOrEmpty(soc.SocOutcomeLongitude)
+                                                   && (soeb.NewTimeFrom.HasValue || soeb.NewTimeTo.HasValue)
+                                                   && (soeb.NewIncome.HasValue && soeb.NewOutgone.HasValue)
+                                                   && and.DeletionStateCode == 0
+                                                   && and.Statecode == 0
+                                                   && and.Statuscode == 1
+                                                   && sob.DeletionStateCode == 0
+                                                   && sob.Statecode == 0
+                                                   && sob.Statuscode == 1
                                                  select new ServiceorderInfo(soeb.NewNumber, soeb.NewAddress, soeb.NewObjName, soeb.NewName, soeb.NewTime, (DateTime)soeb.NewIncome, (DateTime)soeb.NewOutgone, soeb.NewTechConclusion, soeb.NewTimeFrom, soeb.NewTimeTo)
                                   ).AsNoTracking().ToList();
                 if (coords.Count() <= 0)
                     return;
-                //каким образом парсить столбец времени
+                foreach (ServiceorderInfo c in coords) {
+                    DateTime? from = null;
+                    DateTime? to = null;
+                    if (c.TimeFrom.HasValue)
+                        from = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, c.TimeFrom.Value, 0, 0);
+                    if (c.TimeTo.HasValue)
+                        to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, c.TimeTo.Value, 59, 59);
+                    if (from.HasValue && to.HasValue) {//указан интервал, например с 8 до 10 (8-10)
+                        if (c.Income.Value.AddHours(5) > to) {
+                            LatesOrders.Add(c);
+                            continue;
+                        }
+                    }
+                    else if (!from.HasValue && to.HasValue) //есть только до
+                        if (c.Income.Value.AddHours(5) > to) {
+                            LatesOrders.Add(c);
+                            continue;
+                        }
+                }
                 AnalyzeSelectedServicemanVisibleFlyout = true;
             });
         }
@@ -484,6 +631,7 @@ namespace VityazReports.ViewModel {
                 if (!ServicemanID.HasValue)
                     return;
                 SelectedServicemans = tb.IsChecked == true ? ServicemansList.FirstOrDefault(x => x.ServicemanID == ServicemanID.Value) : null;
+                if (SelectedServicemans == null) Timer.Start();
                 FillIntervals.Execute(null);
                 GetInfoByServiceman.Execute(null);
             });

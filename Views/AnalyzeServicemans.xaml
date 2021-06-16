@@ -62,13 +62,13 @@
                 <Label Content="Опоздания" Grid.Row="0" Grid.ColumnSpan="2" FontWeight="UltraLight" FontSize="16"/>
                 <DataGrid Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding LatesOrders}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="0.3*" Header="№ объекта" Binding="{Binding NumberObject}"/>
-                        <DataGridTextColumn Width="*" Header="Адрес объекта" Binding="{Binding AddressObject}"/>
-                        <DataGridTextColumn Width="*" Header="Наименование объекта" Binding="{Binding NameObject}"/>
-                        <DataGridTextColumn  Width="0.5*" Header="Причина" Binding="{Binding Reasons}"/>
-                        <DataGridTextColumn Width="0.3*" Header="Время заявки" Binding="{Binding TimeOrder}"/>
-                        <DataGridTextColumn Width="0.3*" Header="Пришел" Binding="{Binding Income}"/>
-                        <DataGridTextColumn Width="0.3*" Header="Ушел" Binding="{Binding Outgone}"/>
+                        <DataGridTextColumn Width="0.4*" Header="№ объекта" Binding="{Binding Number}"/>
+                        <DataGridTextColumn Width="*" Header="Адрес объекта" Binding="{Binding Address}"/>
+                        <DataGridTextColumn Width="*" Header="Наименование объекта" Binding="{Binding ObjectName}"/>
+                        <DataGridTextColumn  Width="0.5*" Header="Причина" Binding="{Binding Name}"/>
+                        <DataGridTextColumn Width="0.3*" Header="Время" Binding="{Binding Time}"/>
+                        <DataGridTextColumn Width="0.3*" Header="Пришел" Binding="{Binding IncomeReal, StringFormat=\{0:HH:mm:ss\}}"/>
+                        <DataGridTextColumn Width="0.3*" Header="Ушел" Binding="{Binding OutgoneReal, StringFormat=\{0:HH:mm:ss\}}"/>
                         <DataGridTextColumn Width="*" Header="Заключение" Binding="{Binding Conclusion}"/>
                     </DataGrid.Columns>
                 </DataGrid>
