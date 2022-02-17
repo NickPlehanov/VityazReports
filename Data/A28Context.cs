@@ -18,7 +18,7 @@ namespace VityazReports.Data {
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             if (!optionsBuilder.IsConfigured) {
-                optionsBuilder.UseSqlServer("Data Source=andromedacentr;Initial Catalog=A28;Persist Security Info=True;User ID=A28;Password={15996E53-F691-44c8-A7CB-D128C8716B1B};MultipleActiveResultSets=True");
+                optionsBuilder.UseSqlServer("Data Source=192.168.1.40;Initial Catalog=A28;Persist Security Info=True;User ID=A28;Password={15996E53-F691-44c8-A7CB-D128C8716B1B};MultipleActiveResultSets=True");
             }
         }
 
